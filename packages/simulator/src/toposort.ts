@@ -1,4 +1,4 @@
-import type { IRAux, IRExprNode, IRFlow } from '@sysdml/ir';
+import type { IRAux, IRExpressionNode, IRFlow } from '@sysdml/ir';
 import type { SimDiagnostic } from './types.js';
 import { SimDiagnosticCode } from './types.js';
 
@@ -76,7 +76,7 @@ export function toposort(aux: readonly IRAux[], flows: readonly IRFlow[]): Topos
   };
 }
 
-function collectAuxRefs(node: IRExprNode, auxIds: ReadonlySet<string>, out: Set<string>): void {
+function collectAuxRefs(node: IRExpressionNode, auxIds: ReadonlySet<string>, out: Set<string>): void {
   switch (node.type) {
     case 'Num':
       break;

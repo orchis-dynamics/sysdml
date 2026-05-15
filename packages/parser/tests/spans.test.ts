@@ -1,10 +1,10 @@
 import { describe, test, expect } from "vitest";
 import { parseSource } from "../src/index.js";
 import type {
-	AuxDeclNode,
-	BinaryExprNode,
+	AuxiliaryDeclarationNode,
+	BinaryExpressionNode,
 	FunctionCallNode,
-	NumberLitNode,
+	NumberLiteralNode,
 } from "../src/index.js";
 
 // Span contract: line and col are both 1-based, end-inclusive.
@@ -42,8 +42,8 @@ describe("spans — 1-based, end-inclusive", () => {
 		const { ast } = parseSource(`model m\naux x = SQRT(1)`);
 		if (ast === null) throw new Error("expected non-null ast");
 		const aux = ast.decls[0];
-		if (aux?.type !== "AuxDecl" || aux.expr?.type !== "FunctionCall") {
-			throw new Error("expected AuxDecl with FunctionCall expr");
+		if (aux?.type !== "AuxiliaryDeclaration" || aux.expr?.type !== "FunctionCall") {
+			throw new Error("expected AuxiliaryDeclaration with FunctionCall expr");
 		}
 		const call: FunctionCallNode = aux.expr;
 		expect(call.nameSpan).toEqual({
@@ -73,17 +73,17 @@ describe("spans — 1-based, end-inclusive", () => {
 		const { ast } = parseSource(`model m\naux x = 10 + 20`);
 		if (ast === null) throw new Error("expected non-null ast");
 		const aux = ast.decls[0];
-		if (aux?.type !== "AuxDecl" || aux.expr?.type !== "BinaryExpr") {
-			throw new Error("expected AuxDecl with BinaryExpr");
+		if (aux?.type !== "AuxiliaryDeclaration" || aux.expr?.type !== "BinaryExpression") {
+			throw new Error("expected AuxiliaryDeclaration with BinaryExpression");
 		}
-		const expr: BinaryExprNode = aux.expr;
+		const expr: BinaryExpressionNode = aux.expr;
 		// 10 + 20 — full span from first digit of 10 to last digit of 20
 		expect(expr.span).toEqual({
 			start: { line: 2, col: 9 },
 			end: { line: 2, col: 15 },
 		});
-		const left = expr.left as NumberLitNode;
-		const right = expr.right as NumberLitNode;
+		const left = expr.left as NumberLiteralNode;
+		const right = expr.right as NumberLiteralNode;
 		expect(left.span).toEqual({
 			start: { line: 2, col: 9 },
 			end: { line: 2, col: 10 },
@@ -104,7 +104,7 @@ describe("spans — 1-based, end-inclusive", () => {
 		if (ast === null) throw new Error("expected non-null ast");
 		expect(ast.model.span.start.line).toBe(1);
 		const aux = ast.decls[0];
-		if (aux?.type !== "AuxDecl") throw new Error("expected AuxDecl");
+		if (aux?.type !== "AuxiliaryDeclaration") throw new Error("expected AuxiliaryDeclaration");
 		expect(aux.idSpan.start.line).toBe(3);
 		expect(aux.idSpan.start.col).toBe(5);
 		expect(aux.idSpan.end.col).toBe(5);
@@ -141,7 +141,7 @@ describe("spans — 1-based, end-inclusive", () => {
 		const { ast } = parseSource(`model m\naux x = 1 { position: { x: 1, y: 2 } }`);
 		if (ast === null) throw new Error("expected non-null ast");
 		const aux = ast.decls[0];
-		if (aux?.type !== "AuxDecl") throw new Error("expected AuxDecl");
+		if (aux?.type !== "AuxiliaryDeclaration") throw new Error("expected AuxiliaryDeclaration");
 		expect(aux.span.start.line).toBe(2);
 		expect(aux.span.start.col).toBe(1);
 		expect(aux.span.end.line).toBe(2);

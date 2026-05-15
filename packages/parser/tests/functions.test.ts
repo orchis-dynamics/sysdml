@@ -2,17 +2,17 @@ import { describe, test, expect } from "vitest";
 
 import { parseSource } from "../src/index.js";
 import type {
-	AuxDeclNode,
+	AuxiliaryDeclarationNode,
 	FunctionCallNode,
-	IdentRefNode,
+	IdentifierReferenceNode,
 } from "../src/index.js";
 
 function auxExpr(src: string) {
 	const { ast, diagnostics } = parseSource(`model m\naux x = ${src}`);
 	expect(diagnostics).toHaveLength(0);
 	if (ast === null) throw new Error(`expected non-null ast for: ${src}`);
-	const decl = ast.decls[0] as AuxDeclNode;
-	expect(decl.type).toBe("AuxDecl");
+	const decl = ast.decls[0] as AuxiliaryDeclarationNode;
+	expect(decl.type).toBe("AuxiliaryDeclaration");
 	if (decl.expr === null) throw new Error(`expected non-null expr for: ${src}`);
 	return decl.expr;
 }
@@ -30,7 +30,7 @@ describe("function call syntax", () => {
 		if (isFunctionCall(expr)) {
 			expect(expr.name).toBe("ABS");
 			expect(expr.args).toHaveLength(1);
-			expect(expr.args[0].type).toBe("IdentRef");
+			expect(expr.args[0].type).toBe("IdentifierReference");
 		}
 	});
 
@@ -81,7 +81,7 @@ describe("function call syntax", () => {
 		expect(isFunctionCall(expr)).toBe(true);
 		if (isFunctionCall(expr)) {
 			expect(isFunctionCall(expr.args[0])).toBe(true);
-			expect(expr.args[1].type).toBe("NumberLit");
+			expect(expr.args[1].type).toBe("NumberLiteral");
 		}
 	});
 
@@ -89,7 +89,7 @@ describe("function call syntax", () => {
 		const expr = auxExpr("ABS(x + 1)");
 		expect(isFunctionCall(expr)).toBe(true);
 		if (isFunctionCall(expr)) {
-			expect(expr.args[0].type).toBe("BinaryExpr");
+			expect(expr.args[0].type).toBe("BinaryExpression");
 		}
 	});
 
@@ -115,16 +115,16 @@ describe("function call syntax", () => {
 // ── Bare zero-arg identifiers (parens optional) ───────────────────────────────
 
 describe("bare zero-arg identifiers", () => {
-	test("TIME without parens parses as IdentRef", () => {
+	test("TIME without parens parses as IdentifierReference", () => {
 		// Resolution to FunctionCall happens at IR level
 		const expr = auxExpr("TIME");
-		expect(expr.type).toBe("IdentRef");
-		expect((expr as IdentRefNode).name).toBe("TIME");
+		expect(expr.type).toBe("IdentifierReference");
+		expect((expr as IdentifierReferenceNode).name).toBe("TIME");
 	});
 
-	test("PI without parens parses as IdentRef", () => {
+	test("PI without parens parses as IdentifierReference", () => {
 		const expr = auxExpr("PI");
-		expect(expr.type).toBe("IdentRef");
+		expect(expr.type).toBe("IdentifierReference");
 	});
 });
 

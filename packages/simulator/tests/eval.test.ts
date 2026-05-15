@@ -1,7 +1,7 @@
 import { describe, test, expect } from 'vitest';
 import { evalExpr } from '../src/eval.js';
 import type { EvalContext, Env } from '../src/types.js';
-import type { IRExprNode, IRGraphicalFunction } from '@sysdml/ir';
+import type { IRExpressionNode, IRGraphicalFunction } from '@sysdml/ir';
 
 function makeCtx(env: Env = {}, t = 0): EvalContext {
   const sim = { t, start: 0, end: 10, step: 1 };
@@ -71,7 +71,7 @@ describe('evalExpr — BinOp comparisons return 0 or 1', () => {
 
 describe('evalExpr — IfThenElse (eager)', () => {
   test('truthy condition picks then branch', () => {
-    const node: IRExprNode = {
+    const node: IRExpressionNode = {
       type: 'IfThenElse',
       cond: { type: 'Num', value: 1 },
       thenBranch: { type: 'Num', value: 10 },
@@ -81,7 +81,7 @@ describe('evalExpr — IfThenElse (eager)', () => {
   });
 
   test('zero condition picks else branch', () => {
-    const node: IRExprNode = {
+    const node: IRExpressionNode = {
       type: 'IfThenElse',
       cond: { type: 'Num', value: 0 },
       thenBranch: { type: 'Num', value: 10 },
@@ -91,7 +91,7 @@ describe('evalExpr — IfThenElse (eager)', () => {
   });
 
   test('dead branch with 1/0 does not throw (eager evaluation, result discarded)', () => {
-    const node: IRExprNode = {
+    const node: IRExpressionNode = {
       type: 'IfThenElse',
       cond: { type: 'Num', value: 1 },
       thenBranch: { type: 'Num', value: 5 },
@@ -110,19 +110,19 @@ describe('evalExpr — GFCall dispatches to gfLookup', () => {
     const gfMap = new Map<string, IRGraphicalFunction>();
     gfMap.set('f', gf);
     const ctx: EvalContext = { env, sim, initEnv: env, prevEnv: env, gfRegistry: gfMap };
-    const node: IRExprNode = { type: 'GFCall', name: 'f', argument: { type: 'Ref', id: 'x' } };
+    const node: IRExpressionNode = { type: 'GFCall', name: 'f', argument: { type: 'Ref', id: 'x' } };
     expect(evalExpr(node, ctx)).toBeCloseTo(0.5);
   });
 });
 
 describe('evalExpr — deferred v0.2 functions throw', () => {
   test('RANDOM throws with v0.2 message', () => {
-    const node: IRExprNode = { type: 'FunctionCall', name: 'RANDOM', args: [{ type: 'Num', value: 0 }, { type: 'Num', value: 1 }] };
+    const node: IRExpressionNode = { type: 'FunctionCall', name: 'RANDOM', args: [{ type: 'Num', value: 0 }, { type: 'Num', value: 1 }] };
     expect(() => evalExpr(node, makeCtx())).toThrow('v0.2');
   });
 
   test('DELAY throws with v0.2 message', () => {
-    const node: IRExprNode = { type: 'FunctionCall', name: 'DELAY', args: [{ type: 'Num', value: 1 }, { type: 'Num', value: 2 }] };
+    const node: IRExpressionNode = { type: 'FunctionCall', name: 'DELAY', args: [{ type: 'Num', value: 1 }, { type: 'Num', value: 2 }] };
     expect(() => evalExpr(node, makeCtx())).toThrow('v0.2');
   });
 });

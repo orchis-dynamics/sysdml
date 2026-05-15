@@ -1,4 +1,4 @@
-import type { IR, IRAux, IRExprNode, IRFlow, IRStock } from '@sysdml/ir';
+import type { IR, IRAux, IRExpressionNode, IRFlow, IRStock } from '@sysdml/ir';
 import type { SimDiagnostic } from './types.js';
 import { SimDiagnosticCode } from './types.js';
 
@@ -37,7 +37,7 @@ export function desugarIR(ir: IR): { ir: IR; diagnostics: SimDiagnostic[] } {
   return { ir: desugaredIR, diagnostics: state.diagnostics };
 }
 
-function transformExpr(node: IRExprNode, state: DesugarState): IRExprNode {
+function transformExpr(node: IRExpressionNode, state: DesugarState): IRExpressionNode {
   switch (node.type) {
     case 'Num':
     case 'Ref':
@@ -66,16 +66,16 @@ function transformExpr(node: IRExprNode, state: DesugarState): IRExprNode {
     default: {
       const unreachable: never = node;
       void unreachable;
-      throw new Error('transformExpr: unhandled IRExprNode type');
+      throw new Error('transformExpr: unhandled IRExpressionNode type');
     }
   }
 }
 
 function transformFunctionCall(
   name: string,
-  args: readonly IRExprNode[],
+  args: readonly IRExpressionNode[],
   state: DesugarState,
-): IRExprNode {
+): IRExpressionNode {
   switch (name) {
     case 'DELAY1': return desugarDelay1(args, state);
     case 'DELAY3': return desugarDelay3(args, state);
@@ -98,7 +98,7 @@ function nextId(state: DesugarState, prefix: string): string {
   return `_${prefix}_${state.counter++}`;
 }
 
-function makeStockOutputExpr(stockId: string, delayTimeExpr: IRExprNode): IRExprNode {
+function makeStockOutputExpr(stockId: string, delayTimeExpr: IRExpressionNode): IRExpressionNode {
   return {
     type: 'BinOp',
     op: '/',
@@ -107,13 +107,13 @@ function makeStockOutputExpr(stockId: string, delayTimeExpr: IRExprNode): IRExpr
   };
 }
 
-function desugarDelay1(args: readonly IRExprNode[], state: DesugarState): IRExprNode {
+function desugarDelay1(args: readonly IRExpressionNode[], state: DesugarState): IRExpressionNode {
   const [inputExpr, delayTimeExpr, initExpr] = args;
   const stockId = nextId(state, 'delay1');
   const flowId = nextId(state, 'delay1_flow');
 
   const initValueExpr = initExpr ?? inputExpr;
-  const stockInit: IRExprNode = {
+  const stockInit: IRExpressionNode = {
     type: 'BinOp',
     op: '*',
     left: initValueExpr,
@@ -122,7 +122,7 @@ function desugarDelay1(args: readonly IRExprNode[], state: DesugarState): IRExpr
 
   const outputExpr = makeStockOutputExpr(stockId, delayTimeExpr);
 
-  const flowRate: IRExprNode = {
+  const flowRate: IRExpressionNode = {
     type: 'BinOp',
     op: '/',
     left: { type: 'BinOp', op: '-', left: inputExpr, right: outputExpr },
@@ -136,18 +136,18 @@ function desugarDelay1(args: readonly IRExprNode[], state: DesugarState): IRExpr
 }
 
 function buildStageArgs(
-  inputExpr: IRExprNode,
-  stageTimeExpr: IRExprNode,
-  initExpr: IRExprNode | undefined,
-): IRExprNode[] {
+  inputExpr: IRExpressionNode,
+  stageTimeExpr: IRExpressionNode,
+  initExpr: IRExpressionNode | undefined,
+): IRExpressionNode[] {
   return initExpr !== undefined
     ? [inputExpr, stageTimeExpr, initExpr]
     : [inputExpr, stageTimeExpr];
 }
 
-function desugarDelay3(args: readonly IRExprNode[], state: DesugarState): IRExprNode {
+function desugarDelay3(args: readonly IRExpressionNode[], state: DesugarState): IRExpressionNode {
   const [inputExpr, delayTimeExpr, initExpr] = args;
-  const stageDelay: IRExprNode = {
+  const stageDelay: IRExpressionNode = {
     type: 'BinOp',
     op: '/',
     left: delayTimeExpr,
@@ -159,7 +159,7 @@ function desugarDelay3(args: readonly IRExprNode[], state: DesugarState): IRExpr
   return          desugarDelay1(buildStageArgs(stage2, stageDelay, initExpr), state);
 }
 
-function desugarDelayN(args: readonly IRExprNode[], state: DesugarState): IRExprNode {
+function desugarDelayN(args: readonly IRExpressionNode[], state: DesugarState): IRExpressionNode {
   const [inputExpr, delayTimeExpr, nExpr, initExpr] = args;
 
   if (nExpr.type !== 'Num') {
@@ -179,28 +179,28 @@ function desugarDelayN(args: readonly IRExprNode[], state: DesugarState): IRExpr
     return { type: 'Num', value: 0 };
   }
 
-  const stageDelay: IRExprNode = {
+  const stageDelay: IRExpressionNode = {
     type: 'BinOp',
     op: '/',
     left: delayTimeExpr,
     right: { type: 'Num', value: n },
   };
 
-  let current: IRExprNode = inputExpr;
+  let current: IRExpressionNode = inputExpr;
   for (let i = 0; i < n; i++) {
     current = desugarDelay1(buildStageArgs(current, stageDelay, initExpr), state);
   }
   return current;
 }
 
-function desugarSmth1(args: readonly IRExprNode[], state: DesugarState): IRExprNode {
+function desugarSmth1(args: readonly IRExpressionNode[], state: DesugarState): IRExpressionNode {
   const [inputExpr, avgTimeExpr, initExpr] = args;
   const stockId = nextId(state, 'smth1');
   const flowId = nextId(state, 'smth1_flow');
 
-  const stockInit: IRExprNode = initExpr ?? inputExpr;
+  const stockInit: IRExpressionNode = initExpr ?? inputExpr;
 
-  const flowRate: IRExprNode = {
+  const flowRate: IRExpressionNode = {
     type: 'BinOp',
     op: '/',
     left: { type: 'BinOp', op: '-', left: inputExpr, right: { type: 'Ref', id: stockId } },
@@ -213,9 +213,9 @@ function desugarSmth1(args: readonly IRExprNode[], state: DesugarState): IRExprN
   return { type: 'Ref', id: stockId };
 }
 
-function desugarSmth3(args: readonly IRExprNode[], state: DesugarState): IRExprNode {
+function desugarSmth3(args: readonly IRExpressionNode[], state: DesugarState): IRExpressionNode {
   const [inputExpr, avgTimeExpr, initExpr] = args;
-  const stageTime: IRExprNode = {
+  const stageTime: IRExpressionNode = {
     type: 'BinOp',
     op: '/',
     left: avgTimeExpr,
@@ -227,7 +227,7 @@ function desugarSmth3(args: readonly IRExprNode[], state: DesugarState): IRExprN
   return          desugarSmth1(buildStageArgs(stage2, stageTime, initExpr), state);
 }
 
-function desugarSmthN(args: readonly IRExprNode[], state: DesugarState): IRExprNode {
+function desugarSmthN(args: readonly IRExpressionNode[], state: DesugarState): IRExpressionNode {
   const [inputExpr, avgTimeExpr, nExpr, initExpr] = args;
 
   if (nExpr.type !== 'Num') {
@@ -247,21 +247,21 @@ function desugarSmthN(args: readonly IRExprNode[], state: DesugarState): IRExprN
     return { type: 'Num', value: 0 };
   }
 
-  const stageTime: IRExprNode = {
+  const stageTime: IRExpressionNode = {
     type: 'BinOp',
     op: '/',
     left: avgTimeExpr,
     right: { type: 'Num', value: n },
   };
 
-  let current: IRExprNode = inputExpr;
+  let current: IRExpressionNode = inputExpr;
   for (let i = 0; i < n; i++) {
     current = desugarSmth1(buildStageArgs(current, stageTime, initExpr), state);
   }
   return current;
 }
 
-function desugarTrend(args: readonly IRExprNode[], state: DesugarState): IRExprNode {
+function desugarTrend(args: readonly IRExpressionNode[], state: DesugarState): IRExpressionNode {
   const [inputExpr, avgTimeExpr, initExpr] = args;
   const smthArgs = buildStageArgs(inputExpr, avgTimeExpr, initExpr);
   const smoothRef = desugarSmth1(smthArgs, state);
@@ -274,7 +274,7 @@ function desugarTrend(args: readonly IRExprNode[], state: DesugarState): IRExprN
   };
 }
 
-function desugarForcst(args: readonly IRExprNode[], state: DesugarState): IRExprNode {
+function desugarForcst(args: readonly IRExpressionNode[], state: DesugarState): IRExpressionNode {
   const [inputExpr, avgTimeExpr, horizonExpr, initTrendExpr] = args;
   const trendArgs = buildStageArgs(inputExpr, avgTimeExpr, initTrendExpr);
   const trendExpr = desugarTrend(trendArgs, state);

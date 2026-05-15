@@ -32,35 +32,35 @@ describe("getDocumentSymbols", () => {
     expect(symbols.length).toBeGreaterThanOrEqual(5);
   });
 
-  it("maps StockDecl to SymbolKind.Variable", () => {
+  it("maps StockDeclaration to SymbolKind.Variable", () => {
     const { ast } = parseSource(SOURCE);
     const symbols = getDocumentSymbols(ast!);
     const stock = symbols.find((s) => s.name === "population");
     expect(stock?.kind).toBe(SymbolKind.Variable);
   });
 
-  it("maps AuxDecl to SymbolKind.Constant", () => {
+  it("maps AuxiliaryDeclaration to SymbolKind.Constant", () => {
     const { ast } = parseSource(SOURCE);
     const symbols = getDocumentSymbols(ast!);
     const aux = symbols.find((s) => s.name === "birth_rate");
     expect(aux?.kind).toBe(SymbolKind.Constant);
   });
 
-  it("maps FlowDecl to SymbolKind.Function", () => {
+  it("maps FlowDeclaration to SymbolKind.Function", () => {
     const { ast } = parseSource(SOURCE);
     const symbols = getDocumentSymbols(ast!);
     const flow = symbols.find((s) => s.name === "births");
     expect(flow?.kind).toBe(SymbolKind.Function);
   });
 
-  it("maps GfDecl to SymbolKind.Object", () => {
+  it("maps GraphicalFunctionDeclaration to SymbolKind.Object", () => {
     const { ast } = parseSource(SOURCE);
     const symbols = getDocumentSymbols(ast!);
     const gf = symbols.find((s) => s.name === "my_lookup");
     expect(gf?.kind).toBe(SymbolKind.Object);
   });
 
-  it("maps TimeDecl to SymbolKind.Module with name 'time'", () => {
+  it("maps TimeDeclaration to SymbolKind.Module with name 'time'", () => {
     const { ast } = parseSource(SOURCE);
     const symbols = getDocumentSymbols(ast!);
     const time = symbols.find((s) => s.name === "time");

@@ -1,57 +1,57 @@
 import { describe, test, expect } from "vitest";
 import { parseSource } from "../src/index.js";
 import type {
-	AuxDeclNode,
-	ConnectionDeclNode,
-	FlowDeclNode,
-	GfDeclNode,
-	PosNode,
-	StockDeclNode,
+	AuxiliaryDeclarationNode,
+	ConnectionDeclarationNode,
+	FlowDeclarationNode,
+	GraphicalFunctionDeclarationNode,
+	PositionNode,
+	StockDeclarationNode,
 } from "../src/index.js";
 
-function stock(src: string): StockDeclNode {
+function stock(src: string): StockDeclarationNode {
 	const { ast, diagnostics } = parseSource(`model m\n${src}`);
 	if (!ast) throw new Error(`Parse failed: ${diagnostics[0]?.message}`);
-	const decl = ast.decls.find((d) => d.type === "StockDecl");
-	if (!decl || decl.type !== "StockDecl") throw new Error("No StockDecl found");
+	const decl = ast.decls.find((d) => d.type === "StockDeclaration");
+	if (!decl || decl.type !== "StockDeclaration") throw new Error("No StockDeclaration found");
 	return decl;
 }
 
-function flow(src: string): FlowDeclNode {
+function flow(src: string): FlowDeclarationNode {
 	const { ast, diagnostics } = parseSource(`model m\n${src}`);
 	if (!ast) throw new Error(`Parse failed: ${diagnostics[0]?.message}`);
-	const decl = ast.decls.find((d) => d.type === "FlowDecl");
-	if (!decl || decl.type !== "FlowDecl") throw new Error("No FlowDecl found");
+	const decl = ast.decls.find((d) => d.type === "FlowDeclaration");
+	if (!decl || decl.type !== "FlowDeclaration") throw new Error("No FlowDeclaration found");
 	return decl;
 }
 
-function aux(src: string): AuxDeclNode {
+function aux(src: string): AuxiliaryDeclarationNode {
 	const { ast, diagnostics } = parseSource(`model m\n${src}`);
 	if (!ast) throw new Error(`Parse failed: ${diagnostics[0]?.message}`);
-	const decl = ast.decls.find((d) => d.type === "AuxDecl");
-	if (!decl || decl.type !== "AuxDecl") throw new Error("No AuxDecl found");
+	const decl = ast.decls.find((d) => d.type === "AuxiliaryDeclaration");
+	if (!decl || decl.type !== "AuxiliaryDeclaration") throw new Error("No AuxiliaryDeclaration found");
 	return decl;
 }
 
-function gf(src: string): GfDeclNode {
+function gf(src: string): GraphicalFunctionDeclarationNode {
 	const { ast, diagnostics } = parseSource(`model m\n${src}`);
 	if (!ast) throw new Error(`Parse failed: ${diagnostics[0]?.message}`);
-	const decl = ast.decls.find((d) => d.type === "GfDecl");
-	if (!decl || decl.type !== "GfDecl") throw new Error("No GfDecl found");
+	const decl = ast.decls.find((d) => d.type === "GraphicalFunctionDeclaration");
+	if (!decl || decl.type !== "GraphicalFunctionDeclaration") throw new Error("No GraphicalFunctionDeclaration found");
 	return decl;
 }
 
-function connection(src: string): ConnectionDeclNode {
+function connection(src: string): ConnectionDeclarationNode {
 	const { ast, diagnostics } = parseSource(`model m\n${src}`);
 	if (!ast) throw new Error(`Parse failed: ${diagnostics[0]?.message}`);
-	const decl = ast.decls.find((d) => d.type === "ConnectionDecl");
-	if (!decl || decl.type !== "ConnectionDecl") throw new Error("No ConnectionDecl found");
+	const decl = ast.decls.find((d) => d.type === "ConnectionDeclaration");
+	if (!decl || decl.type !== "ConnectionDeclaration") throw new Error("No ConnectionDeclaration found");
 	return decl;
 }
 
-function posEq(pos: PosNode | undefined, x: number, y: number): void {
+function posEq(pos: PositionNode | undefined, x: number, y: number): void {
 	expect(pos).not.toBeUndefined();
-	expect(pos!.type).toBe("Pos");
+	expect(pos!.type).toBe("Position");
 	expect(pos!.x).toBe(x);
 	expect(pos!.y).toBe(y);
 }

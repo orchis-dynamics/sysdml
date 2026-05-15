@@ -2,10 +2,10 @@ import { describe, test, expect } from "vitest";
 
 import { parseSource } from "../src/index.js";
 import type {
-	AuxDeclNode,
-	GfDeclNode,
-	GfBodyNode,
-	NumListNode,
+	AuxiliaryDeclarationNode,
+	GraphicalFunctionDeclarationNode,
+	GraphicalFunctionBodyNode,
+	NumberListNode,
 } from "../src/index.js";
 
 function parseOk(src: string) {
@@ -22,19 +22,19 @@ function wrap(body: string) {
 	return `model m\ntime { start: 0 end: 1 step: 1 }\nstock s { init: 0 }\n${body}`;
 }
 
-function parseGraphicalFunctionDeclaration(src: string): GfDeclNode {
+function parseGraphicalFunctionDeclaration(src: string): GraphicalFunctionDeclarationNode {
 	const ast = parseOk(wrap(src));
 	const declaration = ast.decls.find(
-		(decl) => decl.type === "GfDecl",
-	) as GfDeclNode;
+		(decl) => decl.type === "GraphicalFunctionDeclaration",
+	) as GraphicalFunctionDeclarationNode;
 	expect(declaration).toBeDefined();
 	return declaration;
 }
 
-function numListValues(body: GfBodyNode, key: string): number[] {
+function numListValues(body: GraphicalFunctionBodyNode, key: string): number[] {
 	const prop = body.props.find((property) => property.key === key);
 	if (prop === undefined) throw new Error(`expected prop '${key}'`);
-	const list = prop.value as NumListNode;
+	const list = prop.value as NumberListNode;
 	return list.values.map(
 		(signedNumber) =>
 			(signedNumber.negative ? -1 : 1) * parseFloat(signedNumber.lit.value),
@@ -164,8 +164,8 @@ describe("named gf — multiple in same model", () => {
 			),
 		);
 		const graphicalFunctionDeclarations = ast.decls.filter(
-			(declaration) => declaration.type === "GfDecl",
-		) as GfDeclNode[];
+			(declaration) => declaration.type === "GraphicalFunctionDeclaration",
+		) as GraphicalFunctionDeclarationNode[];
 		expect(graphicalFunctionDeclarations).toHaveLength(2);
 		expect(graphicalFunctionDeclarations[0].id).toBe("f1");
 		expect(graphicalFunctionDeclarations[1].id).toBe("f2");
@@ -178,8 +178,8 @@ describe("named gf referenced in aux expression", () => {
 			wrap("gf f { xscale: [0, 1] ypts: [0, 1] }\naux result = f(s)"),
 		);
 		const aux = ast.decls.find(
-			(declaration) => declaration.type === "AuxDecl",
-		) as AuxDeclNode;
+			(declaration) => declaration.type === "AuxiliaryDeclaration",
+		) as AuxiliaryDeclarationNode;
 		expect(aux.expr.type).toBe("FunctionCall");
 	});
 });
@@ -191,8 +191,8 @@ describe("aux with inline gf via named decl", () => {
 		);
 		expect(diagnostics).toHaveLength(0);
 		if (ast === null) throw new Error("expected ast");
-		const aux = ast.decls.find((d) => d.type === "AuxDecl");
-		if (aux?.type !== "AuxDecl") throw new Error("expected AuxDecl");
+		const aux = ast.decls.find((d) => d.type === "AuxiliaryDeclaration");
+		if (aux?.type !== "AuxiliaryDeclaration") throw new Error("expected AuxiliaryDeclaration");
 		expect(aux.expr.type).toBe("FunctionCall");
 	});
 
@@ -202,8 +202,8 @@ describe("aux with inline gf via named decl", () => {
 		);
 		expect(diagnostics).toHaveLength(0);
 		if (ast === null) throw new Error("expected ast");
-		const gf = ast.decls.find((d) => d.type === "GfDecl");
-		if (gf?.type !== "GfDecl") throw new Error("expected GfDecl");
+		const gf = ast.decls.find((d) => d.type === "GraphicalFunctionDeclaration");
+		if (gf?.type !== "GraphicalFunctionDeclaration") throw new Error("expected GraphicalFunctionDeclaration");
 		const kindProp = gf.body.props.find((p) => p.key === "kind");
 		expect(kindProp).toBeDefined();
 		if (kindProp?.key === "kind") expect(kindProp.value).toBe("step");
@@ -215,8 +215,8 @@ describe("aux with inline gf via named decl", () => {
 		);
 		expect(diagnostics).toHaveLength(0);
 		if (ast === null) throw new Error("expected ast");
-		const gf = ast.decls.find((d) => d.type === "GfDecl");
-		if (gf?.type !== "GfDecl") throw new Error("expected GfDecl");
+		const gf = ast.decls.find((d) => d.type === "GraphicalFunctionDeclaration");
+		if (gf?.type !== "GraphicalFunctionDeclaration") throw new Error("expected GraphicalFunctionDeclaration");
 		const yscaleProp = gf.body.props.find((p) => p.key === "yscale");
 		expect(yscaleProp).toBeDefined();
 	});
@@ -227,8 +227,8 @@ describe("aux with inline gf via named decl", () => {
 		);
 		expect(diagnostics).toHaveLength(0);
 		if (ast === null) throw new Error("expected ast");
-		const gf = ast.decls.find((d) => d.type === "GfDecl");
-		if (gf?.type !== "GfDecl") throw new Error("expected GfDecl");
+		const gf = ast.decls.find((d) => d.type === "GraphicalFunctionDeclaration");
+		if (gf?.type !== "GraphicalFunctionDeclaration") throw new Error("expected GraphicalFunctionDeclaration");
 		const xptsProp = gf.body.props.find((p) => p.key === "xpts");
 		expect(xptsProp).toBeDefined();
 	});
@@ -238,24 +238,24 @@ describe("lookup() inline function", () => {
 	test("parses as FunctionCall named lookup", () => {
 		const ast = parseOk(wrap("aux result = lookup(s, 0, 0.5, 1)"));
 		const aux = ast.decls.find(
-			(declaration) => declaration.type === "AuxDecl",
-		) as AuxDeclNode;
+			(declaration) => declaration.type === "AuxiliaryDeclaration",
+		) as AuxiliaryDeclarationNode;
 		expect(aux.expr.type).toBe("FunctionCall");
 		if (aux.expr.type === "FunctionCall") expect(aux.expr.name).toBe("lookup");
 	});
 	test("first arg is input expression", () => {
 		const ast = parseOk(wrap("aux result = lookup(s, 0, 0.5, 1)"));
 		const aux = ast.decls.find(
-			(declaration) => declaration.type === "AuxDecl",
-		) as AuxDeclNode;
+			(declaration) => declaration.type === "AuxiliaryDeclaration",
+		) as AuxiliaryDeclarationNode;
 		if (aux.expr.type === "FunctionCall")
-			expect(aux.expr.args[0].type).toBe("IdentRef");
+			expect(aux.expr.args[0].type).toBe("IdentifierReference");
 	});
 	test("four total args (input + 3 ypts)", () => {
 		const ast = parseOk(wrap("aux result = lookup(s, 0, 0.5, 1)"));
 		const aux = ast.decls.find(
-			(declaration) => declaration.type === "AuxDecl",
-		) as AuxDeclNode;
+			(declaration) => declaration.type === "AuxiliaryDeclaration",
+		) as AuxiliaryDeclarationNode;
 		if (aux.expr.type === "FunctionCall") expect(aux.expr.args).toHaveLength(4);
 	});
 	test("many y-points", () => {
@@ -265,8 +265,8 @@ describe("lookup() inline function", () => {
 			),
 		);
 		const aux = ast.decls.find(
-			(declaration) => declaration.type === "AuxDecl",
-		) as AuxDeclNode;
+			(declaration) => declaration.type === "AuxiliaryDeclaration",
+		) as AuxiliaryDeclarationNode;
 		if (aux.expr.type === "FunctionCall") expect(aux.expr.args).toHaveLength(12);
 	});
 	test("lookup in flow rate", () => {
@@ -274,7 +274,7 @@ describe("lookup() inline function", () => {
 			"model m\ntime { start: 0 end: 1 step: 1 }\nstock pop { init: 100 }\nflow growth {\n  from: null\n  to: pop\n  rate: lookup(pop, 0, 0.5, 1)\n}",
 		);
 		expect(
-			ast.decls.some((declaration) => declaration.type === "FlowDecl"),
+			ast.decls.some((declaration) => declaration.type === "FlowDeclaration"),
 		).toBe(true);
 	});
 });

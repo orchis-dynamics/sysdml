@@ -56,34 +56,34 @@ import {
 	UnaryPlusContext,
 } from "../../generated/SYSDMLParser.js";
 import type {
-	AuxDeclNode,
-	BinaryExprNode,
-	ConnectionDeclNode,
-	DeclNode,
+	AuxiliaryDeclarationNode,
+	BinaryExpressionNode,
+	ConnectionDeclarationNode,
+	DeclarationNode,
 	Diagnostic,
 	EndpointNode,
-	ExprNode,
+	ExpressionNode,
 	FileNode,
-	FlowDeclNode,
-	FlowPropNode,
+	FlowDeclarationNode,
+	FlowPropertyNode,
 	FunctionCallNode,
-	GfBodyNode,
-	GfDeclNode,
-	GfPropNode,
-	GroupedExprNode,
-	IdentRefNode,
+	GraphicalFunctionBodyNode,
+	GraphicalFunctionDeclarationNode,
+	GraphicalFunctionPropertyNode,
+	GroupedExpressionNode,
+	IdentifierReferenceNode,
 	IfThenElseNode,
-	ModelDeclNode,
-	NumberLitNode,
-	NumListNode,
-	PosNode,
+	ModelDeclarationNode,
+	NumberLiteralNode,
+	NumberListNode,
+	PositionNode,
 	SignedNumberNode,
 	Span,
-	StockDeclNode,
-	StockPropNode,
-	TimeDeclNode,
-	TimePropNode,
-	UnaryExprNode,
+	StockDeclarationNode,
+	StockPropertyNode,
+	TimeDeclarationNode,
+	TimePropertyNode,
+	UnaryExpressionNode,
 } from "./types.js";
 
 // ── Span helpers ─────────────────────────────────────────────────────────────
@@ -156,16 +156,16 @@ export class ASTBuilder {
 		};
 	}
 
-	private modelDecl(ctx: ModelDeclContext): ModelDeclNode {
+	private modelDecl(ctx: ModelDeclContext): ModelDeclarationNode {
 		return {
-			type: "ModelDecl",
+			type: "ModelDeclaration",
 			id: ctx.IDENT().getText(),
 			idSpan: tokenSpan(ctx.IDENT()),
 			span: spanOf(ctx),
 		};
 	}
 
-	private decl(ctx: DeclContext): DeclNode {
+	private decl(ctx: DeclContext): DeclarationNode {
 		const time = ctx.timeDecl();
 		if (time) return this.timeDecl(time);
 
@@ -194,9 +194,9 @@ export class ASTBuilder {
 		);
 	}
 
-	private timeDecl(ctx: TimeDeclContext): TimeDeclNode {
+	private timeDecl(ctx: TimeDeclContext): TimeDeclarationNode {
 		return {
-			type: "TimeDecl",
+			type: "TimeDeclaration",
 			props: ctx
 				.timeProp()
 				.map((timePropContext) => this.timeProp(timePropContext)),
@@ -204,26 +204,26 @@ export class ASTBuilder {
 		};
 	}
 
-	private timeProp(ctx: TimePropContext): TimePropNode {
+	private timeProp(ctx: TimePropContext): TimePropertyNode {
 		const key: "start" | "end" | "step" = ctx.START()
 			? "start"
 			: ctx.END()
 				? "end"
 				: "step";
 		return {
-			type: "TimeProp",
+			type: "TimeProperty",
 			key,
 			value: buildNumber(ctx.number()),
 			span: spanOf(ctx),
 		};
 	}
 
-	private stockDecl(ctx: StockDeclContext): StockDeclNode {
+	private stockDecl(ctx: StockDeclContext): StockDeclarationNode {
 		const allProps = ctx.stockProp();
 		const initProps = allProps.filter((p) => p.INIT() !== null);
 		const posProp = allProps.find((p) => p.POSITION() !== null);
 
-		let position: PosNode | undefined;
+		let position: PositionNode | undefined;
 		if (posProp) {
 			const posLit = posProp.posLiteral();
 			if (!posLit) throw new Error("stockDecl: POSITION prop has no posLiteral");
@@ -231,7 +231,7 @@ export class ASTBuilder {
 		}
 
 		return {
-			type: "StockDecl",
+			type: "StockDeclaration",
 			id: ctx.IDENT().getText(),
 			idSpan: tokenSpan(ctx.IDENT()),
 			props: initProps.map((p) => this.stockProp(p)),
@@ -240,15 +240,15 @@ export class ASTBuilder {
 		};
 	}
 
-	private stockProp(ctx: StockPropContext): StockPropNode {
+	private stockProp(ctx: StockPropContext): StockPropertyNode {
 		return {
-			type: "StockProp",
+			type: "StockProperty",
 			init: buildExpr(ctx.expr()!),
 			span: spanOf(ctx),
 		};
 	}
 
-	private flowDecl(ctx: FlowDeclContext): FlowDeclNode {
+	private flowDecl(ctx: FlowDeclContext): FlowDeclarationNode {
 		const allProps = ctx.flowProp();
 		const regularProps = allProps.filter(
 			(p) => p.FROM() !== null || p.TO() !== null || p.RATE() !== null,
@@ -256,14 +256,14 @@ export class ASTBuilder {
 		const posProp = allProps.find((p) => p.POSITION() !== null);
 		const viaProp = allProps.find((p) => p.VIA() !== null);
 
-		let position: PosNode | undefined;
+		let position: PositionNode | undefined;
 		if (posProp) {
 			const posLit = posProp.posLiteral();
 			if (!posLit) throw new Error("flowDecl: POSITION prop has no posLiteral");
 			position = this.buildPosLiteral(posLit) ?? undefined;
 		}
 
-		let via: PosNode[] | undefined;
+		let via: PositionNode[] | undefined;
 		if (viaProp) {
 			const posArr = viaProp.posArray();
 			if (!posArr) throw new Error("flowDecl: VIA prop has no posArray");
@@ -271,7 +271,7 @@ export class ASTBuilder {
 		}
 
 		return {
-			type: "FlowDecl",
+			type: "FlowDeclaration",
 			id: ctx.IDENT().getText(),
 			idSpan: tokenSpan(ctx.IDENT()),
 			props: regularProps.map((p) => this.flowProp(p)),
@@ -281,10 +281,10 @@ export class ASTBuilder {
 		};
 	}
 
-	private flowProp(ctx: FlowPropContext): FlowPropNode {
+	private flowProp(ctx: FlowPropContext): FlowPropertyNode {
 		if (ctx.FROM()) {
 			return {
-				type: "FlowProp",
+				type: "FlowProperty",
 				key: "from",
 				value: this.endpoint(ctx.endpoint()!),
 				span: spanOf(ctx),
@@ -292,26 +292,26 @@ export class ASTBuilder {
 		}
 		if (ctx.TO()) {
 			return {
-				type: "FlowProp",
+				type: "FlowProperty",
 				key: "to",
 				value: this.endpoint(ctx.endpoint()!),
 				span: spanOf(ctx),
 			};
 		}
 		return {
-			type: "FlowProp",
+			type: "FlowProperty",
 			key: "rate",
 			value: buildExpr(ctx.expr()!),
 			span: spanOf(ctx),
 		};
 	}
 
-	private auxDecl(ctx: AuxDeclContext): AuxDeclNode {
+	private auxDecl(ctx: AuxDeclContext): AuxiliaryDeclarationNode {
 		const id = ctx.IDENT().getText();
 		const idSpan = tokenSpan(ctx.IDENT());
 		const expr = buildExpr(ctx.expr());
 
-		let position: PosNode | undefined;
+		let position: PositionNode | undefined;
 		const seenKeys = new Set<string>();
 		for (const prop of ctx.auxMetaProp()) {
 			if (prop instanceof AuxMetaPosContext) {
@@ -325,7 +325,7 @@ export class ASTBuilder {
 		}
 
 		return {
-			type: "AuxDecl",
+			type: "AuxiliaryDeclaration",
 			id,
 			idSpan,
 			expr,
@@ -334,20 +334,20 @@ export class ASTBuilder {
 		};
 	}
 
-	private gfDecl(ctx: GfDeclContext): GfDeclNode {
+	private gfDecl(ctx: GfDeclContext): GraphicalFunctionDeclarationNode {
 		return {
-			type: "GfDecl",
+			type: "GraphicalFunctionDeclaration",
 			id: ctx.IDENT().getText(),
 			idSpan: tokenSpan(ctx.IDENT()),
-			body: this.buildGfBody(ctx.gfProp(), spanOf(ctx)),
+			body: this.buildGraphicalFunctionBody(ctx.gfProp(), spanOf(ctx)),
 			span: spanOf(ctx),
 		};
 	}
 
-	private buildGfBody(props: GfPropContext[], bodySpan: Span): GfBodyNode {
+	private buildGraphicalFunctionBody(props: GfPropContext[], bodySpan: Span): GraphicalFunctionBodyNode {
 		const validKinds = ["linear", "extra", "step"];
 		const seenKeys = new Set<string>();
-		const builtProps: GfPropNode[] = [];
+		const builtProps: GraphicalFunctionPropertyNode[] = [];
 
 		for (const propCtx of props) {
 			const node = this.gfProp(propCtx);
@@ -377,18 +377,18 @@ export class ASTBuilder {
 		}
 
 		return {
-			type: "GfBody",
+			type: "GraphicalFunctionBody",
 			props: builtProps,
 			span: bodySpan,
 		};
 	}
 
-	private gfProp(ctx: GfPropContext): GfPropNode {
+	private gfProp(ctx: GfPropContext): GraphicalFunctionPropertyNode {
 		if (ctx instanceof GfKindPropContext) {
 			const kindCtx: GfKindValueContext = ctx.gfKindValue();
 			const kindText = (kindCtx.IDENT() ?? kindCtx.STEP())!.getText();
 			return {
-				type: "GfProp",
+				type: "GraphicalFunctionProperty",
 				key: "kind",
 				value: kindText,
 				span: spanOf(ctx),
@@ -396,33 +396,33 @@ export class ASTBuilder {
 		}
 		if (ctx instanceof GfXScalePropContext) {
 			return {
-				type: "GfProp",
+				type: "GraphicalFunctionProperty",
 				key: "xscale",
-				value: buildNumList(ctx.numList()),
+				value: buildNumberList(ctx.numList()),
 				span: spanOf(ctx),
 			};
 		}
 		if (ctx instanceof GfXPtsPropContext) {
 			return {
-				type: "GfProp",
+				type: "GraphicalFunctionProperty",
 				key: "xpts",
-				value: buildNumList(ctx.numList()),
+				value: buildNumberList(ctx.numList()),
 				span: spanOf(ctx),
 			};
 		}
 		if (ctx instanceof GfYPtsPropContext) {
 			return {
-				type: "GfProp",
+				type: "GraphicalFunctionProperty",
 				key: "ypts",
-				value: buildNumList(ctx.numList()),
+				value: buildNumberList(ctx.numList()),
 				span: spanOf(ctx),
 			};
 		}
 		if (ctx instanceof GfYScalePropContext) {
 			return {
-				type: "GfProp",
+				type: "GraphicalFunctionProperty",
 				key: "yscale",
-				value: buildNumList(ctx.numList()),
+				value: buildNumberList(ctx.numList()),
 				span: spanOf(ctx),
 			};
 		}
@@ -438,9 +438,9 @@ export class ASTBuilder {
 		};
 	}
 
-	private connProps(props: ConnPropContext[]): { angle?: number; via?: PosNode } {
+	private connProps(props: ConnPropContext[]): { angle?: number; via?: PositionNode } {
 		let angle: number | undefined;
-		let via: PosNode | undefined;
+		let via: PositionNode | undefined;
 		for (const prop of props) {
 			if (prop.ANGLE() !== null) {
 				const signedNum = prop.signedNumber();
@@ -455,10 +455,10 @@ export class ASTBuilder {
 		return { angle, via };
 	}
 
-	private positiveCausal(ctx: PositiveCausalContext): ConnectionDeclNode {
+	private positiveCausal(ctx: PositiveCausalContext): ConnectionDeclarationNode {
 		const { angle, via } = this.connProps(ctx.connProp());
 		return {
-			type: "ConnectionDecl",
+			type: "ConnectionDeclaration",
 			from: ctx.IDENT(0)!.getText(),
 			fromSpan: tokenSpan(ctx.IDENT(0)!),
 			polarity: "+",
@@ -470,10 +470,10 @@ export class ASTBuilder {
 		};
 	}
 
-	private negativeCausal(ctx: NegativeCausalContext): ConnectionDeclNode {
+	private negativeCausal(ctx: NegativeCausalContext): ConnectionDeclarationNode {
 		const { angle, via } = this.connProps(ctx.connProp());
 		return {
-			type: "ConnectionDecl",
+			type: "ConnectionDeclaration",
 			from: ctx.IDENT(0)!.getText(),
 			fromSpan: tokenSpan(ctx.IDENT(0)!),
 			polarity: "-",
@@ -485,10 +485,10 @@ export class ASTBuilder {
 		};
 	}
 
-	private flowConnection(ctx: FlowConnectionContext): ConnectionDeclNode {
+	private flowConnection(ctx: FlowConnectionContext): ConnectionDeclarationNode {
 		const { angle, via } = this.connProps(ctx.connProp());
 		return {
-			type: "ConnectionDecl",
+			type: "ConnectionDeclaration",
 			from: ctx.IDENT(0)!.getText(),
 			fromSpan: tokenSpan(ctx.IDENT(0)!),
 			polarity: "=>",
@@ -503,7 +503,7 @@ export class ASTBuilder {
 	// Returns null on semantic error (a diagnostic is reported). Callers should
 	// treat null as "drop this position" — the AST node it was attached to is
 	// otherwise complete.
-	private buildPosLiteral(ctx: PosLiteralContext): PosNode | null {
+	private buildPosLiteral(ctx: PosLiteralContext): PositionNode | null {
 		const ident0 = ctx.IDENT(0);
 		const ident1 = ctx.IDENT(1);
 		const sn0 = ctx.signedNumber(0);
@@ -517,10 +517,10 @@ export class ASTBuilder {
 		const num1 = signedNumberToFloat(sn1);
 
 		if (key0 === "x" && key1 === "y") {
-			return { type: "Pos", x: num0, y: num1, span: spanOf(ctx) };
+			return { type: "Position", x: num0, y: num1, span: spanOf(ctx) };
 		}
 		if (key0 === "y" && key1 === "x") {
-			return { type: "Pos", x: num1, y: num0, span: spanOf(ctx) };
+			return { type: "Position", x: num1, y: num0, span: spanOf(ctx) };
 		}
 		this.reportError(
 			`position literal keys must be 'x' and 'y', got '${key0}' and '${key1}'`,
@@ -529,8 +529,8 @@ export class ASTBuilder {
 		return null;
 	}
 
-	private buildPosArray(ctx: PosArrayContext): PosNode[] {
-		const result: PosNode[] = [];
+	private buildPosArray(ctx: PosArrayContext): PositionNode[] {
+		const result: PositionNode[] = [];
 		for (const litCtx of ctx.posLiteral()) {
 			const pos = this.buildPosLiteral(litCtx);
 			if (pos !== null) result.push(pos);
@@ -549,7 +549,7 @@ export class ASTBuilder {
 // Each binary cascading layer (orExpr, andExpr, eqExpr, relExpr, addExpr, mulExpr)
 // follows the same left-associative loop pattern.
 
-function buildExpr(ctx: ExprContext): ExprNode {
+function buildExpr(ctx: ExprContext): ExpressionNode {
 	if (ctx instanceof IfThenElseExprContext) {
 		const exprs = ctx.expr();
 		return {
@@ -566,41 +566,41 @@ function buildExpr(ctx: ExprContext): ExprNode {
 	throw new Error(`Unrecognised expr subtype: ${ctx.constructor.name}`);
 }
 
-function buildOrExpr(ctx: OrExprContext): ExprNode {
+function buildOrExpr(ctx: OrExprContext): ExpressionNode {
 	const ands = ctx.andExpr();
-	let result: ExprNode = buildAndExpr(ands[0]);
+	let result: ExpressionNode = buildAndExpr(ands[0]);
 	for (let i = 1; i < ands.length; i++) {
 		const right = buildAndExpr(ands[i]);
 		const span: Span = { start: result.span.start, end: right.span.end };
 		result = {
-			type: "BinaryExpr",
+			type: "BinaryExpression",
 			op: "OR",
 			left: result,
 			right,
 			span,
-		} satisfies BinaryExprNode;
+		} satisfies BinaryExpressionNode;
 	}
 	return result;
 }
 
-function buildAndExpr(ctx: AndExprContext): ExprNode {
+function buildAndExpr(ctx: AndExprContext): ExpressionNode {
 	const nots = ctx.notExpr();
-	let result: ExprNode = buildNotExpr(nots[0]);
+	let result: ExpressionNode = buildNotExpr(nots[0]);
 	for (let i = 1; i < nots.length; i++) {
 		const right = buildNotExpr(nots[i]);
 		const span: Span = { start: result.span.start, end: right.span.end };
 		result = {
-			type: "BinaryExpr",
+			type: "BinaryExpression",
 			op: "AND",
 			left: result,
 			right,
 			span,
-		} satisfies BinaryExprNode;
+		} satisfies BinaryExpressionNode;
 	}
 	return result;
 }
 
-function buildNotExpr(ctx: NotExprContext): ExprNode {
+function buildNotExpr(ctx: NotExprContext): ExpressionNode {
 	if (ctx instanceof NotOpContext) {
 		const operand = buildNotExpr(ctx.notExpr());
 		// The leading terminal is either NOT or BANG ('!') — both fold to op: 'NOT'.
@@ -608,11 +608,11 @@ function buildNotExpr(ctx: NotExprContext): ExprNode {
 		const notSpan = tokenSpan(notTok);
 		const span: Span = { start: notSpan.start, end: operand.span.end };
 		return {
-			type: "UnaryExpr",
+			type: "UnaryExpression",
 			op: "NOT",
 			operand,
 			span,
-		} satisfies UnaryExprNode;
+		} satisfies UnaryExpressionNode;
 	}
 	if (ctx instanceof EqFallthroughContext) {
 		return buildEqExpr(ctx.eqExpr());
@@ -620,9 +620,9 @@ function buildNotExpr(ctx: NotExprContext): ExprNode {
 	throw new Error(`Unrecognised notExpr subtype: ${ctx.constructor.name}`);
 }
 
-function buildEqExpr(ctx: EqExprContext): ExprNode {
+function buildEqExpr(ctx: EqExprContext): ExpressionNode {
 	const rels = ctx.relExpr();
-	let result: ExprNode = buildRelExpr(rels[0]);
+	let result: ExpressionNode = buildRelExpr(rels[0]);
 	for (let i = 1; i < rels.length; i++) {
 		const child = ctx.getChild(2 * i - 1);
 		if (!(child instanceof TerminalNode))
@@ -630,19 +630,19 @@ function buildEqExpr(ctx: EqExprContext): ExprNode {
 		const right = buildRelExpr(rels[i]);
 		const span: Span = { start: result.span.start, end: right.span.end };
 		result = {
-			type: "BinaryExpr",
+			type: "BinaryExpression",
 			op: asEqOp(child.getText()),
 			left: result,
 			right,
 			span,
-		} satisfies BinaryExprNode;
+		} satisfies BinaryExpressionNode;
 	}
 	return result;
 }
 
-function buildRelExpr(ctx: RelExprContext): ExprNode {
+function buildRelExpr(ctx: RelExprContext): ExpressionNode {
 	const adds = ctx.addExpr();
-	let result: ExprNode = buildAddExpr(adds[0]);
+	let result: ExpressionNode = buildAddExpr(adds[0]);
 	for (let i = 1; i < adds.length; i++) {
 		const child = ctx.getChild(2 * i - 1);
 		if (!(child instanceof TerminalNode))
@@ -650,19 +650,19 @@ function buildRelExpr(ctx: RelExprContext): ExprNode {
 		const right = buildAddExpr(adds[i]);
 		const span: Span = { start: result.span.start, end: right.span.end };
 		result = {
-			type: "BinaryExpr",
+			type: "BinaryExpression",
 			op: asRelOp(child.getText()),
 			left: result,
 			right,
 			span,
-		} satisfies BinaryExprNode;
+		} satisfies BinaryExpressionNode;
 	}
 	return result;
 }
 
-function buildAddExpr(ctx: AddExprContext): ExprNode {
+function buildAddExpr(ctx: AddExprContext): ExpressionNode {
 	const muls = ctx.mulExpr();
-	let result: ExprNode = buildMulExpr(muls[0]);
+	let result: ExpressionNode = buildMulExpr(muls[0]);
 	for (let i = 1; i < muls.length; i++) {
 		const child = ctx.getChild(2 * i - 1);
 		if (!(child instanceof TerminalNode))
@@ -670,47 +670,47 @@ function buildAddExpr(ctx: AddExprContext): ExprNode {
 		const right = buildMulExpr(muls[i]);
 		const span: Span = { start: result.span.start, end: right.span.end };
 		result = {
-			type: "BinaryExpr",
+			type: "BinaryExpression",
 			op: asAddOp(child.getText()),
 			left: result,
 			right,
 			span,
-		} satisfies BinaryExprNode;
+		} satisfies BinaryExpressionNode;
 	}
 	return result;
 }
 
-function buildMulExpr(ctx: MulExprContext): ExprNode {
+function buildMulExpr(ctx: MulExprContext): ExpressionNode {
 	const unaries = ctx.unaryExpr();
-	let result: ExprNode = buildUnaryExpr(unaries[0]);
+	let result: ExpressionNode = buildUnaryExpression(unaries[0]);
 	for (let i = 1; i < unaries.length; i++) {
 		const child = ctx.getChild(2 * i - 1);
 		if (!(child instanceof TerminalNode))
 			throw new Error("Expected operator terminal in mulExpr");
-		const right = buildUnaryExpr(unaries[i]);
+		const right = buildUnaryExpression(unaries[i]);
 		const span: Span = { start: result.span.start, end: right.span.end };
 		result = {
-			type: "BinaryExpr",
+			type: "BinaryExpression",
 			op: asMulOp(child.getText()),
 			left: result,
 			right,
 			span,
-		} satisfies BinaryExprNode;
+		} satisfies BinaryExpressionNode;
 	}
 	return result;
 }
 
-function buildPowExpr(ctx: PowExprContext): ExprNode {
+function buildPowExpr(ctx: PowExprContext): ExpressionNode {
 	if (ctx instanceof PowerExprContext) {
 		const left = buildPrimary(ctx.primary());
 		const right = buildPowExpr(ctx.powExpr());
 		return {
-			type: "BinaryExpr",
+			type: "BinaryExpression",
 			op: "^",
 			left,
 			right,
 			span: spanOf(ctx),
-		} satisfies BinaryExprNode;
+		} satisfies BinaryExpressionNode;
 	}
 	if (ctx instanceof PowPrimaryContext) {
 		return buildPrimary(ctx.primary());
@@ -718,21 +718,21 @@ function buildPowExpr(ctx: PowExprContext): ExprNode {
 	throw new Error(`Unrecognised powExpr subtype: ${ctx.constructor.name}`);
 }
 
-function buildUnaryExpr(ctx: UnaryExprContext): ExprNode {
+function buildUnaryExpression(ctx: UnaryExprContext): ExpressionNode {
 	if (ctx instanceof UnaryMinusContext) {
-		const operand = buildUnaryExpr(ctx.unaryExpr());
+		const operand = buildUnaryExpression(ctx.unaryExpr());
 		const minusSpan = tokenSpan(ctx.MINUS());
 		const span: Span = { start: minusSpan.start, end: operand.span.end };
 		return {
-			type: "UnaryExpr",
+			type: "UnaryExpression",
 			op: "-",
 			operand,
 			span,
-		} satisfies UnaryExprNode;
+		} satisfies UnaryExpressionNode;
 	}
 	if (ctx instanceof UnaryPlusContext) {
 		// Unary + is identity — fold away at AST level, no IR node needed.
-		return buildUnaryExpr(ctx.unaryExpr());
+		return buildUnaryExpression(ctx.unaryExpr());
 	}
 	if (ctx instanceof PowFallthroughContext) {
 		return buildPowExpr(ctx.powExpr());
@@ -740,7 +740,7 @@ function buildUnaryExpr(ctx: UnaryExprContext): ExprNode {
 	throw new Error(`Unrecognised unaryExpr subtype: ${ctx.constructor.name}`);
 }
 
-function buildPrimary(ctx: PrimaryContext): ExprNode {
+function buildPrimary(ctx: PrimaryContext): ExpressionNode {
 	if (ctx instanceof NumberLiteralContext) {
 		return buildNumber(ctx.number());
 	}
@@ -758,30 +758,30 @@ function buildPrimary(ctx: PrimaryContext): ExprNode {
 	if (ctx instanceof IdentRefContext) {
 		const tok = ctx.IDENT();
 		return {
-			type: "IdentRef",
+			type: "IdentifierReference",
 			name: tok.getText(),
 			span: tokenSpan(tok),
-		} satisfies IdentRefNode;
+		} satisfies IdentifierReferenceNode;
 	}
 	if (ctx instanceof GroupedExprContext) {
 		return {
-			type: "GroupedExpr",
+			type: "GroupedExpression",
 			expr: buildExpr(ctx.expr()),
 			span: spanOf(ctx),
-		} satisfies GroupedExprNode;
+		} satisfies GroupedExpressionNode;
 	}
 	throw new Error(`Unrecognised primary subtype: ${ctx.constructor.name}`);
 }
 
-function buildNumber(ctx: NumberContext): NumberLitNode {
+function buildNumber(ctx: NumberContext): NumberLiteralNode {
 	const tok = ctx.INT() ?? ctx.DECIMAL();
 	if (!tok) throw new Error("NumberContext has no INT or DECIMAL token");
-	return { type: "NumberLit", value: tok.getText(), span: tokenSpan(tok) };
+	return { type: "NumberLiteral", value: tok.getText(), span: tokenSpan(tok) };
 }
 
-function buildNumList(ctx: NumListContext): NumListNode {
+function buildNumberList(ctx: NumListContext): NumberListNode {
 	return {
-		type: "NumList",
+		type: "NumberList",
 		values: ctx
 			.signedNumber()
 			.map((signedNumberContext) => buildSignedNumber(signedNumberContext)),

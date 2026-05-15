@@ -1,4 +1,4 @@
-import type { IRBinOp, IRExprNode } from '@sysdml/ir';
+import type { IRBinOp, IRExpressionNode } from '@sysdml/ir';
 import type { EvalContext } from './types.js';
 import { gfLookup } from './gf.js';
 import { evalBuiltin } from './functions.js';
@@ -7,7 +7,7 @@ const DEFERRED_V2_FUNCTIONS = new Set([
   'RANDOM', 'NORMAL', 'LOGNORMAL', 'EXPRND', 'POISSON', 'DELAY',
 ]);
 
-export function evalExpr(node: IRExprNode, evalCtx: EvalContext): number {
+export function evalExpr(node: IRExpressionNode, evalCtx: EvalContext): number {
   switch (node.type) {
     case 'Num':          return node.value;
     case 'Ref':          return evalCtx.env[node.id] ?? 0;
@@ -50,9 +50,9 @@ function flooredMod(dividend: number, divisor: number): number {
 }
 
 function evalIfThenElse(
-  cond: IRExprNode,
-  thenBranch: IRExprNode,
-  elseBranch: IRExprNode,
+  cond: IRExpressionNode,
+  thenBranch: IRExpressionNode,
+  elseBranch: IRExpressionNode,
   evalCtx: EvalContext,
 ): number {
   const condValue = evalExpr(cond, evalCtx);
@@ -61,7 +61,7 @@ function evalIfThenElse(
   return condValue !== 0 ? thenValue : elseValue;
 }
 
-function evalGFCall(name: string, argNode: IRExprNode, evalCtx: EvalContext): number {
+function evalGFCall(name: string, argNode: IRExpressionNode, evalCtx: EvalContext): number {
   const graphicalFunction = evalCtx.gfRegistry.get(name);
   if (graphicalFunction === undefined) throw new Error(`Unknown graphical function '${name}'`);
   return gfLookup(graphicalFunction, evalExpr(argNode, evalCtx));
@@ -69,7 +69,7 @@ function evalGFCall(name: string, argNode: IRExprNode, evalCtx: EvalContext): nu
 
 function evalFunctionCall(
   name: string,
-  argNodes: readonly IRExprNode[],
+  argNodes: readonly IRExpressionNode[],
   evalCtx: EvalContext,
 ): number {
   if (name === 'INIT')     return evalInit(argNodes, evalCtx);
@@ -83,7 +83,7 @@ function evalFunctionCall(
   return evalBuiltin(name, args, evalCtx.sim);
 }
 
-function evalInit(argNodes: readonly IRExprNode[], evalCtx: EvalContext): number {
+function evalInit(argNodes: readonly IRExpressionNode[], evalCtx: EvalContext): number {
   const argNode = argNodes[0];
   if (argNode.type !== 'Ref') {
     throw new Error('INIT requires a bare identifier argument');
@@ -91,7 +91,7 @@ function evalInit(argNodes: readonly IRExprNode[], evalCtx: EvalContext): number
   return evalCtx.initEnv[argNode.id] ?? 0;
 }
 
-function evalPrevious(argNodes: readonly IRExprNode[], evalCtx: EvalContext): number {
+function evalPrevious(argNodes: readonly IRExpressionNode[], evalCtx: EvalContext): number {
   const xNode = argNodes[0];
   if (xNode.type !== 'Ref') {
     throw new Error('PREVIOUS first argument must be a bare identifier');

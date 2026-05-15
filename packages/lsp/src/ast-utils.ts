@@ -1,4 +1,4 @@
-import type { FileNode, DeclNode, ExprNode } from "@sysdml/parser";
+import type { FileNode, DeclarationNode, ExpressionNode } from "@sysdml/parser";
 import type { Position } from "vscode-languageserver/node.js";
 import type { Span } from "@sysdml/ir";
 
@@ -23,17 +23,17 @@ export function findIdentAtPosition(
   return null;
 }
 
-function findIdentInDecl(decl: DeclNode, position: Position): string | null {
+function findIdentInDecl(decl: DeclarationNode, position: Position): string | null {
   switch (decl.type) {
-    case "StockDecl":
+    case "StockDeclaration":
       for (const prop of decl.props) {
         const found = findIdentInExpr(prop.init, position);
         if (found !== null) return found;
       }
       return null;
-    case "AuxDecl":
+    case "AuxiliaryDeclaration":
       return findIdentInExpr(decl.expr, position);
-    case "FlowDecl":
+    case "FlowDeclaration":
       for (const prop of decl.props) {
         if (prop.key === "rate") {
           const found = findIdentInExpr(prop.value, position);
@@ -46,18 +46,18 @@ function findIdentInDecl(decl: DeclNode, position: Position): string | null {
   }
 }
 
-function findIdentInExpr(expr: ExprNode, position: Position): string | null {
+function findIdentInExpr(expr: ExpressionNode, position: Position): string | null {
   if (!isPositionInSpan(position, expr.span)) return null;
   switch (expr.type) {
-    case "IdentRef":
+    case "IdentifierReference":
       return expr.name;
-    case "BinaryExpr": {
+    case "BinaryExpression": {
       const left = findIdentInExpr(expr.left, position);
       return left ?? findIdentInExpr(expr.right, position);
     }
-    case "UnaryExpr":
+    case "UnaryExpression":
       return findIdentInExpr(expr.operand, position);
-    case "GroupedExpr":
+    case "GroupedExpression":
       return findIdentInExpr(expr.expr, position);
     case "FunctionCall": {
       if (isPositionInSpan(position, expr.nameSpan)) return expr.name;

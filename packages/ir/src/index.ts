@@ -7,12 +7,12 @@ export type {
 	IRAux,
 	IRFlow,
 	IRConnection,
-	IRExprNode,
+	IRExpressionNode,
 	IRBinOp,
 	IRDiagnostic,
 	CompileResult,
 	IRGraphicalFunction,
-	IRGfKind,
+	IRGraphicalFunctionKind,
 	IRPosition,
 } from "./types.js";
 export type { Span } from "@sysdml/parser";

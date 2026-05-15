@@ -1,5 +1,5 @@
 import { DocumentSymbol, SymbolKind } from "vscode-languageserver/node.js";
-import type { FileNode, DeclNode } from "@sysdml/parser";
+import type { FileNode, DeclarationNode } from "@sysdml/parser";
 import { spanToRange } from "../analysis.js";
 
 export function getDocumentSymbols(ast: FileNode): DocumentSymbol[] {
@@ -9,9 +9,9 @@ export function getDocumentSymbols(ast: FileNode): DocumentSymbol[] {
   });
 }
 
-function declToSymbol(decl: DeclNode): DocumentSymbol | null {
+function declToSymbol(decl: DeclarationNode): DocumentSymbol | null {
   switch (decl.type) {
-    case "StockDecl":
+    case "StockDeclaration":
       return DocumentSymbol.create(
         decl.id,
         undefined,
@@ -19,7 +19,7 @@ function declToSymbol(decl: DeclNode): DocumentSymbol | null {
         spanToRange(decl.span),
         spanToRange(decl.idSpan),
       );
-    case "AuxDecl":
+    case "AuxiliaryDeclaration":
       return DocumentSymbol.create(
         decl.id,
         undefined,
@@ -27,7 +27,7 @@ function declToSymbol(decl: DeclNode): DocumentSymbol | null {
         spanToRange(decl.span),
         spanToRange(decl.idSpan),
       );
-    case "FlowDecl":
+    case "FlowDeclaration":
       return DocumentSymbol.create(
         decl.id,
         undefined,
@@ -35,7 +35,7 @@ function declToSymbol(decl: DeclNode): DocumentSymbol | null {
         spanToRange(decl.span),
         spanToRange(decl.idSpan),
       );
-    case "GfDecl":
+    case "GraphicalFunctionDeclaration":
       return DocumentSymbol.create(
         decl.id,
         undefined,
@@ -43,7 +43,7 @@ function declToSymbol(decl: DeclNode): DocumentSymbol | null {
         spanToRange(decl.span),
         spanToRange(decl.idSpan),
       );
-    case "TimeDecl":
+    case "TimeDeclaration":
       return DocumentSymbol.create(
         "time",
         undefined,
@@ -51,7 +51,7 @@ function declToSymbol(decl: DeclNode): DocumentSymbol | null {
         spanToRange(decl.span),
         spanToRange(decl.span),
       );
-    case "ConnectionDecl":
+    case "ConnectionDeclaration":
       return null;
     default:
       const _exhaustive: never = decl;

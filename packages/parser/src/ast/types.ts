@@ -10,25 +10,25 @@ export interface Diagnostic {
 
 // ── Expression nodes ────────────────────────────────────────────────────────
 
-export interface NumberLitNode {
-	type: "NumberLit";
+export interface NumberLiteralNode {
+	type: "NumberLiteral";
 	value: string;
 	span: Span;
 }
 
-export interface IdentRefNode {
-	type: "IdentRef";
+export interface IdentifierReferenceNode {
+	type: "IdentifierReference";
 	name: string;
 	span: Span;
 }
 
-export interface GroupedExprNode {
-	type: "GroupedExpr";
-	expr: ExprNode;
+export interface GroupedExpressionNode {
+	type: "GroupedExpression";
+	expr: ExpressionNode;
 	span: Span;
 }
 
-export type BinaryOp =
+export type BinaryOperator =
 	| "+"
 	| "-"
 	| "*"
@@ -44,20 +44,20 @@ export type BinaryOp =
 	| "AND"
 	| "OR";
 
-export interface BinaryExprNode {
-	type: "BinaryExpr";
-	op: BinaryOp;
-	left: ExprNode;
-	right: ExprNode;
+export interface BinaryExpressionNode {
+	type: "BinaryExpression";
+	op: BinaryOperator;
+	left: ExpressionNode;
+	right: ExpressionNode;
 	span: Span;
 }
 
-export type UnaryOp = "-" | "+" | "NOT";
+export type UnaryOperator = "-" | "+" | "NOT";
 
-export interface UnaryExprNode {
-	type: "UnaryExpr";
-	op: UnaryOp;
-	operand: ExprNode;
+export interface UnaryExpressionNode {
+	type: "UnaryExpression";
+	op: UnaryOperator;
+	operand: ExpressionNode;
 	span: Span;
 }
 
@@ -65,104 +65,104 @@ export interface FunctionCallNode {
 	type: "FunctionCall";
 	name: string;
 	nameSpan: Span;
-	args: ExprNode[];
+	args: ExpressionNode[];
 	span: Span;
 }
 
 export interface IfThenElseNode {
 	type: "IfThenElse";
-	cond: ExprNode;
-	thenBranch: ExprNode;
-	elseBranch: ExprNode;
+	cond: ExpressionNode;
+	thenBranch: ExpressionNode;
+	elseBranch: ExpressionNode;
 	span: Span;
 }
 
-export type ExprNode =
-	| NumberLitNode
-	| IdentRefNode
-	| GroupedExprNode
-	| BinaryExprNode
-	| UnaryExprNode
+export type ExpressionNode =
+	| NumberLiteralNode
+	| IdentifierReferenceNode
+	| GroupedExpressionNode
+	| BinaryExpressionNode
+	| UnaryExpressionNode
 	| FunctionCallNode
 	| IfThenElseNode;
 
 export interface SignedNumberNode {
 	type: "SignedNumber";
 	negative: boolean;
-	lit: NumberLitNode;
+	lit: NumberLiteralNode;
 	span: Span;
 }
 
-export interface PosNode {
-	type: "Pos";
+export interface PositionNode {
+	type: "Position";
 	x: number;
 	y: number;
 	span: Span;
 }
 
-export interface NumListNode {
-	type: "NumList";
+export interface NumberListNode {
+	type: "NumberList";
 	values: SignedNumberNode[];
 	span: Span;
 }
 
-export type GfKind = "linear" | "extra" | "step";
+export type GraphicalFunctionKind = "linear" | "extra" | "step";
 
-export type GfPropNode =
-	| { type: "GfProp"; key: "kind"; value: string; span: Span }
-	| { type: "GfProp"; key: "xscale"; value: NumListNode; span: Span }
-	| { type: "GfProp"; key: "xpts"; value: NumListNode; span: Span }
-	| { type: "GfProp"; key: "ypts"; value: NumListNode; span: Span }
-	| { type: "GfProp"; key: "yscale"; value: NumListNode; span: Span };
+export type GraphicalFunctionPropertyNode =
+	| { type: "GraphicalFunctionProperty"; key: "kind"; value: string; span: Span }
+	| { type: "GraphicalFunctionProperty"; key: "xscale"; value: NumberListNode; span: Span }
+	| { type: "GraphicalFunctionProperty"; key: "xpts"; value: NumberListNode; span: Span }
+	| { type: "GraphicalFunctionProperty"; key: "ypts"; value: NumberListNode; span: Span }
+	| { type: "GraphicalFunctionProperty"; key: "yscale"; value: NumberListNode; span: Span };
 
-export interface GfBodyNode {
-	type: "GfBody";
-	props: GfPropNode[];
+export interface GraphicalFunctionBodyNode {
+	type: "GraphicalFunctionBody";
+	props: GraphicalFunctionPropertyNode[];
 	span: Span;
 }
 
-export interface GfDeclNode {
-	type: "GfDecl";
+export interface GraphicalFunctionDeclarationNode {
+	type: "GraphicalFunctionDeclaration";
 	id: string;
 	idSpan: Span;
-	body: GfBodyNode;
+	body: GraphicalFunctionBodyNode;
 	span: Span;
 }
 
 // ── Declaration nodes ───────────────────────────────────────────────────────
 
-export interface ModelDeclNode {
-	type: "ModelDecl";
+export interface ModelDeclarationNode {
+	type: "ModelDeclaration";
 	id: string;
 	idSpan: Span;
 	span: Span;
 }
 
-export interface TimePropNode {
-	type: "TimeProp";
+export interface TimePropertyNode {
+	type: "TimeProperty";
 	key: "start" | "end" | "step";
-	value: NumberLitNode;
+	value: NumberLiteralNode;
 	span: Span;
 }
 
-export interface TimeDeclNode {
-	type: "TimeDecl";
-	props: TimePropNode[];
+export interface TimeDeclarationNode {
+	type: "TimeDeclaration";
+	props: TimePropertyNode[];
 	span: Span;
 }
 
-export interface StockPropNode {
-	type: "StockProp";
-	init: ExprNode;
+export interface StockPropertyNode {
+	type: "StockProperty";
+	init: ExpressionNode;
 	span: Span;
 }
 
-export interface StockDeclNode {
-	type: "StockDecl";
+export interface StockDeclarationNode {
+	type: "StockDeclaration";
 	id: string;
 	idSpan: Span;
-	props: StockPropNode[];
-	position?: PosNode;
+	props: StockPropertyNode[];
+	position?: PositionNode;
 	span: Span;
 }
 
@@ -172,69 +172,69 @@ export interface EndpointNode {
 	span: Span;
 }
 
-// FlowPropNode is a discriminated union on `key` so that `value`'s type
+// FlowPropertyNode is a discriminated union on `key` so that `value`'s type
 // narrows correctly when you branch on `prop.key`.
-export type FlowPropNode =
-	| { type: "FlowProp"; key: "from" | "to"; value: EndpointNode; span: Span }
-	| { type: "FlowProp"; key: "rate"; value: ExprNode; span: Span };
+export type FlowPropertyNode =
+	| { type: "FlowProperty"; key: "from" | "to"; value: EndpointNode; span: Span }
+	| { type: "FlowProperty"; key: "rate"; value: ExpressionNode; span: Span };
 
-export interface FlowDeclNode {
-	type: "FlowDecl";
+export interface FlowDeclarationNode {
+	type: "FlowDeclaration";
 	id: string;
 	idSpan: Span;
-	props: FlowPropNode[];
-	position?: PosNode;
-	via?: PosNode[];
+	props: FlowPropertyNode[];
+	position?: PositionNode;
+	via?: PositionNode[];
 	span: Span;
 }
 
-export interface AuxDeclNode {
-	type: "AuxDecl";
+export interface AuxiliaryDeclarationNode {
+	type: "AuxiliaryDeclaration";
 	id: string;
 	idSpan: Span;
-	expr: ExprNode;
-	position?: PosNode;
+	expr: ExpressionNode;
+	position?: PositionNode;
 	span: Span;
 }
 
-export interface ConnectionDeclNode {
-	type: "ConnectionDecl";
+export interface ConnectionDeclarationNode {
+	type: "ConnectionDeclaration";
 	from: string;
 	fromSpan: Span;
 	polarity: "+" | "-" | "=>";
 	to: string;
 	toSpan: Span;
 	angle?: number;
-	via?: PosNode;
+	via?: PositionNode;
 	span: Span;
 }
 
-export type DeclNode =
-	| TimeDeclNode
-	| StockDeclNode
-	| FlowDeclNode
-	| AuxDeclNode
-	| ConnectionDeclNode
-	| GfDeclNode;
+export type DeclarationNode =
+	| TimeDeclarationNode
+	| StockDeclarationNode
+	| FlowDeclarationNode
+	| AuxiliaryDeclarationNode
+	| ConnectionDeclarationNode
+	| GraphicalFunctionDeclarationNode;
 
 export interface FileNode {
 	type: "File";
-	model: ModelDeclNode;
-	decls: DeclNode[];
+	model: ModelDeclarationNode;
+	decls: DeclarationNode[];
 	span: Span;
 }
 
 export type ASTNode =
 	| FileNode
-	| ModelDeclNode
-	| DeclNode
-	| ExprNode
-	| TimePropNode
-	| FlowPropNode
-	| StockPropNode
+	| ModelDeclarationNode
+	| DeclarationNode
+	| ExpressionNode
+	| TimePropertyNode
+	| FlowPropertyNode
+	| StockPropertyNode
 	| EndpointNode
-	| GfBodyNode
-	| GfPropNode
-	| NumListNode
+	| GraphicalFunctionBodyNode
+	| GraphicalFunctionPropertyNode
+	| NumberListNode
 	| SignedNumberNode
-	| PosNode;
+	| PositionNode;

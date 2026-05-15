@@ -6,13 +6,13 @@ import { describe, test, expect } from "vitest";
 
 import { parseSource } from "../src/index.js";
 import type {
-	AuxDeclNode,
-	DeclNode,
-	ExprNode,
-	FlowDeclNode,
-	StockDeclNode,
-	TimeDeclNode,
-	UnaryExprNode,
+	AuxiliaryDeclarationNode,
+	DeclarationNode,
+	ExpressionNode,
+	FlowDeclarationNode,
+	StockDeclarationNode,
+	TimeDeclarationNode,
+	UnaryExpressionNode,
 } from "../src/index.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -21,20 +21,20 @@ function fixture(name: string): string {
 	return readFileSync(join(__dirname, "fixtures", name), "utf8");
 }
 
-function isTimeDecl(n: DeclNode): n is TimeDeclNode {
-	return n.type === "TimeDecl";
+function isTimeDeclaration(n: DeclarationNode): n is TimeDeclarationNode {
+	return n.type === "TimeDeclaration";
 }
-function isStockDecl(n: DeclNode): n is StockDeclNode {
-	return n.type === "StockDecl";
+function isStockDeclaration(n: DeclarationNode): n is StockDeclarationNode {
+	return n.type === "StockDeclaration";
 }
-function isAuxDecl(n: DeclNode): n is AuxDeclNode {
-	return n.type === "AuxDecl";
+function isAuxiliaryDeclaration(n: DeclarationNode): n is AuxiliaryDeclarationNode {
+	return n.type === "AuxiliaryDeclaration";
 }
-function isFlowDecl(n: DeclNode): n is FlowDeclNode {
-	return n.type === "FlowDecl";
+function isFlowDeclaration(n: DeclarationNode): n is FlowDeclarationNode {
+	return n.type === "FlowDeclaration";
 }
-function isUnaryExpr(n: ExprNode): n is UnaryExprNode {
-	return n.type === "UnaryExpr";
+function isUnaryExpression(n: ExpressionNode): n is UnaryExpressionNode {
+	return n.type === "UnaryExpression";
 }
 
 describe("SFD parsing", () => {
@@ -53,8 +53,8 @@ describe("SFD parsing", () => {
 	test("time decl has correct props", () => {
 		const { ast } = parseSource(fixture("population_growth.sysdml"));
 		if (ast === null) throw new Error("expected non-null ast");
-		const time = ast.decls.find(isTimeDecl);
-		if (time === undefined) throw new Error("expected TimeDecl in decls");
+		const time = ast.decls.find(isTimeDeclaration);
+		if (time === undefined) throw new Error("expected TimeDeclaration in decls");
 		const keys = time.props.map((property) => property.key);
 		expect(keys).toContain("start");
 		expect(keys).toContain("end");
@@ -67,27 +67,27 @@ describe("SFD parsing", () => {
 	test("stock decl has init value", () => {
 		const { ast } = parseSource(fixture("population_growth.sysdml"));
 		if (ast === null) throw new Error("expected non-null ast");
-		const stock = ast.decls.find(isStockDecl);
-		if (stock === undefined) throw new Error("expected StockDecl in decls");
+		const stock = ast.decls.find(isStockDeclaration);
+		if (stock === undefined) throw new Error("expected StockDeclaration in decls");
 		expect(stock.id).toBe("population");
 		expect(stock.props).toHaveLength(1);
-		expect(stock.props[0].init.type).toBe("NumberLit");
+		expect(stock.props[0].init.type).toBe("NumberLiteral");
 	});
 
 	test("aux decl", () => {
 		const { ast } = parseSource(fixture("population_growth.sysdml"));
 		if (ast === null) throw new Error("expected non-null ast");
-		const aux = ast.decls.find(isAuxDecl);
-		if (aux === undefined) throw new Error("expected AuxDecl in decls");
+		const aux = ast.decls.find(isAuxiliaryDeclaration);
+		if (aux === undefined) throw new Error("expected AuxiliaryDeclaration in decls");
 		expect(aux.id).toBe("birth_rate");
-		expect(aux.expr.type).toBe("NumberLit");
+		expect(aux.expr.type).toBe("NumberLiteral");
 	});
 
 	test("flow decl with null endpoint and binary expr rate", () => {
 		const { ast } = parseSource(fixture("population_growth.sysdml"));
 		if (ast === null) throw new Error("expected non-null ast");
-		const flow = ast.decls.find(isFlowDecl);
-		if (flow === undefined) throw new Error("expected FlowDecl in decls");
+		const flow = ast.decls.find(isFlowDeclaration);
+		if (flow === undefined) throw new Error("expected FlowDeclaration in decls");
 		expect(flow.id).toBe("births");
 
 		const fromProp = flow.props.find((property) => property.key === "from");
@@ -102,7 +102,7 @@ describe("SFD parsing", () => {
 
 		const rateProp = flow.props.find((property) => property.key === "rate");
 		if (rateProp === undefined) throw new Error("expected 'rate' prop");
-		expect(rateProp.value.type).toBe("BinaryExpr");
+		expect(rateProp.value.type).toBe("BinaryExpression");
 	});
 
 	test("minimal inline model parses", () => {
@@ -111,9 +111,9 @@ describe("SFD parsing", () => {
 		expect(diagnostics).toHaveLength(0);
 		if (ast === null) throw new Error("expected non-null ast");
 		expect(ast.model.id).toBe("m");
-		const aux = ast.decls.find(isAuxDecl);
-		if (aux === undefined) throw new Error("expected AuxDecl in decls");
-		expect(aux.type).toBe("AuxDecl");
+		const aux = ast.decls.find(isAuxiliaryDeclaration);
+		if (aux === undefined) throw new Error("expected AuxiliaryDeclaration in decls");
+		expect(aux.type).toBe("AuxiliaryDeclaration");
 		expect(aux.id).toBe("x");
 	});
 
@@ -122,13 +122,13 @@ describe("SFD parsing", () => {
 		const { ast, diagnostics } = parseSource(src);
 		expect(diagnostics).toHaveLength(0);
 		if (ast === null) throw new Error("expected non-null ast");
-		const aux = ast.decls.find(isAuxDecl);
-		if (aux === undefined) throw new Error("expected AuxDecl in decls");
-		expect(aux.expr.type).toBe("UnaryExpr");
-		expect(isUnaryExpr(aux.expr)).toBe(true);
-		if (isUnaryExpr(aux.expr)) {
+		const aux = ast.decls.find(isAuxiliaryDeclaration);
+		if (aux === undefined) throw new Error("expected AuxiliaryDeclaration in decls");
+		expect(aux.expr.type).toBe("UnaryExpression");
+		expect(isUnaryExpression(aux.expr)).toBe(true);
+		if (isUnaryExpression(aux.expr)) {
 			expect(aux.expr.op).toBe("-");
-			expect(aux.expr.operand.type).toBe("NumberLit");
+			expect(aux.expr.operand.type).toBe("NumberLiteral");
 		}
 	});
 
@@ -137,9 +137,9 @@ describe("SFD parsing", () => {
 		const { ast, diagnostics } = parseSource(src);
 		expect(diagnostics).toHaveLength(0);
 		if (ast === null) throw new Error("expected non-null ast");
-		const aux = ast.decls.find(isAuxDecl);
-		if (aux === undefined) throw new Error("expected AuxDecl in decls");
-		expect(aux.expr.type).toBe("BinaryExpr");
+		const aux = ast.decls.find(isAuxiliaryDeclaration);
+		if (aux === undefined) throw new Error("expected AuxiliaryDeclaration in decls");
+		expect(aux.expr.type).toBe("BinaryExpression");
 	});
 
 	test("determinism: same source produces identical AST JSON", () => {

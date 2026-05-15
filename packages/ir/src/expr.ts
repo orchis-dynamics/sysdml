@@ -1,4 +1,4 @@
-import type { ExprNode } from "@sysdml/parser";
+import type { ExpressionNode } from "@sysdml/parser";
 
 import {
 	BUILTIN_ARITY,
@@ -6,7 +6,7 @@ import {
 	ZERO_ARG_BUILTINS,
 } from "./builtins.js";
 import { DiagnosticCode } from "./diagnostics.js";
-import type { IRDiagnostic, IRExprNode, IRGraphicalFunction } from "./types.js";
+import type { IRDiagnostic, IRExpressionNode, IRGraphicalFunction } from "./types.js";
 
 let _lookupCounter = 0;
 
@@ -15,17 +15,17 @@ export function resetLookupCounter(): void {
 }
 
 export function compileExpr(
-	node: ExprNode,
+	node: ExpressionNode,
 	validIds: ReadonlySet<string>,
 	graphicalFunctionNames: ReadonlySet<string>,
 	errors: IRDiagnostic[],
 	syntheticGraphicalFunctions: IRGraphicalFunction[],
-): IRExprNode {
+): IRExpressionNode {
 	switch (node.type) {
-		case "NumberLit":
+		case "NumberLiteral":
 			return { type: "Num", value: parseFloat(node.value) };
 
-		case "IdentRef": {
+		case "IdentifierReference": {
 			const uppercasedName = node.name.toUpperCase();
 			if (ZERO_ARG_BUILTINS.has(uppercasedName)) {
 				return { type: "FunctionCall", name: uppercasedName, args: [] };
@@ -40,7 +40,7 @@ export function compileExpr(
 			return { type: "Ref", id: node.name };
 		}
 
-		case "GroupedExpr":
+		case "GroupedExpression":
 			return compileExpr(
 				node.expr,
 				validIds,
@@ -49,7 +49,7 @@ export function compileExpr(
 				syntheticGraphicalFunctions,
 			);
 
-		case "UnaryExpr": {
+		case "UnaryExpression": {
 			const operand = compileExpr(
 				node.operand,
 				validIds,
@@ -62,7 +62,7 @@ export function compileExpr(
 				: { type: "UnaryMinus", operand };
 		}
 
-		case "BinaryExpr":
+		case "BinaryExpression":
 			return {
 				type: "BinOp",
 				op: node.op,
@@ -180,12 +180,12 @@ export function compileExpr(
 
 function compileGfCall(
 	name: string,
-	args: readonly ExprNode[],
+	args: readonly ExpressionNode[],
 	validIds: ReadonlySet<string>,
 	graphicalFunctionNames: ReadonlySet<string>,
 	errors: IRDiagnostic[],
 	syntheticGraphicalFunctions: IRGraphicalFunction[],
-): IRExprNode {
+): IRExpressionNode {
 	if (args.length !== 1) {
 		errors.push({
 			code: DiagnosticCode.GF_WRONG_ARITY,
@@ -201,17 +201,17 @@ function compileGfCall(
 					errors,
 					syntheticGraphicalFunctions,
 				)
-			: ({ type: "Num", value: 0 } as IRExprNode);
+			: ({ type: "Num", value: 0 } as IRExpressionNode);
 	return { type: "GFCall", name, argument: compiledArgument };
 }
 
 function compileLookup(
-	args: readonly ExprNode[],
+	args: readonly ExpressionNode[],
 	validIds: ReadonlySet<string>,
 	graphicalFunctionNames: ReadonlySet<string>,
 	errors: IRDiagnostic[],
 	syntheticGraphicalFunctions: IRGraphicalFunction[],
-): IRExprNode {
+): IRExpressionNode {
 	const yPointCount = args.length - 1;
 	if (args.length < 3) {
 		errors.push({
@@ -254,14 +254,14 @@ function compileLookup(
 	return { type: "GFCall", name: id, argument: compiledInput };
 }
 
-function extractLiteralNumber(node: ExprNode): number | null {
-	if (node.type === "NumberLit") {
+function extractLiteralNumber(node: ExpressionNode): number | null {
+	if (node.type === "NumberLiteral") {
 		return parseFloat(node.value);
 	}
 	if (
-		node.type === "UnaryExpr" &&
+		node.type === "UnaryExpression" &&
 		node.op === "-" &&
-		node.operand.type === "NumberLit"
+		node.operand.type === "NumberLiteral"
 	) {
 		return -parseFloat(node.operand.value);
 	}

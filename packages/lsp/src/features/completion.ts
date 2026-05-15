@@ -47,7 +47,7 @@ function detectContext(source: string, position: Position): CompletionContext {
 function getStockIds(ast: FileNode | null): string[] {
   if (!ast) return [];
   return ast.decls
-    .filter((d): d is Extract<typeof d, { type: "StockDecl" }> => d.type === "StockDecl")
+    .filter((d): d is Extract<typeof d, { type: "StockDeclaration" }> => d.type === "StockDeclaration")
     .map((d) => d.id);
 }
 
@@ -63,9 +63,9 @@ function getAllUserIds(ast: FileNode | null, ir: IR | null): string[] {
   return ast.decls
     .filter(
       (d): d is Extract<typeof d, { id: string }> =>
-        d.type === "StockDecl" ||
-        d.type === "AuxDecl" ||
-        d.type === "FlowDecl",
+        d.type === "StockDeclaration" ||
+        d.type === "AuxiliaryDeclaration" ||
+        d.type === "FlowDeclaration",
     )
     .map((d) => d.id);
 }

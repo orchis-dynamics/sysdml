@@ -2,21 +2,21 @@ import { describe, test, expect } from "vitest";
 
 import { parseSource } from "../src/index.js";
 import type {
-	AuxDeclNode,
-	BinaryExprNode,
-	ExprNode,
+	AuxiliaryDeclarationNode,
+	BinaryExpressionNode,
+	ExpressionNode,
 	IfThenElseNode,
-	UnaryExprNode,
+	UnaryExpressionNode,
 } from "../src/index.js";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-function auxExpr(src: string): ExprNode {
+function auxExpr(src: string): ExpressionNode {
 	const { ast, diagnostics } = parseSource(`model m\naux x = ${src}`);
 	expect(diagnostics, `parse errors for ${src}`).toHaveLength(0);
 	if (ast === null) throw new Error(`expected non-null ast for: ${src}`);
-	const decl = ast.decls[0] as AuxDeclNode;
-	expect(decl.type).toBe("AuxDecl");
+	const decl = ast.decls[0] as AuxiliaryDeclarationNode;
+	expect(decl.type).toBe("AuxiliaryDeclaration");
 	if (decl.expr === null) throw new Error(`expected non-null expr for: ${src}`);
 	return decl.expr;
 }
@@ -29,13 +29,13 @@ function parseFails(src: string) {
 	).toBeGreaterThan(0);
 }
 
-function isBinaryExpr(n: ExprNode): n is BinaryExprNode {
-	return n.type === "BinaryExpr";
+function isBinaryExpression(n: ExpressionNode): n is BinaryExpressionNode {
+	return n.type === "BinaryExpression";
 }
-function isUnaryExpr(n: ExprNode): n is UnaryExprNode {
-	return n.type === "UnaryExpr";
+function isUnaryExpression(n: ExpressionNode): n is UnaryExpressionNode {
+	return n.type === "UnaryExpression";
 }
-function isIfThenElse(n: ExprNode): n is IfThenElseNode {
+function isIfThenElse(n: ExpressionNode): n is IfThenElseNode {
 	return n.type === "IfThenElse";
 }
 
@@ -67,22 +67,22 @@ describe("comparison operators", () => {
 	for (const op of ["<", "<=", ">", ">=", "=", "<>"] as const) {
 		test(`a ${op} b`, () => {
 			const e = auxExpr(`a ${op} b`);
-			expect(isBinaryExpr(e)).toBe(true);
-			if (isBinaryExpr(e)) {
+			expect(isBinaryExpression(e)).toBe(true);
+			if (isBinaryExpression(e)) {
 				expect(e.op).toBe(op);
-				expect(e.left.type).toBe("IdentRef");
-				expect(e.right.type).toBe("IdentRef");
+				expect(e.left.type).toBe("IdentifierReference");
+				expect(e.right.type).toBe("IdentifierReference");
 			}
 		});
 	}
 
 	test("chained comparison is left-associative: a < b < c → (a < b) < c", () => {
 		const e = auxExpr("a < b < c");
-		expect(isBinaryExpr(e)).toBe(true);
-		if (isBinaryExpr(e)) {
+		expect(isBinaryExpression(e)).toBe(true);
+		if (isBinaryExpression(e)) {
 			expect(e.op).toBe("<");
-			expect(isBinaryExpr(e.left) && e.left.op === "<").toBe(true);
-			expect(e.right.type).toBe("IdentRef");
+			expect(isBinaryExpression(e.left) && e.left.op === "<").toBe(true);
+			expect(e.right.type).toBe("IdentifierReference");
 		}
 	});
 });
@@ -92,39 +92,39 @@ describe("comparison operators", () => {
 describe("logical operators", () => {
 	test("a AND b", () => {
 		const e = auxExpr("a AND b");
-		expect(isBinaryExpr(e)).toBe(true);
-		if (isBinaryExpr(e)) expect(e.op).toBe("AND");
+		expect(isBinaryExpression(e)).toBe(true);
+		if (isBinaryExpression(e)) expect(e.op).toBe("AND");
 	});
 
 	test("a OR b", () => {
 		const e = auxExpr("a OR b");
-		expect(isBinaryExpr(e)).toBe(true);
-		if (isBinaryExpr(e)) expect(e.op).toBe("OR");
+		expect(isBinaryExpression(e)).toBe(true);
+		if (isBinaryExpression(e)) expect(e.op).toBe("OR");
 	});
 
 	test("NOT a", () => {
 		const e = auxExpr("NOT a");
-		expect(isUnaryExpr(e)).toBe(true);
-		if (isUnaryExpr(e)) {
+		expect(isUnaryExpression(e)).toBe(true);
+		if (isUnaryExpression(e)) {
 			expect(e.op).toBe("NOT");
-			expect(e.operand.type).toBe("IdentRef");
+			expect(e.operand.type).toBe("IdentifierReference");
 		}
 	});
 
 	test("NOT NOT a — nested unary", () => {
 		const e = auxExpr("NOT NOT a");
-		expect(isUnaryExpr(e) && e.op === "NOT").toBe(true);
-		if (isUnaryExpr(e)) {
-			expect(isUnaryExpr(e.operand) && e.operand.op === "NOT").toBe(true);
+		expect(isUnaryExpression(e) && e.op === "NOT").toBe(true);
+		if (isUnaryExpression(e)) {
+			expect(isUnaryExpression(e.operand) && e.operand.op === "NOT").toBe(true);
 		}
 	});
 
 	test("a AND b OR c → (a AND b) OR c (AND binds tighter)", () => {
 		const e = auxExpr("a AND b OR c");
-		expect(isBinaryExpr(e) && e.op === "OR").toBe(true);
-		if (isBinaryExpr(e)) {
-			expect(isBinaryExpr(e.left) && e.left.op === "AND").toBe(true);
-			expect(e.right.type).toBe("IdentRef");
+		expect(isBinaryExpression(e) && e.op === "OR").toBe(true);
+		if (isBinaryExpression(e)) {
+			expect(isBinaryExpression(e.left) && e.left.op === "AND").toBe(true);
+			expect(e.right.type).toBe("IdentifierReference");
 		}
 	});
 
@@ -140,45 +140,45 @@ describe("logical operators", () => {
 describe("mixed precedence", () => {
 	test("a + b < c * d → (a + b) < (c * d)", () => {
 		const e = auxExpr("a + b < c * d");
-		expect(isBinaryExpr(e) && e.op === "<").toBe(true);
-		if (isBinaryExpr(e)) {
-			expect(isBinaryExpr(e.left) && e.left.op === "+").toBe(true);
-			expect(isBinaryExpr(e.right) && e.right.op === "*").toBe(true);
+		expect(isBinaryExpression(e) && e.op === "<").toBe(true);
+		if (isBinaryExpression(e)) {
+			expect(isBinaryExpression(e.left) && e.left.op === "+").toBe(true);
+			expect(isBinaryExpression(e.right) && e.right.op === "*").toBe(true);
 		}
 	});
 
 	test("NOT a OR b → (NOT a) OR b (NOT binds tighter)", () => {
 		const e = auxExpr("NOT a OR b");
-		expect(isBinaryExpr(e) && e.op === "OR").toBe(true);
-		if (isBinaryExpr(e)) {
-			expect(isUnaryExpr(e.left) && e.left.op === "NOT").toBe(true);
-			expect(e.right.type).toBe("IdentRef");
+		expect(isBinaryExpression(e) && e.op === "OR").toBe(true);
+		if (isBinaryExpression(e)) {
+			expect(isUnaryExpression(e.left) && e.left.op === "NOT").toBe(true);
+			expect(e.right.type).toBe("IdentifierReference");
 		}
 	});
 
 	test("a < b AND c < d → (a < b) AND (c < d)", () => {
 		const e = auxExpr("a < b AND c < d");
-		expect(isBinaryExpr(e) && e.op === "AND").toBe(true);
-		if (isBinaryExpr(e)) {
-			expect(isBinaryExpr(e.left) && e.left.op === "<").toBe(true);
-			expect(isBinaryExpr(e.right) && e.right.op === "<").toBe(true);
+		expect(isBinaryExpression(e) && e.op === "AND").toBe(true);
+		if (isBinaryExpression(e)) {
+			expect(isBinaryExpression(e.left) && e.left.op === "<").toBe(true);
+			expect(isBinaryExpression(e.right) && e.right.op === "<").toBe(true);
 		}
 	});
 
 	test("a = b OR c = d → (a = b) OR (c = d)", () => {
 		const e = auxExpr("a = b OR c = d");
-		expect(isBinaryExpr(e) && e.op === "OR").toBe(true);
-		if (isBinaryExpr(e)) {
-			expect(isBinaryExpr(e.left) && e.left.op === "=").toBe(true);
-			expect(isBinaryExpr(e.right) && e.right.op === "=").toBe(true);
+		expect(isBinaryExpression(e) && e.op === "OR").toBe(true);
+		if (isBinaryExpression(e)) {
+			expect(isBinaryExpression(e.left) && e.left.op === "=").toBe(true);
+			expect(isBinaryExpression(e.right) && e.right.op === "=").toBe(true);
 		}
 	});
 
 	test("-a < b → (-a) < b (unary minus binds tighter than <)", () => {
 		const e = auxExpr("-a < b");
-		expect(isBinaryExpr(e) && e.op === "<").toBe(true);
-		if (isBinaryExpr(e)) {
-			expect(isUnaryExpr(e.left) && e.left.op === "-").toBe(true);
+		expect(isBinaryExpression(e) && e.op === "<").toBe(true);
+		if (isBinaryExpression(e)) {
+			expect(isUnaryExpression(e.left) && e.left.op === "-").toBe(true);
 		}
 	});
 });
@@ -190,9 +190,9 @@ describe("IF/THEN/ELSE", () => {
 		const e = auxExpr("IF a THEN b ELSE c");
 		expect(isIfThenElse(e)).toBe(true);
 		if (isIfThenElse(e)) {
-			expect(e.cond.type).toBe("IdentRef");
-			expect(e.thenBranch.type).toBe("IdentRef");
-			expect(e.elseBranch.type).toBe("IdentRef");
+			expect(e.cond.type).toBe("IdentifierReference");
+			expect(e.thenBranch.type).toBe("IdentifierReference");
+			expect(e.elseBranch.type).toBe("IdentifierReference");
 		}
 	});
 
@@ -200,9 +200,9 @@ describe("IF/THEN/ELSE", () => {
 		const e = auxExpr("IF a > 0 AND b > 0 THEN a + b ELSE 0");
 		expect(isIfThenElse(e)).toBe(true);
 		if (isIfThenElse(e)) {
-			expect(isBinaryExpr(e.cond) && e.cond.op === "AND").toBe(true);
-			expect(isBinaryExpr(e.thenBranch) && e.thenBranch.op === "+").toBe(true);
-			expect(e.elseBranch.type).toBe("NumberLit");
+			expect(isBinaryExpression(e.cond) && e.cond.op === "AND").toBe(true);
+			expect(isBinaryExpression(e.thenBranch) && e.thenBranch.op === "+").toBe(true);
+			expect(e.elseBranch.type).toBe("NumberLiteral");
 		}
 	});
 
@@ -212,14 +212,14 @@ describe("IF/THEN/ELSE", () => {
 		const e = auxExpr("IF a THEN IF b THEN c ELSE d ELSE e");
 		expect(isIfThenElse(e)).toBe(true);
 		if (isIfThenElse(e)) {
-			expect(e.cond.type).toBe("IdentRef");
+			expect(e.cond.type).toBe("IdentifierReference");
 			expect(isIfThenElse(e.thenBranch)).toBe(true);
 			if (isIfThenElse(e.thenBranch)) {
-				expect(e.thenBranch.cond.type).toBe("IdentRef"); // b
-				expect(e.thenBranch.thenBranch.type).toBe("IdentRef"); // c
-				expect(e.thenBranch.elseBranch.type).toBe("IdentRef"); // d
+				expect(e.thenBranch.cond.type).toBe("IdentifierReference"); // b
+				expect(e.thenBranch.thenBranch.type).toBe("IdentifierReference"); // c
+				expect(e.thenBranch.elseBranch.type).toBe("IdentifierReference"); // d
 			}
-			expect(e.elseBranch.type).toBe("IdentRef"); // e
+			expect(e.elseBranch.type).toBe("IdentifierReference"); // e
 		}
 	});
 
@@ -267,7 +267,7 @@ describe("C-style aliases fold to canonical AST", () => {
 	test("aux x = a == 5 — single = is assignment, == is equality", () => {
 		// Should parse: x is assigned the result of (a == 5)
 		const e = auxExpr("a == 5");
-		expect(isBinaryExpr(e) && e.op === "=").toBe(true);
+		expect(isBinaryExpression(e) && e.op === "=").toBe(true);
 	});
 });
 
