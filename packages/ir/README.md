@@ -51,9 +51,9 @@ npm test
 - **Structural validation** — requires exactly one `time` block and at least one `stock`.
 - **Duplicate checks** — rejects duplicate identifiers across stocks, aux, and flows; rejects duplicate or conflicting graphical-function names.
 - **Flow endpoint checks** — ensures `from` and `to` references resolve to declared stocks.
-- **Expression compilation** — walks every expression tree, resolves identifier references, validates function names and arities, and lowers `GroupedExpr` / `UnaryPlus` / `IF_THEN_ELSE` calls to canonical IR nodes.
+- **Expression compilation** — walks every expression tree, resolves identifier references, validates function names and arities, and lowers `GroupedExpression` / `UnaryPlus` / `IF_THEN_ELSE` calls to canonical IR nodes.
 - **Graphical function validation** — checks required fields, xscale/xpts mutual exclusivity, xpts strict-ascending order, and the `step` kind invariant.
-- **Inline `aux` GF lowering** — an `aux` block-form with an embedded `gf` body is compiled into a synthetic named `IRGraphicalFunction` (prefixed `__aux_gf_<id>`) and a `GFCall` expression.
+- **Inline `aux` GF lowering** — an `aux` block-form with an embedded `gf` body is compiled into a synthetic named `IRGraphicalFunction` (prefixed `__aux_gf_<id>`) and a `GraphicalFunctionCall` expression.
 - **`LOOKUP` lowering** — `LOOKUP(input, y0, y1, …)` calls are compiled to synthetic `IRGraphicalFunction` entries with auto-generated names.
 
 ---
@@ -68,7 +68,7 @@ interface IR {
 	model: { id: string };
 	time: IRTime;
 	stocks: IRStock[];
-	aux: IRAux[];
+	auxiliaries: IRAuxiliary[];
 	flows: IRFlow[];
 	connections: IRConnection[];
 	graphicalFunctions: IRGraphicalFunction[];
@@ -90,16 +90,16 @@ interface IRTime {
 ```ts
 interface IRStock {
 	id: string;
-	init: IRExprNode;
+	init: IRExpressionNode;
 }
 ```
 
-### `IRAux`
+### `IRAuxiliary`
 
 ```ts
-interface IRAux {
+interface IRAuxiliary {
 	id: string;
-	expr: IRExprNode;
+	expr: IRExpressionNode;
 }
 ```
 
@@ -110,7 +110,7 @@ interface IRFlow {
 	id: string;
 	from: string | null; // null = open source
 	to: string | null; // null = open sink
-	rate: IRExprNode;
+	rate: IRExpressionNode;
 }
 ```
 
@@ -129,11 +129,11 @@ interface IRConnection {
 Exactly one of `xscale` or `xpts` is set (never both, never neither).
 
 ```ts
-type IRGfKind = "linear" | "extra" | "step";
+type IRGraphicalFunctionKind = "linear" | "extra" | "step";
 
 interface IRGraphicalFunction {
 	id: string;
-	kind: IRGfKind;
+	kind: IRGraphicalFunctionKind;
 	xscale: [number, number] | null;
 	xpts: number[] | null;
 	ypts: number[];
@@ -141,12 +141,12 @@ interface IRGraphicalFunction {
 }
 ```
 
-### `IRExprNode`
+### `IRExpressionNode`
 
-All expression nodes are span-free. `GroupedExpr` is collapsed; tree structure encodes precedence. Comparison and logical operators return `1.0` (true) or `0.0` (false) at simulation time.
+All expression nodes are span-free. `GroupedExpression` is collapsed; tree structure encodes precedence. Comparison and logical operators return `1.0` (true) or `0.0` (false) at simulation time.
 
 ```ts
-type IRBinOp =
+type IRBinaryOperator =
 	| "+"
 	| "-"
 	| "*"
@@ -162,20 +162,20 @@ type IRBinOp =
 	| "AND"
 	| "OR";
 
-type IRExprNode =
-	| { type: "Num"; value: number }
-	| { type: "Ref"; id: string }
-	| { type: "BinOp"; op: IRBinOp; left: IRExprNode; right: IRExprNode }
-	| { type: "UnaryMinus"; operand: IRExprNode }
-	| { type: "Not"; operand: IRExprNode }
+type IRExpressionNode =
+	| { type: "Number"; value: number }
+	| { type: "Reference"; id: string }
+	| { type: "BinaryOperation"; op: IRBinaryOperator; left: IRExpressionNode; right: IRExpressionNode }
+	| { type: "UnaryMinus"; operand: IRExpressionNode }
+	| { type: "Not"; operand: IRExpressionNode }
 	| {
 			type: "IfThenElse";
-			cond: IRExprNode;
-			thenBranch: IRExprNode;
-			elseBranch: IRExprNode;
+			cond: IRExpressionNode;
+			thenBranch: IRExpressionNode;
+			elseBranch: IRExpressionNode;
 	  }
-	| { type: "FunctionCall"; name: string; args: IRExprNode[] }
-	| { type: "GFCall"; name: string; arg: IRExprNode };
+	| { type: "FunctionCall"; name: string; args: IRExpressionNode[] }
+	| { type: "GraphicalFunctionCall"; name: string; argument: IRExpressionNode };
 ```
 
 ---
@@ -193,7 +193,7 @@ type IRExprNode =
 | Test inputs       | `STEP(height, start)` `RAMP(slope, start)` `PULSE(magnitude, start[, interval])`                                                     |
 | Statistical       | `RANDOM(min, max[, seed])` `NORMAL(mean, std[, seed])` `LOGNORMAL(mean, std[, seed])` `EXPRND(mean[, seed])` `POISSON(mean[, seed])` |
 | Conditional       | `IF_THEN_ELSE(cond, then, else)` — lowered to `IfThenElse` IR node                                                                   |
-| Inline lookup     | `LOOKUP(input, y0, y1, …)` — lowered to a synthetic `GFCall`                                                                         |
+| Inline lookup     | `LOOKUP(input, y0, y1, …)` — lowered to a synthetic `GraphicalFunctionCall`                                                                         |
 
 ---
 
