@@ -12,7 +12,7 @@ export class EulerSimulator implements Simulator {
     const { ir: desugaredIR, diagnostics: desugarDiag } = desugarIR(ir);
     diagnostics.push(...desugarDiag);
 
-    const { orderedAux, orderedFlows, diagnostics: sortDiag } = toposort(desugaredIR.aux, desugaredIR.flows);
+    const { orderedAux, orderedFlows, diagnostics: sortDiag } = toposort(desugaredIR.auxiliaries, desugaredIR.flows);
     diagnostics.push(...sortDiag);
     if (sortDiag.some(d => d.code === SimDiagnosticCode.CYCLE_IN_AUX)) {
       return { rows: [], diagnostics };
@@ -69,7 +69,7 @@ export class EulerSimulator implements Simulator {
 
 function buildInitEnv(
   stockState: Env,
-  orderedAux: IR['aux'],
+  orderedAux: IR['auxiliaries'],
   orderedFlows: IR['flows'],
   start: number,
   end: number,
@@ -97,7 +97,7 @@ function buildEvalContext(
 function buildRow(t: number, originalIR: IR, stockState: Env, env: Env, flowValues: Env): SimRow {
   const row: SimRow = { time: t };
   for (const stock of originalIR.stocks) row[stock.id] = stockState[stock.id];
-  for (const auxVar of originalIR.aux) row[auxVar.id] = env[auxVar.id];
+  for (const auxVar of originalIR.auxiliaries) row[auxVar.id] = env[auxVar.id];
   for (const flow of originalIR.flows) row[flow.id] = flowValues[flow.id] ?? 0;
   return row;
 }

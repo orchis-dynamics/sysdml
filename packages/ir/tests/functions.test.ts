@@ -42,7 +42,7 @@ function getResultExpression(
 	expect(diagnostics).toHaveLength(0);
 	expect(ir).not.toBeNull();
 	// last aux is always `result`
-	return ir!.aux[ir!.aux.length - 1].expr;
+	return ir!.auxiliaries[ir!.auxiliaries.length - 1].expr;
 }
 
 function createFunctionCallNode(
@@ -53,7 +53,7 @@ function createFunctionCallNode(
 }
 
 function createRefNode(id: string): IRExpressionNode {
-	return { type: "Ref", id };
+	return { type: "Reference", id };
 }
 
 // ── Case normalisation ────────────────────────────────────────────────────────

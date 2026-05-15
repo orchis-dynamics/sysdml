@@ -1,4 +1,4 @@
-import type { IR, IRStock, IRFlow, IRAux } from "@sysdml/ir";
+import type { IR, IRStock, IRFlow, IRAuxiliary } from "@sysdml/ir";
 
 export type NodeKind = "stock" | "aux" | "flow";
 
@@ -51,12 +51,12 @@ function layoutSFD(ir: IR): LayoutResult {
   type Tagged =
     | (IRStock & { kind: "stock" })
     | (IRFlow & { kind: "flow" })
-    | (IRAux & { kind: "aux" });
+    | (IRAuxiliary & { kind: "aux" });
 
   const nodeMap = new Map<string, Tagged>();
   ir.stocks.forEach((s) => nodeMap.set(s.id, { ...s, kind: "stock" }));
   ir.flows.forEach((f) => nodeMap.set(f.id, { ...f, kind: "flow" }));
-  ir.aux.forEach((a) => nodeMap.set(a.id, { ...a, kind: "aux" }));
+  ir.auxiliaries.forEach((a) => nodeMap.set(a.id, { ...a, kind: "aux" }));
 
   let stockCount = 0;
   for (const node of nodeMap.values()) {
@@ -130,7 +130,7 @@ function layoutCLD(ir: IR): LayoutResult {
   const nodes: LayoutNode[] = [];
   const edges: LayoutEdge[] = [];
 
-  const allNodes = [...ir.aux, ...ir.stocks];
+  const allNodes = [...ir.auxiliaries, ...ir.stocks];
   const n = allNodes.length;
   const radius = Math.max(120, n * 35);
   const cx = radius + MARGIN + NODE_SIZE.aux.width / 2;

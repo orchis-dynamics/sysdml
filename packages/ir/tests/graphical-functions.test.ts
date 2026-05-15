@@ -176,10 +176,10 @@ describe("named GF call in expression", () => {
       gf f { xscale: [0, 1] ypts: [0, 0.5, 1] }
       aux result = f(s)
     `);
-		const auxExpr = ir.aux.find(
+		const auxExpr = ir.auxiliaries.find(
 			(auxiliaryVariable) => auxiliaryVariable.id === "result",
 		)!.expr;
-		expect(auxExpr.type).toBe("GFCall");
+		expect(auxExpr.type).toBe("GraphicalFunctionCall");
 	});
 
 	test("GFCall name matches GF declaration id", () => {
@@ -187,10 +187,10 @@ describe("named GF call in expression", () => {
       gf food_curve { xscale: [0, 1] ypts: [0, 0.5, 1] }
       aux result = food_curve(s)
     `);
-		const auxExpr = ir.aux.find(
+		const auxExpr = ir.auxiliaries.find(
 			(auxiliaryVariable) => auxiliaryVariable.id === "result",
 		)!.expr;
-		if (auxExpr.type === "GFCall") {
+		if (auxExpr.type === "GraphicalFunctionCall") {
 			expect(auxExpr.name).toBe("food_curve");
 		}
 	});
@@ -200,11 +200,11 @@ describe("named GF call in expression", () => {
       gf f { xscale: [0, 1] ypts: [0, 0.5, 1] }
       aux result = f(s)
     `);
-		const auxExpr = ir.aux.find(
+		const auxExpr = ir.auxiliaries.find(
 			(auxiliaryVariable) => auxiliaryVariable.id === "result",
 		)!.expr;
-		if (auxExpr.type === "GFCall") {
-			expect(auxExpr.argument).toEqual({ type: "Ref", id: "s" });
+		if (auxExpr.type === "GraphicalFunctionCall") {
+			expect(auxExpr.argument).toEqual({ type: "Reference", id: "s" });
 		}
 	});
 
@@ -213,7 +213,7 @@ describe("named GF call in expression", () => {
       gf f { xscale: [0, 1] ypts: [0, 0.5, 1] }
       flow growth { from: null to: s rate: f(s) }
     `);
-		expect(ir.flows[0].rate.type).toBe("GFCall");
+		expect(ir.flows[0].rate.type).toBe("GraphicalFunctionCall");
 	});
 
 	test("named GF does not appear as FunctionCall", () => {
@@ -221,7 +221,7 @@ describe("named GF call in expression", () => {
       gf f { xscale: [0, 1] ypts: [0, 0.5, 1] }
       aux result = f(s)
     `);
-		const auxExpr = ir.aux.find(
+		const auxExpr = ir.auxiliaries.find(
 			(auxiliaryVariable) => auxiliaryVariable.id === "result",
 		)!.expr;
 		expect(auxExpr.type).not.toBe("FunctionCall");
@@ -236,10 +236,10 @@ describe("aux referencing named GF", () => {
       gf effect_curve { xscale: [0, 1] ypts: [0, 0.5, 1] }
       aux effect = effect_curve(s)
     `);
-		const auxExpr = ir.aux.find(
+		const auxExpr = ir.auxiliaries.find(
 			(auxiliaryVariable) => auxiliaryVariable.id === "effect",
 		)!.expr;
-		expect(auxExpr.type).toBe("GFCall");
+		expect(auxExpr.type).toBe("GraphicalFunctionCall");
 	});
 
 	test("GFCall arg is compiled input expr", () => {
@@ -247,11 +247,11 @@ describe("aux referencing named GF", () => {
       gf effect_curve { xscale: [0, 100] ypts: [0, 0.5, 1] }
       aux effect = effect_curve(s)
     `);
-		const auxExpr = ir.aux.find(
+		const auxExpr = ir.auxiliaries.find(
 			(auxiliaryVariable) => auxiliaryVariable.id === "effect",
 		)!.expr;
-		if (auxExpr.type === "GFCall") {
-			expect(auxExpr.argument).toEqual({ type: "Ref", id: "s" });
+		if (auxExpr.type === "GraphicalFunctionCall") {
+			expect(auxExpr.argument).toEqual({ type: "Reference", id: "s" });
 		}
 	});
 
@@ -272,7 +272,7 @@ describe("aux referencing named GF", () => {
 describe("lookup() inline function", () => {
 	test("produces GFCall IR node", () => {
 		const ir = compileValid("aux result = lookup(s, 0, 0.5, 1)");
-		expect(ir.aux[0].expr.type).toBe("GFCall");
+		expect(ir.auxiliaries[0].expr.type).toBe("GraphicalFunctionCall");
 	});
 
 	test("produces synthetic GF in graphicalFunctions", () => {
@@ -298,15 +298,15 @@ describe("lookup() inline function", () => {
 
 	test("GFCall name references the synthetic GF id", () => {
 		const ir = compileValid("aux result = lookup(s, 0, 0.5, 1)");
-		if (ir.aux[0].expr.type === "GFCall") {
-			expect(ir.aux[0].expr.name).toBe("__lookup_0");
+		if (ir.auxiliaries[0].expr.type === "GraphicalFunctionCall") {
+			expect(ir.auxiliaries[0].expr.name).toBe("__lookup_0");
 		}
 	});
 
 	test("GFCall arg is compiled input expression", () => {
 		const ir = compileValid("aux result = lookup(s, 0, 0.5, 1)");
-		if (ir.aux[0].expr.type === "GFCall") {
-			expect(ir.aux[0].expr.argument).toEqual({ type: "Ref", id: "s" });
+		if (ir.auxiliaries[0].expr.type === "GraphicalFunctionCall") {
+			expect(ir.auxiliaries[0].expr.argument).toEqual({ type: "Reference", id: "s" });
 		}
 	});
 
@@ -328,7 +328,7 @@ describe("lookup() inline function", () => {
 		const ir = compileValid(`
       flow growth { from: null to: s rate: lookup(s, 0, 0.5, 1) }
     `);
-		expect(ir.flows[0].rate.type).toBe("GFCall");
+		expect(ir.flows[0].rate.type).toBe("GraphicalFunctionCall");
 	});
 
 	test("negative ypts in lookup", () => {

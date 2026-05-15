@@ -36,7 +36,7 @@ function buildHoverContent(
         break;
       case "AuxiliaryDeclaration":
         if (decl.id === name) {
-          const irAux = ir?.aux.find((a) => a.id === name);
+          const irAux = ir?.auxiliaries.find((a) => a.id === name);
           return `**aux** \`${name}\`${irAux ? ` = ${formatIRExpr(irAux.expr)}` : ""}${formatPosition(irAux?.position)}`;
         }
         break;
@@ -75,9 +75,9 @@ function formatPosition(position: IRPosition | undefined): string {
 
 function formatIRExpr(expr: IRExpressionNode): string {
   switch (expr.type) {
-    case "Num":
+    case "Number":
       return String(expr.value);
-    case "Ref":
+    case "Reference":
       return expr.id;
     default:
       return "…";

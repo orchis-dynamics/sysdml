@@ -1,14 +1,14 @@
-import type { IRAux, IRExpressionNode, IRFlow } from '@sysdml/ir';
+import type { IRAuxiliary, IRExpressionNode, IRFlow } from '@sysdml/ir';
 import type { SimDiagnostic } from './types.js';
 import { SimDiagnosticCode } from './types.js';
 
 export interface ToposortResult {
-  orderedAux: IRAux[];
+  orderedAux: IRAuxiliary[];
   orderedFlows: IRFlow[];
   diagnostics: SimDiagnostic[];
 }
 
-export function toposort(aux: readonly IRAux[], flows: readonly IRFlow[]): ToposortResult {
+export function toposort(aux: readonly IRAuxiliary[], flows: readonly IRFlow[]): ToposortResult {
   const diagnostics: SimDiagnostic[] = [];
   const auxIds = new Set(aux.map(a => a.id));
 
@@ -78,14 +78,14 @@ export function toposort(aux: readonly IRAux[], flows: readonly IRFlow[]): Topos
 
 function collectAuxRefs(node: IRExpressionNode, auxIds: ReadonlySet<string>, out: Set<string>): void {
   switch (node.type) {
-    case 'Num':
+    case 'Number':
       break;
-    case 'Ref':
+    case 'Reference':
       if (auxIds.has(node.id)) {
         out.add(node.id);
       }
       break;
-    case 'BinOp':
+    case 'BinaryOperation':
       collectAuxRefs(node.left, auxIds, out);
       collectAuxRefs(node.right, auxIds, out);
       break;
@@ -103,7 +103,7 @@ function collectAuxRefs(node: IRExpressionNode, auxIds: ReadonlySet<string>, out
         collectAuxRefs(arg, auxIds, out);
       }
       break;
-    case 'GFCall':
+    case 'GraphicalFunctionCall':
       collectAuxRefs(node.argument, auxIds, out);
       break;
   }

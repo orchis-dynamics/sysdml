@@ -36,8 +36,8 @@ stock population { init: 100 }
 aux delayed = DELAY1(population, 3)
     `);
     const { ir: desugared } = desugarIR(ir);
-    const delayedAux = desugared.aux.find(a => a.id === 'delayed')!;
-    expect(delayedAux.expr.type).toBe('BinOp'); // output = stock / delay_time
+    const delayedAux = desugared.auxiliaries.find(a => a.id === 'delayed')!;
+    expect(delayedAux.expr.type).toBe('BinaryOperation'); // output = stock / delay_time
   });
 });
 
@@ -90,8 +90,8 @@ stock s { init: 100 }
 aux smoothed = SMTH1(s, 4)
     `);
     const { ir: desugared } = desugarIR(ir);
-    const smoothedAux = desugared.aux.find(a => a.id === 'smoothed')!;
-    expect(smoothedAux.expr.type).toBe('Ref');
+    const smoothedAux = desugared.auxiliaries.find(a => a.id === 'smoothed')!;
+    expect(smoothedAux.expr.type).toBe('Reference');
   });
 });
 

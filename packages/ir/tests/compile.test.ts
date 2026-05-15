@@ -60,13 +60,13 @@ describe("population_growth compiles", () => {
 	test("stock init is Num(100)", () => {
 		expect(ir.stocks).toHaveLength(1);
 		expect(ir.stocks[0].id).toBe("population");
-		expect(ir.stocks[0].init).toEqual({ type: "Num", value: 100 });
+		expect(ir.stocks[0].init).toEqual({ type: "Number", value: 100 });
 	});
 
 	test("aux expr is Num(0.02)", () => {
-		expect(ir.aux).toHaveLength(1);
-		expect(ir.aux[0].id).toBe("birth_rate");
-		expect(ir.aux[0].expr).toEqual({ type: "Num", value: 0.02 });
+		expect(ir.auxiliaries).toHaveLength(1);
+		expect(ir.auxiliaries[0].id).toBe("birth_rate");
+		expect(ir.auxiliaries[0].expr).toEqual({ type: "Number", value: 0.02 });
 	});
 
 	test("flow endpoints and rate expr", () => {
@@ -76,10 +76,10 @@ describe("population_growth compiles", () => {
 		expect(flow.from).toBeNull();
 		expect(flow.to).toBe("population");
 		const rate: IRExpressionNode = {
-			type: "BinOp",
+			type: "BinaryOperation",
 			op: "*",
-			left: { type: "Ref", id: "population" },
-			right: { type: "Ref", id: "birth_rate" },
+			left: { type: "Reference", id: "population" },
+			right: { type: "Reference", id: "birth_rate" },
 		};
 		expect(flow.rate).toEqual(rate);
 	});
@@ -97,9 +97,9 @@ describe("expression compilation", () => {
 			`model m\nstock s { init: 0 }\naux x = -1\ntime { start:0 end:1 step:1 }`,
 		);
 		const { ir } = compileAST(ast);
-		expect(ir!.aux[0].expr).toEqual({
+		expect(ir!.auxiliaries[0].expr).toEqual({
 			type: "UnaryMinus",
-			operand: { type: "Num", value: 1 },
+			operand: { type: "Number", value: 1 },
 		});
 	});
 
@@ -108,11 +108,11 @@ describe("expression compilation", () => {
 			`model m\nstock s { init: 0 }\naux x = (2 + 3)\ntime { start:0 end:1 step:1 }`,
 		);
 		const { ir } = compileAST(ast);
-		expect(ir!.aux[0].expr).toEqual({
-			type: "BinOp",
+		expect(ir!.auxiliaries[0].expr).toEqual({
+			type: "BinaryOperation",
 			op: "+",
-			left: { type: "Num", value: 2 },
-			right: { type: "Num", value: 3 },
+			left: { type: "Number", value: 2 },
+			right: { type: "Number", value: 3 },
 		});
 	});
 
@@ -122,15 +122,15 @@ describe("expression compilation", () => {
 		);
 		const { ir } = compileAST(ast);
 		// Parser handles precedence: 1 + (2 * 3)
-		expect(ir!.aux[0].expr).toEqual({
-			type: "BinOp",
+		expect(ir!.auxiliaries[0].expr).toEqual({
+			type: "BinaryOperation",
 			op: "+",
-			left: { type: "Num", value: 1 },
+			left: { type: "Number", value: 1 },
 			right: {
-				type: "BinOp",
+				type: "BinaryOperation",
 				op: "*",
-				left: { type: "Num", value: 2 },
-				right: { type: "Num", value: 3 },
+				left: { type: "Number", value: 2 },
+				right: { type: "Number", value: 3 },
 			},
 		});
 	});
