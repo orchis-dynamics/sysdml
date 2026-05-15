@@ -5,7 +5,7 @@ import { fileURLToPath } from "url";
 import { describe, test, expect, beforeAll } from "vitest";
 
 import { parseSource } from "../src/index.js";
-import type { ConnectionDeclNode, DeclNode } from "../src/index.js";
+import type { ConnectionDeclarationNode, DeclarationNode } from "../src/index.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -13,12 +13,12 @@ function fixture(name: string): string {
 	return readFileSync(join(__dirname, "fixtures", name), "utf8");
 }
 
-function isConnection(n: DeclNode): n is ConnectionDeclNode {
-	return n.type === "ConnectionDecl";
+function isConnection(n: DeclarationNode): n is ConnectionDeclarationNode {
+	return n.type === "ConnectionDeclaration";
 }
 
 describe("CLD arrow syntax", () => {
-	let cldDecls: DeclNode[];
+	let cldDecls: DeclarationNode[];
 
 	beforeAll(() => {
 		const { ast, diagnostics } = parseSource(fixture("simple_cld.sysdml"));
@@ -33,7 +33,7 @@ describe("CLD arrow syntax", () => {
 
 	test("positive causal arrow ->+", () => {
 		const conn = cldDecls.find(
-			(d): d is ConnectionDeclNode => isConnection(d) && d.polarity === "+",
+			(d): d is ConnectionDeclarationNode => isConnection(d) && d.polarity === "+",
 		);
 		expect(conn).toBeDefined();
 		expect(conn!.from).toBe("population");
@@ -42,7 +42,7 @@ describe("CLD arrow syntax", () => {
 
 	test("negative causal arrow ->-", () => {
 		const conn = cldDecls.find(
-			(d): d is ConnectionDeclNode => isConnection(d) && d.polarity === "-",
+			(d): d is ConnectionDeclarationNode => isConnection(d) && d.polarity === "-",
 		);
 		expect(conn).toBeDefined();
 		expect(conn!.from).toBe("births");
@@ -51,7 +51,7 @@ describe("CLD arrow syntax", () => {
 
 	test("flow connection arrow =>", () => {
 		const conn = cldDecls.find(
-			(d): d is ConnectionDeclNode => isConnection(d) && d.polarity === "=>",
+			(d): d is ConnectionDeclarationNode => isConnection(d) && d.polarity === "=>",
 		);
 		expect(conn).toBeDefined();
 		expect(conn!.from).toBe("births");

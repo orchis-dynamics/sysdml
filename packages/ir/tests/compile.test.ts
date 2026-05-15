@@ -2,7 +2,7 @@ import { parseSource } from "@sysdml/parser";
 import { describe, test, it, expect, beforeAll } from "vitest";
 
 import { compileAST, DiagnosticCode } from "../src/index.js";
-import type { IR, IRExprNode } from "../src/index.js";
+import type { IR, IRExpressionNode } from "../src/index.js";
 
 function parse(src: string) {
 	const { ast, diagnostics } = parseSource(src);
@@ -75,7 +75,7 @@ describe("population_growth compiles", () => {
 		expect(flow.id).toBe("births");
 		expect(flow.from).toBeNull();
 		expect(flow.to).toBe("population");
-		const rate: IRExprNode = {
+		const rate: IRExpressionNode = {
 			type: "BinOp",
 			op: "*",
 			left: { type: "Ref", id: "population" },
@@ -275,7 +275,7 @@ describe("IRDiagnostic spans", () => {
 		expect(diag?.span).toBeDefined();
 	});
 
-	it("UNDEFINED_IDENTIFIER points at the IdentRef token", () => {
+	it("UNDEFINED_IDENTIFIER points at the IdentifierReference token", () => {
 		const { ast } = parseSource(
 			"model m\ntime { start: 0\n end: 10\n step: 1\n}\nstock s { init: ghost }",
 		);

@@ -1,6 +1,6 @@
 import { Hover, MarkupKind } from "vscode-languageserver/node.js";
 import type { FileNode } from "@sysdml/parser";
-import type { IR, IRExprNode, IRPosition } from "@sysdml/ir";
+import type { IR, IRExpressionNode, IRPosition } from "@sysdml/ir";
 import type { Position } from "vscode-languageserver/node.js";
 import { BUILTIN_ARITY } from "@sysdml/ir";
 import { findIdentAtPosition } from "../ast-utils.js";
@@ -28,19 +28,19 @@ function buildHoverContent(
 ): string | null {
   for (const decl of ast.decls) {
     switch (decl.type) {
-      case "StockDecl":
+      case "StockDeclaration":
         if (decl.id === name) {
           const irStock = ir?.stocks.find((s) => s.id === name);
           return `**stock** \`${name}\`\n\ninit: ${irStock ? formatIRExpr(irStock.init) : "…"}${formatPosition(irStock?.position)}`;
         }
         break;
-      case "AuxDecl":
+      case "AuxiliaryDeclaration":
         if (decl.id === name) {
           const irAux = ir?.aux.find((a) => a.id === name);
           return `**aux** \`${name}\`${irAux ? ` = ${formatIRExpr(irAux.expr)}` : ""}${formatPosition(irAux?.position)}`;
         }
         break;
-      case "FlowDecl":
+      case "FlowDeclaration":
         if (decl.id === name) {
           const irFlow = ir?.flows.find((f) => f.id === name);
           const from = irFlow?.from ?? "null";
@@ -48,7 +48,7 @@ function buildHoverContent(
           return `**flow** \`${name}\`\n\nfrom: ${from} → to: ${to}${formatPosition(irFlow?.position)}`;
         }
         break;
-      case "GfDecl":
+      case "GraphicalFunctionDeclaration":
         if (decl.id === name) {
           const irGf = ir?.graphicalFunctions.find((g) => g.id === name);
           const kind = irGf?.kind ?? "unknown";
@@ -73,7 +73,7 @@ function formatPosition(position: IRPosition | undefined): string {
   return position ? `\nposition: (${position.x}, ${position.y})` : "";
 }
 
-function formatIRExpr(expr: IRExprNode): string {
+function formatIRExpr(expr: IRExpressionNode): string {
   switch (expr.type) {
     case "Num":
       return String(expr.value);

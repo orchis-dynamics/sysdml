@@ -14,10 +14,10 @@ export function getDefinitionLocation(
 
   for (const decl of ast.decls) {
     if (
-      (decl.type === "StockDecl" ||
-        decl.type === "AuxDecl" ||
-        decl.type === "FlowDecl" ||
-        decl.type === "GfDecl") &&
+      (decl.type === "StockDeclaration" ||
+        decl.type === "AuxiliaryDeclaration" ||
+        decl.type === "FlowDeclaration" ||
+        decl.type === "GraphicalFunctionDeclaration") &&
       decl.id === identName
     ) {
       return Location.create(uri, spanToRange(decl.idSpan));

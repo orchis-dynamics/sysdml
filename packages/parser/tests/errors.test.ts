@@ -101,9 +101,9 @@ describe("builder diagnostics — position literal", () => {
 		expect(diagnostics).toHaveLength(0);
 		if (ast === null) throw new Error("expected non-null ast");
 		const stock = ast.decls[0];
-		if (stock?.type !== "StockDecl") throw new Error("expected StockDecl");
+		if (stock?.type !== "StockDeclaration") throw new Error("expected StockDeclaration");
 		expect(stock.position).toEqual({
-			type: "Pos",
+			type: "Position",
 			x: 200,
 			y: 100,
 			span: expect.any(Object),

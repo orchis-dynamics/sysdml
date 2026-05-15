@@ -1,17 +1,17 @@
 import { parseSource } from "@sysdml/parser";
 import type {
   FileNode,
-  DeclNode,
-  ExprNode,
-  TimeDeclNode,
-  StockDeclNode,
-  AuxDeclNode,
-  FlowDeclNode,
-  ConnectionDeclNode,
-  GfDeclNode,
-  GfBodyNode,
-  NumListNode,
-  PosNode,
+  DeclarationNode,
+  ExpressionNode,
+  TimeDeclarationNode,
+  StockDeclarationNode,
+  AuxiliaryDeclarationNode,
+  FlowDeclarationNode,
+  ConnectionDeclarationNode,
+  GraphicalFunctionDeclarationNode,
+  GraphicalFunctionBodyNode,
+  NumberListNode,
+  PositionNode,
 } from "@sysdml/parser";
 
 export function formatSource(source: string): string | null {
@@ -29,24 +29,24 @@ function printFile(file: FileNode): string {
   return parts.join("\n") + "\n";
 }
 
-function printDecl(decl: DeclNode): string {
+function printDecl(decl: DeclarationNode): string {
   switch (decl.type) {
-    case "TimeDecl":
-      return printTimeDecl(decl);
-    case "StockDecl":
-      return printStockDecl(decl);
-    case "AuxDecl":
-      return printAuxDecl(decl);
-    case "FlowDecl":
-      return printFlowDecl(decl);
-    case "ConnectionDecl":
-      return printConnectionDecl(decl);
-    case "GfDecl":
-      return printGfDecl(decl);
+    case "TimeDeclaration":
+      return printTimeDeclaration(decl);
+    case "StockDeclaration":
+      return printStockDeclaration(decl);
+    case "AuxiliaryDeclaration":
+      return printAuxiliaryDeclaration(decl);
+    case "FlowDeclaration":
+      return printFlowDeclaration(decl);
+    case "ConnectionDeclaration":
+      return printConnectionDeclaration(decl);
+    case "GraphicalFunctionDeclaration":
+      return printGraphicalFunctionDeclaration(decl);
   }
 }
 
-function printTimeDecl(decl: TimeDeclNode): string {
+function printTimeDeclaration(decl: TimeDeclarationNode): string {
   const order = ["start", "end", "step"] as const;
   const lines = order.flatMap((key) => {
     const prop = decl.props.find((p) => p.key === key);
@@ -55,7 +55,7 @@ function printTimeDecl(decl: TimeDeclNode): string {
   return `time {\n${lines.join("\n")}\n}`;
 }
 
-function printStockDecl(decl: StockDeclNode): string {
+function printStockDeclaration(decl: StockDeclarationNode): string {
   const initProp = decl.props[0];
   const lines = [
     `stock ${decl.id} {`,
@@ -66,13 +66,13 @@ function printStockDecl(decl: StockDeclNode): string {
   return lines.join("\n");
 }
 
-function printAuxDecl(decl: AuxDeclNode): string {
+function printAuxiliaryDeclaration(decl: AuxiliaryDeclarationNode): string {
   const head = `aux ${decl.id} = ${printExpr(decl.expr)}`;
   if (decl.position === undefined) return head;
   return `${head} { position: ${printPos(decl.position)} }`;
 }
 
-function printFlowDecl(decl: FlowDeclNode): string {
+function printFlowDeclaration(decl: FlowDeclarationNode): string {
   const order = ["from", "to", "rate"] as const;
   const lines: string[] = [];
   for (const key of order) {
@@ -91,7 +91,7 @@ function printFlowDecl(decl: FlowDeclNode): string {
   return `flow ${decl.id} {\n${lines.join("\n")}\n}`;
 }
 
-function printConnectionDecl(decl: ConnectionDeclNode): string {
+function printConnectionDeclaration(decl: ConnectionDeclarationNode): string {
   const arrow =
     decl.polarity === "+" ? "->+" : decl.polarity === "-" ? "->-" : "=>";
   const base = `${decl.from} ${arrow} ${decl.to}`;
@@ -102,22 +102,22 @@ function printConnectionDecl(decl: ConnectionDeclNode): string {
   return `${base} {\n${propLines.join("\n")}\n}`;
 }
 
-function printGfDecl(decl: GfDeclNode): string {
-  const lines = printGfBodyProps(decl.body);
+function printGraphicalFunctionDeclaration(decl: GraphicalFunctionDeclarationNode): string {
+  const lines = printGraphicalFunctionBodyProps(decl.body);
   return `gf ${decl.id} {\n${lines.map((line) => `  ${line}`).join("\n")}\n}`;
 }
 
-function printGfBodyProps(body: GfBodyNode): string[] {
+function printGraphicalFunctionBodyProps(body: GraphicalFunctionBodyNode): string[] {
   const order = ["kind", "xscale", "xpts", "ypts", "yscale"] as const;
   return order.flatMap((key) => {
     const prop = body.props.find((p) => p.key === key);
     if (!prop) return [];
     if (prop.key === "kind") return [`kind: ${prop.value}`];
-    return [`${prop.key}: ${printNumList(prop.value)}`];
+    return [`${prop.key}: ${printNumberList(prop.value)}`];
   });
 }
 
-function printNumList(list: NumListNode): string {
+function printNumberList(list: NumberListNode): string {
   const values = list.values.map(
     (signedNumber) =>
       `${signedNumber.negative ? "-" : ""}${signedNumber.lit.value}`,
@@ -125,25 +125,25 @@ function printNumList(list: NumListNode): string {
   return `[${values.join(", ")}]`;
 }
 
-function printPos(pos: PosNode): string {
+function printPos(pos: PositionNode): string {
   return `{ x: ${pos.x}, y: ${pos.y} }`;
 }
 
-function printPosArray(positions: PosNode[]): string {
+function printPosArray(positions: PositionNode[]): string {
   return `[${positions.map(printPos).join(", ")}]`;
 }
 
-function printExpr(expr: ExprNode): string {
+function printExpr(expr: ExpressionNode): string {
   switch (expr.type) {
-    case "NumberLit":
+    case "NumberLiteral":
       return expr.value;
-    case "IdentRef":
+    case "IdentifierReference":
       return expr.name;
-    case "GroupedExpr":
+    case "GroupedExpression":
       return `(${printExpr(expr.expr)})`;
-    case "BinaryExpr":
+    case "BinaryExpression":
       return `${printExpr(expr.left)} ${expr.op} ${printExpr(expr.right)}`;
-    case "UnaryExpr":
+    case "UnaryExpression":
       return expr.op === "NOT"
         ? `NOT ${printExpr(expr.operand)}`
         : `${expr.op}${printExpr(expr.operand)}`;

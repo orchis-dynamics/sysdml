@@ -2,7 +2,7 @@ import { parseSource } from "@sysdml/parser";
 import { describe, test, expect } from "vitest";
 
 import { compileAST, DiagnosticCode } from "../src/index.js";
-import type { IRExprNode } from "../src/index.js";
+import type { IRExpressionNode } from "../src/index.js";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 function parse(src: string) {
@@ -34,7 +34,7 @@ aux result = ${expressionSource}
 function getResultExpression(
 	expressionSource: string,
 	extraDeclarations = "",
-): IRExprNode {
+): IRExpressionNode {
 	const { ir, diagnostics } = compileExpressionSource(
 		expressionSource,
 		extraDeclarations,
@@ -47,12 +47,12 @@ function getResultExpression(
 
 function createFunctionCallNode(
 	name: string,
-	...args: IRExprNode[]
-): IRExprNode {
+	...args: IRExpressionNode[]
+): IRExpressionNode {
 	return { type: "FunctionCall", name, args };
 }
 
-function createRefNode(id: string): IRExprNode {
+function createRefNode(id: string): IRExpressionNode {
 	return { type: "Ref", id };
 }
 

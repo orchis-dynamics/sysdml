@@ -2,7 +2,7 @@ import type { Span } from "@sysdml/parser";
 import type { DiagnosticCode } from "./diagnostics.js";
 
 // IR expression nodes — no spans, no parse artifacts.
-// GroupedExpr is collapsed; tree structure already encodes precedence.
+// GroupedExpression is collapsed; tree structure already encodes precedence.
 // Comparison and logical ops return 1.0 (true) or 0.0 (false) at simulation time.
 export type IRBinOp =
 	| "+"
@@ -20,20 +20,20 @@ export type IRBinOp =
 	| "AND"
 	| "OR";
 
-export type IRExprNode =
+export type IRExpressionNode =
 	| { type: "Num"; value: number }
 	| { type: "Ref"; id: string }
-	| { type: "BinOp"; op: IRBinOp; left: IRExprNode; right: IRExprNode }
-	| { type: "UnaryMinus"; operand: IRExprNode }
-	| { type: "Not"; operand: IRExprNode }
+	| { type: "BinOp"; op: IRBinOp; left: IRExpressionNode; right: IRExpressionNode }
+	| { type: "UnaryMinus"; operand: IRExpressionNode }
+	| { type: "Not"; operand: IRExpressionNode }
 	| {
 			type: "IfThenElse";
-			cond: IRExprNode;
-			thenBranch: IRExprNode;
-			elseBranch: IRExprNode;
+			cond: IRExpressionNode;
+			thenBranch: IRExpressionNode;
+			elseBranch: IRExpressionNode;
 	  }
-	| { type: "FunctionCall"; name: string; args: IRExprNode[] }
-	| { type: "GFCall"; name: string; argument: IRExprNode };
+	| { type: "FunctionCall"; name: string; args: IRExpressionNode[] }
+	| { type: "GFCall"; name: string; argument: IRExpressionNode };
 
 export interface IRTime {
 	start: number;
@@ -48,13 +48,13 @@ export interface IRPosition {
 
 export interface IRStock {
 	id: string;
-	init: IRExprNode;
+	init: IRExpressionNode;
 	position?: IRPosition;
 }
 
 export interface IRAux {
 	id: string;
-	expr: IRExprNode;
+	expr: IRExpressionNode;
 	position?: IRPosition;
 }
 
@@ -62,7 +62,7 @@ export interface IRFlow {
 	id: string;
 	from: string | null;
 	to: string | null;
-	rate: IRExprNode;
+	rate: IRExpressionNode;
 	position?: IRPosition;
 	via?: IRPosition[];
 }
@@ -75,12 +75,12 @@ export interface IRConnection {
 	via?: IRPosition;
 }
 
-export type IRGfKind = "linear" | "extra" | "step";
+export type IRGraphicalFunctionKind = "linear" | "extra" | "step";
 
 // Exactly one of xscale or xpts is set (never both, never neither).
 export interface IRGraphicalFunction {
 	id: string;
-	kind: IRGfKind;
+	kind: IRGraphicalFunctionKind;
 	xscale: [number, number] | null;
 	xpts: number[] | null;
 	ypts: number[];

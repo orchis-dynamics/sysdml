@@ -2,7 +2,7 @@ import { parseSource } from "@sysdml/parser";
 import { describe, test, expect } from "vitest";
 
 import { compileAST, DiagnosticCode } from "../src/index.js";
-import type { IRExprNode } from "../src/index.js";
+import type { IRExpressionNode } from "../src/index.js";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -27,7 +27,7 @@ aux result = ${expressionSource}
 	return compileAST(parse(src));
 }
 
-function getResultExpression(expressionSource: string): IRExprNode {
+function getResultExpression(expressionSource: string): IRExpressionNode {
 	const { ir, diagnostics } = compileExpressionSource(expressionSource);
 	expect(
 		diagnostics,
@@ -37,8 +37,8 @@ function getResultExpression(expressionSource: string): IRExprNode {
 	return ir!.aux[ir!.aux.length - 1].expr;
 }
 
-const createRefNode = (id: string): IRExprNode => ({ type: "Ref", id });
-const createNumNode = (value: number): IRExprNode => ({ type: "Num", value });
+const createRefNode = (id: string): IRExpressionNode => ({ type: "Ref", id });
+const createNumNode = (value: number): IRExpressionNode => ({ type: "Num", value });
 
 // ── Comparison operators ──────────────────────────────────────────────────────
 

@@ -1,15 +1,15 @@
 import type {
 	FileNode,
-	DeclNode,
-	TimeDeclNode,
-	StockDeclNode,
-	AuxDeclNode,
-	FlowDeclNode,
-	ConnectionDeclNode,
-	GfDeclNode,
-	GfBodyNode,
-	NumListNode,
-	PosNode,
+	DeclarationNode,
+	TimeDeclarationNode,
+	StockDeclarationNode,
+	AuxiliaryDeclarationNode,
+	FlowDeclarationNode,
+	ConnectionDeclarationNode,
+	GraphicalFunctionDeclarationNode,
+	GraphicalFunctionBodyNode,
+	NumberListNode,
+	PositionNode,
 	Span,
 } from "@sysdml/parser";
 
@@ -26,40 +26,40 @@ import type {
 	IRPosition,
 } from "./types.js";
 
-function isTimeDecl(n: DeclNode): n is TimeDeclNode {
-	return n.type === "TimeDecl";
+function isTimeDeclaration(n: DeclarationNode): n is TimeDeclarationNode {
+	return n.type === "TimeDeclaration";
 }
-function isStockDecl(n: DeclNode): n is StockDeclNode {
-	return n.type === "StockDecl";
+function isStockDeclaration(n: DeclarationNode): n is StockDeclarationNode {
+	return n.type === "StockDeclaration";
 }
-function isAuxDecl(n: DeclNode): n is AuxDeclNode {
-	return n.type === "AuxDecl";
+function isAuxiliaryDeclaration(n: DeclarationNode): n is AuxiliaryDeclarationNode {
+	return n.type === "AuxiliaryDeclaration";
 }
-function isFlowDecl(n: DeclNode): n is FlowDeclNode {
-	return n.type === "FlowDecl";
+function isFlowDeclaration(n: DeclarationNode): n is FlowDeclarationNode {
+	return n.type === "FlowDeclaration";
 }
-function isConnectionDecl(n: DeclNode): n is ConnectionDeclNode {
-	return n.type === "ConnectionDecl";
+function isConnectionDeclaration(n: DeclarationNode): n is ConnectionDeclarationNode {
+	return n.type === "ConnectionDeclaration";
 }
-function isGfDecl(n: DeclNode): n is GfDeclNode {
-	return n.type === "GfDecl";
+function isGraphicalFunctionDeclaration(n: DeclarationNode): n is GraphicalFunctionDeclarationNode {
+	return n.type === "GraphicalFunctionDeclaration";
 }
 
-function numListToFloats(node: NumListNode): number[] {
+function numListToFloats(node: NumberListNode): number[] {
 	return node.values.map(
 		(signedNumber) =>
 			(signedNumber.negative ? -1 : 1) * parseFloat(signedNumber.lit.value),
 	);
 }
 
-function posToIR(pos: PosNode | undefined): IRPosition | undefined {
+function posToIR(pos: PositionNode | undefined): IRPosition | undefined {
 	if (!pos) return undefined;
 	return { x: pos.x, y: pos.y };
 }
 
-function validateGfBody(
+function validateGraphicalFunctionBody(
 	id: string,
-	body: GfBodyNode,
+	body: GraphicalFunctionBodyNode,
 	declSpan: Span,
 	errors: IRDiagnostic[],
 ): IRGraphicalFunction | null {
@@ -111,7 +111,7 @@ function validateGfBody(
 	if (!isValid) return null;
 
 	const ypts = numListToFloats(
-		(yptsProp! as { key: "ypts"; value: NumListNode }).value,
+		(yptsProp! as { key: "ypts"; value: NumberListNode }).value,
 	);
 
 	let xscale: [number, number] | null = null;
@@ -182,12 +182,12 @@ export function compileAST(ast: FileNode): CompileResult {
 
 	// ── Collect typed decls ───────────────────────────────────────────────────
 
-	const timeDecls = ast.decls.filter(isTimeDecl);
-	const stockDecls = ast.decls.filter(isStockDecl);
-	const auxDecls = ast.decls.filter(isAuxDecl);
-	const flowDecls = ast.decls.filter(isFlowDecl);
-	const connectionDecls = ast.decls.filter(isConnectionDecl);
-	const graphicalFunctionDecls = ast.decls.filter(isGfDecl);
+	const timeDecls = ast.decls.filter(isTimeDeclaration);
+	const stockDecls = ast.decls.filter(isStockDeclaration);
+	const auxDecls = ast.decls.filter(isAuxiliaryDeclaration);
+	const flowDecls = ast.decls.filter(isFlowDeclaration);
+	const connectionDecls = ast.decls.filter(isConnectionDeclaration);
+	const graphicalFunctionDecls = ast.decls.filter(isGraphicalFunctionDeclaration);
 
 	// ── Structural validation ─────────────────────────────────────────────────
 
@@ -253,14 +253,14 @@ export function compileAST(ast: FileNode): CompileResult {
 	let time = { start: 0, end: 0, step: 1 };
 
 	if (timeDecl) {
-		const getTimePropValue = (key: "start" | "end" | "step"): number => {
+		const getTimePropertyValue = (key: "start" | "end" | "step"): number => {
 			const prop = timeDecl.props.find((timeProp) => timeProp.key === key);
 			return prop ? parseFloat(prop.value.value) : 0;
 		};
 		time = {
-			start: getTimePropValue("start"),
-			end: getTimePropValue("end"),
-			step: getTimePropValue("step"),
+			start: getTimePropertyValue("start"),
+			end: getTimePropertyValue("end"),
+			step: getTimePropertyValue("step"),
 		};
 
 		if (time.step <= 0)
@@ -297,7 +297,7 @@ export function compileAST(ast: FileNode): CompileResult {
 
 	const declaredGraphicalFunctions: IRGraphicalFunction[] = [];
 	for (const graphicalFunctionDecl of graphicalFunctionDecls) {
-		const irGraphicalFunction = validateGfBody(
+		const irGraphicalFunction = validateGraphicalFunctionBody(
 			graphicalFunctionDecl.id,
 			graphicalFunctionDecl.body,
 			graphicalFunctionDecl.span,
@@ -311,7 +311,7 @@ export function compileAST(ast: FileNode): CompileResult {
 	// ── Stocks ────────────────────────────────────────────────────────────────
 
 	const stocks: IRStock[] = stockDecls.map((stockDecl) => {
-		const initProp = stockDecl.props.find((prop) => prop.type === "StockProp");
+		const initProp = stockDecl.props.find((prop) => prop.type === "StockProperty");
 		if (!initProp) {
 			errors.push({
 				code: DiagnosticCode.MISSING_STOCK_INIT,
