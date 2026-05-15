@@ -1,5 +1,6 @@
 import { describe, test, expect } from 'vitest';
 import { evalBuiltin } from '../src/functions.js';
+import { SimDiagnosticCode, SimulationHaltedError } from '../src/types.js';
 
 const noCtx = { t: 0, start: 0, end: 10, step: 1 };
 
@@ -9,13 +10,32 @@ describe('evalBuiltin — math functions', () => {
   test('INT(3.9) → 3', () => expect(evalBuiltin('INT', [3.9], noCtx)).toBe(3));
   test('INT(-1.5) → -2 (floor, not truncate)', () => expect(evalBuiltin('INT', [-1.5], noCtx)).toBe(-2));
   test('SQRT(4) → 2', () => expect(evalBuiltin('SQRT', [4], noCtx)).toBe(2));
-  test('SQRT(-1) → NaN (D1: IEEE 754 propagation)', () => expect(evalBuiltin('SQRT', [-1], noCtx)).toBeNaN());
+  test('SQRT(0) → 0 (zero allowed)', () => expect(evalBuiltin('SQRT', [0], noCtx)).toBe(0));
+  test('SQRT(-1) throws MATH_DOMAIN_ERROR (out of real domain)', () =>
+    expect(() => evalBuiltin('SQRT', [-1], noCtx)).toThrow(SimulationHaltedError));
   test('EXP(0) → 1', () => expect(evalBuiltin('EXP', [0], noCtx)).toBe(1));
   test('EXP(1) → e', () => expect(evalBuiltin('EXP', [1], noCtx)).toBeCloseTo(Math.E));
   test('LN(1) → 0', () => expect(evalBuiltin('LN', [1], noCtx)).toBe(0));
-  test('LN(0) → -Infinity (D1)', () => expect(evalBuiltin('LN', [0], noCtx)).toBe(-Infinity));
+  test('LN(0) throws MATH_DOMAIN_ERROR (XMILE: domain is (0, ∞))', () =>
+    expect(() => evalBuiltin('LN', [0], noCtx)).toThrow(SimulationHaltedError));
+  test('LN(-1) throws MATH_DOMAIN_ERROR', () =>
+    expect(() => evalBuiltin('LN', [-1], noCtx)).toThrow(SimulationHaltedError));
   test('LOG10(100) → 2', () => expect(evalBuiltin('LOG10', [100], noCtx)).toBeCloseTo(2));
-  test('LOG10(0) → -Infinity (D1)', () => expect(evalBuiltin('LOG10', [0], noCtx)).toBe(-Infinity));
+  test('LOG10(0) throws MATH_DOMAIN_ERROR', () =>
+    expect(() => evalBuiltin('LOG10', [0], noCtx)).toThrow(SimulationHaltedError));
+  test('LOG10(-1) throws MATH_DOMAIN_ERROR', () =>
+    expect(() => evalBuiltin('LOG10', [-1], noCtx)).toThrow(SimulationHaltedError));
+  test('domain error carries MATH_DOMAIN_ERROR code and offending value', () => {
+    try {
+      evalBuiltin('LN', [0], noCtx);
+      throw new Error('expected SimulationHaltedError');
+    } catch (err) {
+      expect(err).toBeInstanceOf(SimulationHaltedError);
+      const halt = err as SimulationHaltedError;
+      expect(halt.diagnostic.code).toBe(SimDiagnosticCode.MATH_DOMAIN_ERROR);
+      expect(halt.diagnostic.message).toContain('LN(0)');
+    }
+  });
   test('SIN(0) → 0', () => expect(evalBuiltin('SIN', [0], noCtx)).toBeCloseTo(0));
   test('COS(0) → 1', () => expect(evalBuiltin('COS', [0], noCtx)).toBeCloseTo(1));
   test('TAN(0) → 0', () => expect(evalBuiltin('TAN', [0], noCtx)).toBeCloseTo(0));

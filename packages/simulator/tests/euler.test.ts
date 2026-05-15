@@ -254,16 +254,15 @@ aux smoothed = SMTH1(input_val, 5)
   });
 });
 
-// ── IEEE 754 propagation (D1) ───────────────────────────────────────────────
+// ── Domain semantics ────────────────────────────────────────────────────────
+// Division by zero still propagates IEEE 754 — decision pending (see stdlib.md).
+// LN/LOG10/SQRT halt with a MATH_DOMAIN_ERROR diagnostic — see domain-errors.test.ts.
 
-describe('IEEE 754 propagation (D1): domain violations do not throw', () => {
+describe('division by zero: IEEE 754 propagation (decision pending)', () => {
   test('1/0 → Infinity does not abort simulation', () => {
     expect(() => evalAux('1 / 0')).not.toThrow();
     expect(evalAux('1 / 0')).toBe(Infinity);
   });
-
-  test('LN(0) → -Infinity', () => expect(evalAux('LN(0)')).toBe(-Infinity));
-  test('SQRT(-1) → NaN',     () => expect(evalAux('SQRT(-1)')).toBeNaN());
 });
 
 // ── Deferred v0.2 functions ─────────────────────────────────────────────────

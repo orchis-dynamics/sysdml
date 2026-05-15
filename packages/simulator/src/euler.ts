@@ -1,6 +1,6 @@
 import type { IR, IRGraphicalFunction } from '@sysdml/ir';
 import type { Env, EvalContext, SimContext, SimDiagnostic, SimRow, SimulationResult, Simulator } from './types.js';
-import { SimDiagnosticCode } from './types.js';
+import { SimDiagnosticCode, SimulationHaltedError } from './types.js';
 import { desugarIR } from './desugar.js';
 import { evalExpr } from './eval.js';
 import { toposort } from './toposort.js';
@@ -8,6 +8,7 @@ import { toposort } from './toposort.js';
 export class EulerSimulator implements Simulator {
   simulate(ir: IR): SimulationResult {
     const diagnostics: SimDiagnostic[] = [];
+    const rows: SimRow[] = [];
 
     const { ir: desugaredIR, diagnostics: desugarDiag } = desugarIR(ir);
     diagnostics.push(...desugarDiag);
@@ -24,43 +25,50 @@ export class EulerSimulator implements Simulator {
 
     const { start, end, step } = desugaredIR.time;
 
-    const stockState: Env = {};
-    const bootstrapCtx = buildEvalContext({}, { t: start, start, end, step }, {}, {}, gfRegistry);
-    for (const stock of desugaredIR.stocks) {
-      stockState[stock.id] = evalExpr(stock.init, bootstrapCtx);
-    }
-
-    const initEnv = buildInitEnv(stockState, orderedAux, orderedFlows, start, end, step, gfRegistry);
-
-    const rows: SimRow[] = [];
-    let prevEnv: Env = { ...initEnv };
-
-    for (let t = start; t <= end + step * 1e-10; t = roundStep(t + step)) {
-      const env: Env = { ...stockState };
-      const simCtx: SimContext = { t, start, end, step };
-      const evalCtx = buildEvalContext(env, simCtx, initEnv, prevEnv, gfRegistry);
-
-      for (const auxVar of orderedAux) {
-        env[auxVar.id] = evalExpr(auxVar.expr, evalCtx);
-      }
-
-      const flowValues: Env = {};
-      for (const flow of orderedFlows) {
-        flowValues[flow.id] = evalExpr(flow.rate, evalCtx);
-        env[flow.id] = flowValues[flow.id];
-      }
-
-      rows.push(buildRow(t, ir, stockState, env, flowValues));
-      prevEnv = { ...env };
-
+    try {
+      const stockState: Env = {};
+      const bootstrapCtx = buildEvalContext({}, { t: start, start, end, step }, {}, {}, gfRegistry);
       for (const stock of desugaredIR.stocks) {
-        let netFlow = 0;
-        for (const flow of orderedFlows) {
-          if (flow.to   === stock.id) netFlow += flowValues[flow.id];
-          if (flow.from === stock.id) netFlow -= flowValues[flow.id];
-        }
-        stockState[stock.id] += netFlow * step;
+        stockState[stock.id] = evalExpr(stock.init, bootstrapCtx);
       }
+
+      const initEnv = buildInitEnv(stockState, orderedAux, orderedFlows, start, end, step, gfRegistry);
+
+      let prevEnv: Env = { ...initEnv };
+
+      for (let t = start; t <= end + step * 1e-10; t = roundStep(t + step)) {
+        const env: Env = { ...stockState };
+        const simCtx: SimContext = { t, start, end, step };
+        const evalCtx = buildEvalContext(env, simCtx, initEnv, prevEnv, gfRegistry);
+
+        for (const auxVar of orderedAux) {
+          env[auxVar.id] = evalExpr(auxVar.expr, evalCtx);
+        }
+
+        const flowValues: Env = {};
+        for (const flow of orderedFlows) {
+          flowValues[flow.id] = evalExpr(flow.rate, evalCtx);
+          env[flow.id] = flowValues[flow.id];
+        }
+
+        rows.push(buildRow(t, ir, stockState, env, flowValues));
+        prevEnv = { ...env };
+
+        for (const stock of desugaredIR.stocks) {
+          let netFlow = 0;
+          for (const flow of orderedFlows) {
+            if (flow.to   === stock.id) netFlow += flowValues[flow.id];
+            if (flow.from === stock.id) netFlow -= flowValues[flow.id];
+          }
+          stockState[stock.id] += netFlow * step;
+        }
+      }
+    } catch (err) {
+      if (err instanceof SimulationHaltedError) {
+        diagnostics.push(err.diagnostic);
+        return { rows, diagnostics };
+      }
+      throw err;
     }
 
     return { rows, diagnostics };
