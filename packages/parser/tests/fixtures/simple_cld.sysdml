@@ -1,0 +1,5 @@
+model simple_cld
+
+population ->+ births
+births ->- population
+births => population

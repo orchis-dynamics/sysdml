@@ -1,0 +1,7 @@
+node_modules/
+dist/
+generated/
+src/grammar/.antlr/
+.vscode/
+.claude/
+.env

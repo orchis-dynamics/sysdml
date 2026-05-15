@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+GRAMMAR="src/grammar/SYSDML.g4"
+OUT="generated"
+
+echo "Generating ANTLR4 TypeScript parser from $GRAMMAR..."
+pnpm exec antlr-ng \
+  -D language=TypeScript \
+  -v \
+  -o "$OUT" \
+  "$GRAMMAR"
+
+echo "Done. Generated files in $OUT/"

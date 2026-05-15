@@ -1,0 +1,27 @@
+import { Location } from "vscode-languageserver/node.js";
+import type { FileNode } from "@sysdml/parser";
+import type { Position } from "vscode-languageserver/node.js";
+import { findIdentAtPosition } from "../ast-utils.js";
+import { spanToRange } from "../analysis.js";
+
+export function getDefinitionLocation(
+  ast: FileNode,
+  uri: string,
+  position: Position,
+): Location | null {
+  const identName = findIdentAtPosition(ast, position);
+  if (!identName) return null;
+
+  for (const decl of ast.decls) {
+    if (
+      (decl.type === "StockDecl" ||
+        decl.type === "AuxDecl" ||
+        decl.type === "FlowDecl" ||
+        decl.type === "GfDecl") &&
+      decl.id === identName
+    ) {
+      return Location.create(uri, spanToRange(decl.idSpan));
+    }
+  }
+  return null;
+}

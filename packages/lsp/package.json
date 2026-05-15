@@ -1,0 +1,26 @@
+{
+  "name": "@sysdml/lsp-server",
+  "version": "0.1.0",
+  "type": "module",
+  "bin": {
+    "sysdml-lsp": "./dist/src/server.js"
+  },
+  "main": "./dist/src/server.js",
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@sysdml/ir": "workspace:*",
+    "@sysdml/parser": "workspace:*",
+    "vscode-jsonrpc": "^8.2.0",
+    "vscode-languageserver": "^9.0.0",
+    "vscode-languageserver-textdocument": "^1.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.12.0",
+    "typescript": "^5.4.5",
+    "vitest": "^4.1.5"
+  }
+}

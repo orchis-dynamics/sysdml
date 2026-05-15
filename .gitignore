@@ -1,0 +1,16 @@
+packages/parser/dist/
+packages/parser/generated/
+packages/parser/src/grammar/.antlr/
+**/node_modules
+**/dist/
+.worktrees/
+
+.claude/
+.vscode/
+bin/
+docs/
+models/
+CLAUDE.md
+AGENT_CONTEXT.md
+run.sh
+.DS_Store

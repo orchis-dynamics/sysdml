@@ -1,0 +1,162 @@
+import type { IR, IRStock, IRFlow, IRAux } from "@sysdml/ir";
+
+export type NodeKind = "stock" | "aux" | "flow";
+
+export interface LayoutNode {
+  id: string;
+  kind: NodeKind;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+export type EdgeKind = "flow" | "connection";
+
+export interface LayoutEdge {
+  id: string;
+  kind: EdgeKind;
+  source: string;
+  target: string;
+  polarity?: "+" | "-" | "=>";
+  points: { x: number; y: number }[];
+}
+
+export interface LayoutResult {
+  nodes: LayoutNode[];
+  edges: LayoutEdge[];
+}
+
+const NODE_SIZE: Record<NodeKind, { width: number; height: number }> = {
+  stock: { width: 120, height: 48 },
+  aux: { width: 80, height: 80 },
+  flow: { width: 20, height: 20 },
+};
+
+export function computeLayout(ir: IR): LayoutResult {
+  return ir.stocks.length > 0 ? layoutSFD(ir) : layoutCLD(ir);
+}
+
+const MARGIN = 80;
+
+function getLayoutNode(id: string, kind: NodeKind, x: number, y: number): LayoutNode {
+  return { id, kind, x, y, ...NODE_SIZE[kind] };
+}
+
+function layoutSFD(ir: IR): LayoutResult {
+  const OFFSET = 200;
+  const nodes = new Map<string, LayoutNode>();
+  const edges = new Map<string, LayoutEdge>();
+
+  type Tagged =
+    | (IRStock & { kind: "stock" })
+    | (IRFlow & { kind: "flow" })
+    | (IRAux & { kind: "aux" });
+
+  const nodeMap = new Map<string, Tagged>();
+  ir.stocks.forEach((s) => nodeMap.set(s.id, { ...s, kind: "stock" }));
+  ir.flows.forEach((f) => nodeMap.set(f.id, { ...f, kind: "flow" }));
+  ir.aux.forEach((a) => nodeMap.set(a.id, { ...a, kind: "aux" }));
+
+  let stockCount = 0;
+  for (const node of nodeMap.values()) {
+    if (node.kind === "stock") {
+      const x = node.position?.x ?? stockCount * 2 * OFFSET;
+      const y = node.position?.y ?? 0;
+      nodes.set(node.id, getLayoutNode(node.id, "stock", x, y));
+      stockCount++;
+    }
+
+    if (node.kind === "flow") {
+      const from = node.from ? nodes.get(node.from) : null;
+      const to = node.to ? nodes.get(node.to) : null;
+      const algorithmX = from
+        ? from.x + OFFSET + from.width / 2
+        : to
+          ? to.x - OFFSET
+          : 0;
+      const algorithmY = from?.y ?? to?.y ?? 0;
+      const x = node.position?.x ?? algorithmX;
+      const y = node.position?.y ?? algorithmY;
+      nodes.set(node.id, getLayoutNode(node.id, "flow", x, y));
+
+      edges.set(node.id, {
+        id: node.id,
+        kind: "flow",
+        source: node.from ?? node.id,
+        target: node.to ?? node.id,
+        points: [
+          { x: to?.x ?? x, y: to?.y ?? y },
+          { x: from?.x ?? x, y: from?.y ?? y },
+        ],
+      });
+    }
+
+    if (node.kind === "aux") {
+      const related = ir.connections
+        .filter((c) => c.from === node.id || c.to === node.id)
+        .map((c) => (c.from === node.id ? c.to : c.from));
+      const xs = related.map((id) => nodes.get(id)?.x).filter((v): v is number => v !== undefined);
+      const ys = related.map((id) => nodes.get(id)?.y).filter((v): v is number => v !== undefined);
+      const algorithmX = xs.length ? xs.reduce((a, b) => a + b) / xs.length : 0;
+      const algorithmY = (ys.length ? ys.reduce((a, b) => a + b) / ys.length : 0) - OFFSET / 2;
+      const x = node.position?.x ?? algorithmX;
+      const y = node.position?.y ?? algorithmY;
+      nodes.set(node.id, getLayoutNode(node.id, "aux", x, y));
+    }
+  }
+
+  ir.connections.forEach((conn) => {
+    const edgeId = `${conn.from}_to_${conn.to}`;
+    const src = nodes.get(conn.from);
+    const tgt = nodes.get(conn.to);
+    edges.set(edgeId, {
+      id: edgeId,
+      kind: "connection",
+      source: conn.from,
+      target: conn.to,
+      polarity: conn.polarity,
+      points: [
+        { x: src?.x ?? 0, y: src?.y ?? 0 },
+        { x: tgt?.x ?? 0, y: tgt?.y ?? 0 },
+      ],
+    });
+  });
+
+  return { nodes: [...nodes.values()], edges: [...edges.values()] };
+}
+
+function layoutCLD(ir: IR): LayoutResult {
+  const nodes: LayoutNode[] = [];
+  const edges: LayoutEdge[] = [];
+
+  const allNodes = [...ir.aux, ...ir.stocks];
+  const n = allNodes.length;
+  const radius = Math.max(120, n * 35);
+  const cx = radius + MARGIN + NODE_SIZE.aux.width / 2;
+  const cy = radius + MARGIN + NODE_SIZE.aux.height / 2;
+
+  allNodes.forEach((node, i) => {
+    const angle = (2 * Math.PI * i) / n - Math.PI / 2;
+    const isStock = ir.stocks.some((s) => s.id === node.id);
+    const kind: NodeKind = isStock ? "stock" : "aux";
+    const algorithmX = cx + radius * Math.cos(angle) - NODE_SIZE[kind].width / 2;
+    const algorithmY = cy + radius * Math.sin(angle) - NODE_SIZE[kind].height / 2;
+    nodes.push(
+      getLayoutNode(node.id, kind, node.position?.x ?? algorithmX, node.position?.y ?? algorithmY),
+    );
+  });
+
+  for (const c of ir.connections) {
+    edges.push({
+      id: `conn-${c.from}-${c.to}`,
+      kind: "connection",
+      source: c.from,
+      target: c.to,
+      polarity: c.polarity,
+      points: [],
+    });
+  }
+
+  return { nodes, edges };
+}

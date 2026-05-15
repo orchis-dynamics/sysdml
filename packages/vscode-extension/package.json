@@ -1,0 +1,61 @@
+{
+  "name": "sysdml-vscode",
+  "displayName": "SysDML",
+  "description": "Language support for SysDML system dynamics models",
+  "version": "0.1.0",
+  "publisher": "orchis-dynamics",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/orchis-dynamics/sysdml"
+  },
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": ["Programming Languages"],
+  "activationEvents": ["onLanguage:sysdml"],
+  "icon": "assets/images/sysdml-logo.png",
+  "main": "./dist/extension.js",
+  "contributes": {
+    "languages": [
+      {
+        "id": "sysdml",
+        "aliases": ["SysDML", "sysdml"],
+        "extensions": [".sysdml"],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "sysdml",
+        "scopeName": "source.sysdml",
+        "path": "./syntaxes/sysdml.tmLanguage.json"
+      }
+    ],
+    "commands": [
+      {
+        "command": "sysdml.openDiagram",
+        "title": "SysDML: Open Diagram"
+      },
+      {
+        "command": "sysdml.refreshDiagram",
+        "title": "SysDML: Refresh Diagram"
+      }
+    ]
+  },
+  "scripts": {
+    "build": "tsc",
+    "package": "vsce package",
+    "build:renderer": "cd ../renderer && npm run build && rm -rf ../vscode-extension/renderer-dist && cp -r dist/ ../vscode-extension/renderer-dist/"
+  },
+  "dependencies": {
+    "vscode-languageclient": "^9.0.0"
+  },
+  "devDependencies": {
+    "@sysdml/ir": "workspace:*",
+    "@sysdml/lsp-server": "workspace:*",
+    "@types/vscode": "^1.85.0",
+    "@types/node": "^20.12.0",
+    "@vscode/vsce": "^2.0.0",
+    "typescript": "^5.4.5"
+  }
+}

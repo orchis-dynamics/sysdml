@@ -1,0 +1,57 @@
+import { describe, it, expect } from "vitest";
+import { getDefinitionLocation } from "../../src/features/definition.js";
+import { parseSource } from "@sysdml/parser";
+
+const SOURCE = `model test
+time {
+  start: 0
+  end: 10
+  step: 1
+}
+stock population {
+  init: 100
+}
+aux birth_rate = 0.02
+flow births {
+  from: null
+  to: population
+  rate: population * birth_rate
+}
+`;
+
+describe("getDefinitionLocation", () => {
+  it("resolves a stock reference in an expression to the stock declaration", () => {
+    const { ast } = parseSource(SOURCE);
+    // 'population' in 'rate: population * birth_rate' — line 14 (1-indexed) = 13 (0-indexed)
+    const result = getDefinitionLocation(ast!, "file:///test.sdml", {
+      line: 13,
+      character: 8,
+    });
+    expect(result).not.toBeNull();
+    // stock population is on line 7 (1-indexed) = line 6 (0-indexed)
+    expect(result!.range.start.line).toBe(6);
+  });
+
+  it("returns null for a position not on an identifier", () => {
+    const { ast } = parseSource(SOURCE);
+    const result = getDefinitionLocation(ast!, "file:///test.sdml", {
+      line: 0,
+      character: 0,
+    });
+    expect(result).toBeNull();
+  });
+
+  it("returns null for a builtin function name (no user declaration)", () => {
+    const src = SOURCE.replace(
+      "rate: population * birth_rate",
+      "rate: ABS(population)",
+    );
+    const { ast } = parseSource(src);
+    // ABS has no user declaration
+    const result = getDefinitionLocation(ast!, "file:///test.sdml", {
+      line: 13,
+      character: 8,
+    });
+    expect(result).toBeNull();
+  });
+});

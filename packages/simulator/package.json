@@ -1,0 +1,21 @@
+{
+  "name": "@sysdml/simulator",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "./dist/src/index.js",
+  "types": "./dist/src/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@sysdml/ir": "workspace:*"
+  },
+  "devDependencies": {
+    "@sysdml/parser": "workspace:*",
+    "@types/node": "^20.12.0",
+    "typescript": "^5.4.5",
+    "vitest": "^4.1.5"
+  }
+}
