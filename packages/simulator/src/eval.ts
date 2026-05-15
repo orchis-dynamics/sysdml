@@ -1,4 +1,4 @@
-import type { IRBinOp, IRExpressionNode } from '@sysdml/ir';
+import type { IRBinaryOperator, IRExpressionNode } from '@sysdml/ir';
 import type { EvalContext } from './types.js';
 import { gfLookup } from './gf.js';
 import { evalBuiltin } from './functions.js';
@@ -9,18 +9,18 @@ const DEFERRED_V2_FUNCTIONS = new Set([
 
 export function evalExpr(node: IRExpressionNode, evalCtx: EvalContext): number {
   switch (node.type) {
-    case 'Num':          return node.value;
-    case 'Ref':          return evalCtx.env[node.id] ?? 0;
+    case 'Number':          return node.value;
+    case 'Reference':          return evalCtx.env[node.id] ?? 0;
     case 'UnaryMinus':   return -evalExpr(node.operand, evalCtx);
     case 'Not':          return evalExpr(node.operand, evalCtx) === 0 ? 1 : 0;
-    case 'BinOp':        return evalBinOp(node.op, evalExpr(node.left, evalCtx), evalExpr(node.right, evalCtx));
+    case 'BinaryOperation':        return evalBinOp(node.op, evalExpr(node.left, evalCtx), evalExpr(node.right, evalCtx));
     case 'IfThenElse':   return evalIfThenElse(node.cond, node.thenBranch, node.elseBranch, evalCtx);
-    case 'GFCall':       return evalGFCall(node.name, node.argument, evalCtx);
+    case 'GraphicalFunctionCall':       return evalGFCall(node.name, node.argument, evalCtx);
     case 'FunctionCall': return evalFunctionCall(node.name, node.args, evalCtx);
   }
 }
 
-function evalBinOp(op: IRBinOp, left: number, right: number): number {
+function evalBinOp(op: IRBinaryOperator, left: number, right: number): number {
   switch (op) {
     case '+':   return left + right;
     case '-':   return left - right;
@@ -85,7 +85,7 @@ function evalFunctionCall(
 
 function evalInit(argNodes: readonly IRExpressionNode[], evalCtx: EvalContext): number {
   const argNode = argNodes[0];
-  if (argNode.type !== 'Ref') {
+  if (argNode.type !== 'Reference') {
     throw new Error('INIT requires a bare identifier argument');
   }
   return evalCtx.initEnv[argNode.id] ?? 0;
@@ -93,7 +93,7 @@ function evalInit(argNodes: readonly IRExpressionNode[], evalCtx: EvalContext): 
 
 function evalPrevious(argNodes: readonly IRExpressionNode[], evalCtx: EvalContext): number {
   const xNode = argNodes[0];
-  if (xNode.type !== 'Ref') {
+  if (xNode.type !== 'Reference') {
     throw new Error('PREVIOUS first argument must be a bare identifier');
   }
   if (evalCtx.sim.t === evalCtx.sim.start) {

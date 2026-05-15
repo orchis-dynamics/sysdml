@@ -34,11 +34,11 @@ function getResultExpression(expressionSource: string): IRExpressionNode {
 		`unexpected diagnostics for ${expressionSource}`,
 	).toHaveLength(0);
 	expect(ir).not.toBeNull();
-	return ir!.aux[ir!.aux.length - 1].expr;
+	return ir!.auxiliaries[ir!.auxiliaries.length - 1].expr;
 }
 
-const createRefNode = (id: string): IRExpressionNode => ({ type: "Ref", id });
-const createNumNode = (value: number): IRExpressionNode => ({ type: "Num", value });
+const createRefNode = (id: string): IRExpressionNode => ({ type: "Reference", id });
+const createNumNode = (value: number): IRExpressionNode => ({ type: "Number", value });
 
 // ── Comparison operators ──────────────────────────────────────────────────────
 
@@ -46,7 +46,7 @@ describe("comparison operators in IR", () => {
 	for (const op of ["<", "<=", ">", ">=", "=", "<>"] as const) {
 		test(`a ${op} b → BinOp(${op})`, () => {
 			expect(getResultExpression(`a ${op} b`)).toEqual({
-				type: "BinOp",
+				type: "BinaryOperation",
 				op,
 				left: createRefNode("a"),
 				right: createRefNode("b"),
@@ -60,7 +60,7 @@ describe("comparison operators in IR", () => {
 describe("logical operators in IR", () => {
 	test("a AND b → BinOp(AND)", () => {
 		expect(getResultExpression("a AND b")).toEqual({
-			type: "BinOp",
+			type: "BinaryOperation",
 			op: "AND",
 			left: createRefNode("a"),
 			right: createRefNode("b"),
@@ -69,7 +69,7 @@ describe("logical operators in IR", () => {
 
 	test("a OR b → BinOp(OR)", () => {
 		expect(getResultExpression("a OR b")).toEqual({
-			type: "BinOp",
+			type: "BinaryOperation",
 			op: "OR",
 			left: createRefNode("a"),
 			right: createRefNode("b"),
@@ -114,7 +114,7 @@ describe("IF/THEN/ELSE in IR", () => {
 		expect(getResultExpression("IF a > 0 THEN b ELSE c")).toEqual({
 			type: "IfThenElse",
 			cond: {
-				type: "BinOp",
+				type: "BinaryOperation",
 				op: ">",
 				left: createRefNode("a"),
 				right: createNumNode(0),
@@ -161,16 +161,16 @@ describe("IF_THEN_ELSE arity errors", () => {
 describe("precedence in IR", () => {
 	test("a + b < c * d → BinOp(<, (a+b), (c*d))", () => {
 		expect(getResultExpression("a + b < c * d")).toEqual({
-			type: "BinOp",
+			type: "BinaryOperation",
 			op: "<",
 			left: {
-				type: "BinOp",
+				type: "BinaryOperation",
 				op: "+",
 				left: createRefNode("a"),
 				right: createRefNode("b"),
 			},
 			right: {
-				type: "BinOp",
+				type: "BinaryOperation",
 				op: "*",
 				left: createRefNode("c"),
 				right: createRefNode("d"),
@@ -180,7 +180,7 @@ describe("precedence in IR", () => {
 
 	test("NOT a OR b → BinOp(OR, Not(a), b)", () => {
 		expect(getResultExpression("NOT a OR b")).toEqual({
-			type: "BinOp",
+			type: "BinaryOperation",
 			op: "OR",
 			left: { type: "Not", operand: createRefNode("a") },
 			right: createRefNode("b"),
@@ -189,10 +189,10 @@ describe("precedence in IR", () => {
 
 	test("a AND b OR c → BinOp(OR, BinOp(AND, a, b), c)", () => {
 		expect(getResultExpression("a AND b OR c")).toEqual({
-			type: "BinOp",
+			type: "BinaryOperation",
 			op: "OR",
 			left: {
-				type: "BinOp",
+				type: "BinaryOperation",
 				op: "AND",
 				left: createRefNode("a"),
 				right: createRefNode("b"),
@@ -207,7 +207,7 @@ describe("precedence in IR", () => {
 describe("C-style aliases produce identical IR", () => {
 	test("a && b → BinOp(AND)", () => {
 		expect(getResultExpression("a && b")).toEqual({
-			type: "BinOp",
+			type: "BinaryOperation",
 			op: "AND",
 			left: createRefNode("a"),
 			right: createRefNode("b"),
@@ -216,7 +216,7 @@ describe("C-style aliases produce identical IR", () => {
 
 	test("a || b → BinOp(OR)", () => {
 		expect(getResultExpression("a || b")).toEqual({
-			type: "BinOp",
+			type: "BinaryOperation",
 			op: "OR",
 			left: createRefNode("a"),
 			right: createRefNode("b"),
@@ -232,7 +232,7 @@ describe("C-style aliases produce identical IR", () => {
 
 	test("a == b → BinOp(=)", () => {
 		expect(getResultExpression("a == b")).toEqual({
-			type: "BinOp",
+			type: "BinaryOperation",
 			op: "=",
 			left: createRefNode("a"),
 			right: createRefNode("b"),
@@ -241,7 +241,7 @@ describe("C-style aliases produce identical IR", () => {
 
 	test("a != b → BinOp(<>)", () => {
 		expect(getResultExpression("a != b")).toEqual({
-			type: "BinOp",
+			type: "BinaryOperation",
 			op: "<>",
 			left: createRefNode("a"),
 			right: createRefNode("b"),
@@ -260,7 +260,7 @@ describe("C-style aliases produce identical IR", () => {
 describe("exponentiation operator in IR", () => {
 	test("a ^ b → BinOp(^)", () => {
 		expect(getResultExpression("a ^ b")).toEqual({
-			type: "BinOp",
+			type: "BinaryOperation",
 			op: "^",
 			left: createRefNode("a"),
 			right: createRefNode("b"),
@@ -269,11 +269,11 @@ describe("exponentiation operator in IR", () => {
 
 	test("a ^ b ^ c is right-associative: a ^ (b ^ c)", () => {
 		expect(getResultExpression("a ^ b ^ c")).toEqual({
-			type: "BinOp",
+			type: "BinaryOperation",
 			op: "^",
 			left: createRefNode("a"),
 			right: {
-				type: "BinOp",
+				type: "BinaryOperation",
 				op: "^",
 				left: createRefNode("b"),
 				right: createRefNode("c"),
@@ -285,7 +285,7 @@ describe("exponentiation operator in IR", () => {
 		expect(getResultExpression("-a ^ b")).toEqual({
 			type: "UnaryMinus",
 			operand: {
-				type: "BinOp",
+				type: "BinaryOperation",
 				op: "^",
 				left: createRefNode("a"),
 				right: createRefNode("b"),
@@ -295,10 +295,10 @@ describe("exponentiation operator in IR", () => {
 
 	test("a ^ b * c is (a ^ b) * c: ^ higher precedence than *", () => {
 		expect(getResultExpression("a ^ b * c")).toEqual({
-			type: "BinOp",
+			type: "BinaryOperation",
 			op: "*",
 			left: {
-				type: "BinOp",
+				type: "BinaryOperation",
 				op: "^",
 				left: createRefNode("a"),
 				right: createRefNode("b"),
@@ -332,7 +332,7 @@ describe("unary plus in IR", () => {
 describe("MOD operator in IR", () => {
 	test("a MOD b → BinOp(MOD)", () => {
 		expect(getResultExpression("a MOD b")).toEqual({
-			type: "BinOp",
+			type: "BinaryOperation",
 			op: "MOD",
 			left: createRefNode("a"),
 			right: createRefNode("b"),
@@ -341,10 +341,10 @@ describe("MOD operator in IR", () => {
 
 	test("a MOD b * c is left-associative: (a MOD b) * c", () => {
 		expect(getResultExpression("a MOD b * c")).toEqual({
-			type: "BinOp",
+			type: "BinaryOperation",
 			op: "*",
 			left: {
-				type: "BinOp",
+				type: "BinaryOperation",
 				op: "MOD",
 				left: createRefNode("a"),
 				right: createRefNode("b"),
@@ -359,7 +359,7 @@ describe("MOD operator in IR", () => {
 describe("arithmetic still compiles unchanged", () => {
 	test("a + b → BinOp(+)", () => {
 		expect(getResultExpression("a + b")).toEqual({
-			type: "BinOp",
+			type: "BinaryOperation",
 			op: "+",
 			left: createRefNode("a"),
 			right: createRefNode("b"),
@@ -368,16 +368,16 @@ describe("arithmetic still compiles unchanged", () => {
 
 	test("a * b - c / d", () => {
 		expect(getResultExpression("a * b - c / d")).toEqual({
-			type: "BinOp",
+			type: "BinaryOperation",
 			op: "-",
 			left: {
-				type: "BinOp",
+				type: "BinaryOperation",
 				op: "*",
 				left: createRefNode("a"),
 				right: createRefNode("b"),
 			},
 			right: {
-				type: "BinOp",
+				type: "BinaryOperation",
 				op: "/",
 				left: createRefNode("c"),
 				right: createRefNode("d"),

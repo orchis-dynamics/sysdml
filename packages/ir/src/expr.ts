@@ -23,7 +23,7 @@ export function compileExpr(
 ): IRExpressionNode {
 	switch (node.type) {
 		case "NumberLiteral":
-			return { type: "Num", value: parseFloat(node.value) };
+			return { type: "Number", value: parseFloat(node.value) };
 
 		case "IdentifierReference": {
 			const uppercasedName = node.name.toUpperCase();
@@ -37,7 +37,7 @@ export function compileExpr(
 					span: node.span,
 				});
 			}
-			return { type: "Ref", id: node.name };
+			return { type: "Reference", id: node.name };
 		}
 
 		case "GroupedExpression":
@@ -64,7 +64,7 @@ export function compileExpr(
 
 		case "BinaryExpression":
 			return {
-				type: "BinOp",
+				type: "BinaryOperation",
 				op: node.op,
 				left: compileExpr(
 					node.left,
@@ -201,8 +201,8 @@ function compileGfCall(
 					errors,
 					syntheticGraphicalFunctions,
 				)
-			: ({ type: "Num", value: 0 } as IRExpressionNode);
-	return { type: "GFCall", name, argument: compiledArgument };
+			: ({ type: "Number", value: 0 } as IRExpressionNode);
+	return { type: "GraphicalFunctionCall", name, argument: compiledArgument };
 }
 
 function compileLookup(
@@ -218,7 +218,7 @@ function compileLookup(
 			code: DiagnosticCode.LOOKUP_TOO_FEW_YPTS,
 			message: `lookup() requires at least 2 y-points (got ${yPointCount < 0 ? 0 : yPointCount})`,
 		});
-		return { type: "Num", value: 0 };
+		return { type: "Number", value: 0 };
 	}
 
 	const ypts: number[] = [];
@@ -229,7 +229,7 @@ function compileLookup(
 				code: DiagnosticCode.LOOKUP_NON_LITERAL_YPTS,
 				message: "lookup() y-values must be numeric literals",
 			});
-			return { type: "Num", value: 0 };
+			return { type: "Number", value: 0 };
 		}
 		ypts.push(literalValue);
 	}
@@ -251,7 +251,7 @@ function compileLookup(
 		errors,
 		syntheticGraphicalFunctions,
 	);
-	return { type: "GFCall", name: id, argument: compiledInput };
+	return { type: "GraphicalFunctionCall", name: id, argument: compiledInput };
 }
 
 function extractLiteralNumber(node: ExpressionNode): number | null {

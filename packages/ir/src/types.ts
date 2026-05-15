@@ -4,7 +4,7 @@ import type { DiagnosticCode } from "./diagnostics.js";
 // IR expression nodes — no spans, no parse artifacts.
 // GroupedExpression is collapsed; tree structure already encodes precedence.
 // Comparison and logical ops return 1.0 (true) or 0.0 (false) at simulation time.
-export type IRBinOp =
+export type IRBinaryOperator =
 	| "+"
 	| "-"
 	| "*"
@@ -21,9 +21,9 @@ export type IRBinOp =
 	| "OR";
 
 export type IRExpressionNode =
-	| { type: "Num"; value: number }
-	| { type: "Ref"; id: string }
-	| { type: "BinOp"; op: IRBinOp; left: IRExpressionNode; right: IRExpressionNode }
+	| { type: "Number"; value: number }
+	| { type: "Reference"; id: string }
+	| { type: "BinaryOperation"; op: IRBinaryOperator; left: IRExpressionNode; right: IRExpressionNode }
 	| { type: "UnaryMinus"; operand: IRExpressionNode }
 	| { type: "Not"; operand: IRExpressionNode }
 	| {
@@ -33,7 +33,7 @@ export type IRExpressionNode =
 			elseBranch: IRExpressionNode;
 	  }
 	| { type: "FunctionCall"; name: string; args: IRExpressionNode[] }
-	| { type: "GFCall"; name: string; argument: IRExpressionNode };
+	| { type: "GraphicalFunctionCall"; name: string; argument: IRExpressionNode };
 
 export interface IRTime {
 	start: number;
@@ -52,7 +52,7 @@ export interface IRStock {
 	position?: IRPosition;
 }
 
-export interface IRAux {
+export interface IRAuxiliary {
 	id: string;
 	expr: IRExpressionNode;
 	position?: IRPosition;
@@ -92,7 +92,7 @@ export interface IR {
 	model: { id: string };
 	time: IRTime;
 	stocks: IRStock[];
-	aux: IRAux[];
+	auxiliaries: IRAuxiliary[];
 	flows: IRFlow[];
 	connections: IRConnection[];
 	graphicalFunctions: IRGraphicalFunction[];

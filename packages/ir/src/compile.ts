@@ -20,7 +20,7 @@ import type {
 	IRDiagnostic,
 	CompileResult,
 	IRStock,
-	IRAux,
+	IRAuxiliary,
 	IRFlow,
 	IRGraphicalFunction,
 	IRPosition,
@@ -318,7 +318,7 @@ export function compileAST(ast: FileNode): CompileResult {
 				message: `Stock '${stockDecl.id}' is missing init`,
 				span: stockDecl.span,
 			});
-			return { id: stockDecl.id, init: { type: "Num", value: 0 }, position: posToIR(stockDecl.position) };
+			return { id: stockDecl.id, init: { type: "Number", value: 0 }, position: posToIR(stockDecl.position) };
 		}
 		return {
 			id: stockDecl.id,
@@ -335,7 +335,7 @@ export function compileAST(ast: FileNode): CompileResult {
 
 	// ── Aux ───────────────────────────────────────────────────────────────────
 
-	const aux: IRAux[] = auxDecls.map((auxDecl) => ({
+	const auxiliaries: IRAuxiliary[] = auxDecls.map((auxDecl) => ({
 		id: auxDecl.id,
 		expr: compileExpr(
 			auxDecl.expr,
@@ -403,7 +403,7 @@ export function compileAST(ast: FileNode): CompileResult {
 				id: flowDecl.id,
 				from,
 				to,
-				rate: { type: "Num", value: 0 },
+				rate: { type: "Number", value: 0 },
 				position: posToIR(flowDecl.position),
 				via: flowDecl.via?.map((p) => ({ x: p.x, y: p.y })),
 			};
@@ -446,7 +446,7 @@ export function compileAST(ast: FileNode): CompileResult {
 		model: { id: ast.model.id },
 		time,
 		stocks,
-		aux,
+		auxiliaries,
 		flows,
 		connections,
 		graphicalFunctions: [

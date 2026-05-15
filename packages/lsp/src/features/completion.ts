@@ -55,7 +55,7 @@ function getAllUserIds(ast: FileNode | null, ir: IR | null): string[] {
   if (ir) {
     return [
       ...ir.stocks.map((s) => s.id),
-      ...ir.aux.map((a) => a.id),
+      ...ir.auxiliaries.map((a) => a.id),
       ...ir.flows.map((f) => f.id),
     ];
   }

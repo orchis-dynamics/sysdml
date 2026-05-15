@@ -1,4 +1,4 @@
-import type { IR, IRAux, IRExpressionNode, IRFlow, IRStock } from '@sysdml/ir';
+import type { IR, IRAuxiliary, IRExpressionNode, IRFlow, IRStock } from '@sysdml/ir';
 import type { SimDiagnostic } from './types.js';
 import { SimDiagnosticCode } from './types.js';
 
@@ -17,7 +17,7 @@ export function desugarIR(ir: IR): { ir: IR; diagnostics: SimDiagnostic[] } {
     counter: 0,
   };
 
-  const transformedAux: IRAux[] = ir.aux.map(a => ({
+  const transformedAux: IRAuxiliary[] = ir.auxiliaries.map(a => ({
     ...a,
     expr: transformExpr(a.expr, state),
   }));
@@ -29,7 +29,7 @@ export function desugarIR(ir: IR): { ir: IR; diagnostics: SimDiagnostic[] } {
 
   const desugaredIR: IR = {
     ...ir,
-    aux: transformedAux,
+    auxiliaries: transformedAux,
     flows: [...transformedFlows, ...state.hiddenFlows],
     stocks: [...ir.stocks, ...state.hiddenStocks],
   };
@@ -39,14 +39,14 @@ export function desugarIR(ir: IR): { ir: IR; diagnostics: SimDiagnostic[] } {
 
 function transformExpr(node: IRExpressionNode, state: DesugarState): IRExpressionNode {
   switch (node.type) {
-    case 'Num':
-    case 'Ref':
+    case 'Number':
+    case 'Reference':
       return node;
     case 'UnaryMinus':
       return { ...node, operand: transformExpr(node.operand, state) };
     case 'Not':
       return { ...node, operand: transformExpr(node.operand, state) };
-    case 'BinOp':
+    case 'BinaryOperation':
       return {
         ...node,
         left: transformExpr(node.left, state),
@@ -59,7 +59,7 @@ function transformExpr(node: IRExpressionNode, state: DesugarState): IRExpressio
         thenBranch: transformExpr(node.thenBranch, state),
         elseBranch: transformExpr(node.elseBranch, state),
       };
-    case 'GFCall':
+    case 'GraphicalFunctionCall':
       return { ...node, argument: transformExpr(node.argument, state) };
     case 'FunctionCall':
       return transformFunctionCall(node.name, node.args, state);
@@ -100,9 +100,9 @@ function nextId(state: DesugarState, prefix: string): string {
 
 function makeStockOutputExpr(stockId: string, delayTimeExpr: IRExpressionNode): IRExpressionNode {
   return {
-    type: 'BinOp',
+    type: 'BinaryOperation',
     op: '/',
-    left: { type: 'Ref', id: stockId },
+    left: { type: 'Reference', id: stockId },
     right: delayTimeExpr,
   };
 }
@@ -114,7 +114,7 @@ function desugarDelay1(args: readonly IRExpressionNode[], state: DesugarState): 
 
   const initValueExpr = initExpr ?? inputExpr;
   const stockInit: IRExpressionNode = {
-    type: 'BinOp',
+    type: 'BinaryOperation',
     op: '*',
     left: initValueExpr,
     right: delayTimeExpr,
@@ -123,9 +123,9 @@ function desugarDelay1(args: readonly IRExpressionNode[], state: DesugarState): 
   const outputExpr = makeStockOutputExpr(stockId, delayTimeExpr);
 
   const flowRate: IRExpressionNode = {
-    type: 'BinOp',
+    type: 'BinaryOperation',
     op: '/',
-    left: { type: 'BinOp', op: '-', left: inputExpr, right: outputExpr },
+    left: { type: 'BinaryOperation', op: '-', left: inputExpr, right: outputExpr },
     right: delayTimeExpr,
   };
 
@@ -148,10 +148,10 @@ function buildStageArgs(
 function desugarDelay3(args: readonly IRExpressionNode[], state: DesugarState): IRExpressionNode {
   const [inputExpr, delayTimeExpr, initExpr] = args;
   const stageDelay: IRExpressionNode = {
-    type: 'BinOp',
+    type: 'BinaryOperation',
     op: '/',
     left: delayTimeExpr,
-    right: { type: 'Num', value: 3 },
+    right: { type: 'Number', value: 3 },
   };
 
   const stage1 = desugarDelay1(buildStageArgs(inputExpr, stageDelay, initExpr), state);
@@ -162,12 +162,12 @@ function desugarDelay3(args: readonly IRExpressionNode[], state: DesugarState): 
 function desugarDelayN(args: readonly IRExpressionNode[], state: DesugarState): IRExpressionNode {
   const [inputExpr, delayTimeExpr, nExpr, initExpr] = args;
 
-  if (nExpr.type !== 'Num') {
+  if (nExpr.type !== 'Number') {
     state.diagnostics.push({
       code: SimDiagnosticCode.INVALID_DELAY_ORDER,
       message: 'DELAYN order must be a numeric literal',
     });
-    return { type: 'Num', value: 0 };
+    return { type: 'Number', value: 0 };
   }
 
   const n = Math.floor(nExpr.value);
@@ -176,14 +176,14 @@ function desugarDelayN(args: readonly IRExpressionNode[], state: DesugarState): 
       code: SimDiagnosticCode.INVALID_DELAY_ORDER,
       message: `DELAYN order must be >= 1, got ${n}`,
     });
-    return { type: 'Num', value: 0 };
+    return { type: 'Number', value: 0 };
   }
 
   const stageDelay: IRExpressionNode = {
-    type: 'BinOp',
+    type: 'BinaryOperation',
     op: '/',
     left: delayTimeExpr,
-    right: { type: 'Num', value: n },
+    right: { type: 'Number', value: n },
   };
 
   let current: IRExpressionNode = inputExpr;
@@ -201,25 +201,25 @@ function desugarSmth1(args: readonly IRExpressionNode[], state: DesugarState): I
   const stockInit: IRExpressionNode = initExpr ?? inputExpr;
 
   const flowRate: IRExpressionNode = {
-    type: 'BinOp',
+    type: 'BinaryOperation',
     op: '/',
-    left: { type: 'BinOp', op: '-', left: inputExpr, right: { type: 'Ref', id: stockId } },
+    left: { type: 'BinaryOperation', op: '-', left: inputExpr, right: { type: 'Reference', id: stockId } },
     right: avgTimeExpr,
   };
 
   state.hiddenStocks.push({ id: stockId, init: stockInit });
   state.hiddenFlows.push({ id: flowId, from: null, to: stockId, rate: flowRate });
 
-  return { type: 'Ref', id: stockId };
+  return { type: 'Reference', id: stockId };
 }
 
 function desugarSmth3(args: readonly IRExpressionNode[], state: DesugarState): IRExpressionNode {
   const [inputExpr, avgTimeExpr, initExpr] = args;
   const stageTime: IRExpressionNode = {
-    type: 'BinOp',
+    type: 'BinaryOperation',
     op: '/',
     left: avgTimeExpr,
-    right: { type: 'Num', value: 3 },
+    right: { type: 'Number', value: 3 },
   };
 
   const stage1 = desugarSmth1(buildStageArgs(inputExpr, stageTime, initExpr), state);
@@ -230,12 +230,12 @@ function desugarSmth3(args: readonly IRExpressionNode[], state: DesugarState): I
 function desugarSmthN(args: readonly IRExpressionNode[], state: DesugarState): IRExpressionNode {
   const [inputExpr, avgTimeExpr, nExpr, initExpr] = args;
 
-  if (nExpr.type !== 'Num') {
+  if (nExpr.type !== 'Number') {
     state.diagnostics.push({
       code: SimDiagnosticCode.INVALID_DELAY_ORDER,
       message: 'SMTHN order must be a numeric literal',
     });
-    return { type: 'Num', value: 0 };
+    return { type: 'Number', value: 0 };
   }
 
   const n = Math.floor(nExpr.value);
@@ -244,14 +244,14 @@ function desugarSmthN(args: readonly IRExpressionNode[], state: DesugarState): I
       code: SimDiagnosticCode.INVALID_DELAY_ORDER,
       message: `SMTHN order must be >= 1, got ${n}`,
     });
-    return { type: 'Num', value: 0 };
+    return { type: 'Number', value: 0 };
   }
 
   const stageTime: IRExpressionNode = {
-    type: 'BinOp',
+    type: 'BinaryOperation',
     op: '/',
     left: avgTimeExpr,
-    right: { type: 'Num', value: n },
+    right: { type: 'Number', value: n },
   };
 
   let current: IRExpressionNode = inputExpr;
@@ -267,10 +267,10 @@ function desugarTrend(args: readonly IRExpressionNode[], state: DesugarState): I
   const smoothRef = desugarSmth1(smthArgs, state);
 
   return {
-    type: 'BinOp',
+    type: 'BinaryOperation',
     op: '/',
-    left: { type: 'BinOp', op: '-', left: inputExpr, right: smoothRef },
-    right: { type: 'BinOp', op: '*', left: avgTimeExpr, right: smoothRef },
+    left: { type: 'BinaryOperation', op: '-', left: inputExpr, right: smoothRef },
+    right: { type: 'BinaryOperation', op: '*', left: avgTimeExpr, right: smoothRef },
   };
 }
 
@@ -280,14 +280,14 @@ function desugarForcst(args: readonly IRExpressionNode[], state: DesugarState): 
   const trendExpr = desugarTrend(trendArgs, state);
 
   return {
-    type: 'BinOp',
+    type: 'BinaryOperation',
     op: '*',
     left: inputExpr,
     right: {
-      type: 'BinOp',
+      type: 'BinaryOperation',
       op: '+',
-      left: { type: 'Num', value: 1 },
-      right: { type: 'BinOp', op: '*', left: trendExpr, right: horizonExpr },
+      left: { type: 'Number', value: 1 },
+      right: { type: 'BinaryOperation', op: '*', left: trendExpr, right: horizonExpr },
     },
   };
 }

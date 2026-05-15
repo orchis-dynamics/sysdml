@@ -1,20 +1,20 @@
 import { describe, test, expect } from 'vitest';
 import { toposort } from '../src/toposort.js';
-import type { IRAux, IRExpressionNode } from '@sysdml/ir';
+import type { IRAuxiliary, IRExpressionNode } from '@sysdml/ir';
 
 function num(value: number): IRExpressionNode {
-  return { type: 'Num', value };
+  return { type: 'Number', value };
 }
 
 function ref(id: string): IRExpressionNode {
-  return { type: 'Ref', id };
+  return { type: 'Reference', id };
 }
 
 function binop(left: IRExpressionNode, right: IRExpressionNode): IRExpressionNode {
-  return { type: 'BinOp', op: '+', left, right };
+  return { type: 'BinaryOperation', op: '+', left, right };
 }
 
-function aux(id: string, expr: IRExpressionNode): IRAux {
+function aux(id: string, expr: IRExpressionNode): IRAuxiliary {
   return { id, expr };
 }
 

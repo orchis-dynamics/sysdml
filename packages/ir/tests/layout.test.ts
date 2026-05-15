@@ -37,12 +37,12 @@ describe("IR layout — stock", () => {
 describe("IR layout — aux", () => {
 	test("aux with metadata block position threads to IR", () => {
 		const ir = compile(`${BASE}\nstock s { init: 0 }\naux birth_rate = 0.02 { position: { x: 200, y: 300 } }`);
-		expect(ir.aux[0].position).toEqual({ x: 200, y: 300 });
+		expect(ir.auxiliaries[0].position).toEqual({ x: 200, y: 300 });
 	});
 
 	test("aux expr form has no position in IR", () => {
 		const ir = compile(`${BASE}\nstock s { init: 0 }\naux birth_rate = 0.02`);
-		expect(ir.aux[0].position).toBeUndefined();
+		expect(ir.auxiliaries[0].position).toBeUndefined();
 	});
 });
 
