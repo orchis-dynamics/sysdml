@@ -290,46 +290,46 @@ Every node has a `span: { start: { line, col }, end: { line, col } }` (1-based).
 
 | Node            | Fields                                      |
 | --------------- | ------------------------------------------- |
-| `FileNode`      | `model: ModelDeclNode`, `decls: DeclNode[]` |
-| `ModelDeclNode` | `id: string`, `idSpan`                      |
+| `FileNode`      | `model: ModelDeclarationNode`, `decls: DeclarationNode[]` |
+| `ModelDeclarationNode` | `id: string`, `idSpan`                      |
 
-### Declaration nodes (`DeclNode`)
+### Declaration nodes (`DeclarationNode`)
 
 | Node                 | Fields                                                                                                                                                        |
 | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `TimeDeclNode`       | `props: TimePropNode[]`                                                                                                                                       |
-| `TimePropNode`       | `key: "start" \| "end" \| "step"`, `value: NumberLitNode`                                                                                                     |
-| `StockDeclNode`      | `id: string`, `idSpan`, `props: StockPropNode[]`                                                                                                              |
-| `StockPropNode`      | `init: ExprNode`                                                                                                                                              |
-| `FlowDeclNode`       | `id: string`, `idSpan`, `props: FlowPropNode[]`                                                                                                               |
-| `FlowPropNode`       | `key: "from" \| "to"`, `value: EndpointNode` — or — `key: "rate"`, `value: ExprNode`                                                                          |
+| `TimeDeclarationNode`       | `props: TimePropertyNode[]`                                                                                                                                       |
+| `TimePropertyNode`       | `key: "start" \| "end" \| "step"`, `value: NumberLiteralNode`                                                                                                     |
+| `StockDeclarationNode`      | `id: string`, `idSpan`, `props: StockPropertyNode[]`                                                                                                              |
+| `StockPropertyNode`      | `init: ExpressionNode`                                                                                                                                              |
+| `FlowDeclarationNode`       | `id: string`, `idSpan`, `props: FlowPropertyNode[]`                                                                                                               |
+| `FlowPropertyNode`       | `key: "from" \| "to"`, `value: EndpointNode` — or — `key: "rate"`, `value: ExpressionNode`                                                                          |
 | `EndpointNode`       | `value: string \| null`                                                                                                                                       |
-| `AuxDeclNode`        | `id: string`, `idSpan`, `expr: ExprNode`, `position?: PosNode` |
-| `GfDeclNode`         | `id: string`, `idSpan`, `body: GfBodyNode`                                                                                                                    |
-| `ConnectionDeclNode` | `from: string`, `fromSpan`, `polarity: "+" \| "-" \| "=>"`, `to: string`, `toSpan`                                                                            |
+| `AuxiliaryDeclarationNode`        | `id: string`, `idSpan`, `expr: ExpressionNode`, `position?: PositionNode` |
+| `GraphicalFunctionDeclarationNode`         | `id: string`, `idSpan`, `body: GraphicalFunctionBodyNode`                                                                                                                    |
+| `ConnectionDeclarationNode` | `from: string`, `fromSpan`, `polarity: "+" \| "-" \| "=>"`, `to: string`, `toSpan`                                                                            |
 
 ### Graphical function nodes
 
 | Node               | Fields                                                                                                      |
 | ------------------ | ----------------------------------------------------------------------------------------------------------- |
-| `GfBodyNode`       | `props: GfPropNode[]`                                                                                       |
-| `GfPropNode`       | `key: "kind"`, `value: string` — or — `key: "xscale" \| "xpts" \| "ypts" \| "yscale"`, `value: NumListNode` |
-| `NumListNode`      | `values: SignedNumberNode[]`                                                                                |
-| `SignedNumberNode` | `negative: boolean`, `lit: NumberLitNode`                                                                   |
+| `GraphicalFunctionBodyNode`       | `props: GraphicalFunctionPropertyNode[]`                                                                                       |
+| `GraphicalFunctionPropertyNode`       | `key: "kind"`, `value: string` — or — `key: "xscale" \| "xpts" \| "ypts" \| "yscale"`, `value: NumberListNode` |
+| `NumberListNode`      | `values: SignedNumberNode[]`                                                                                |
+| `SignedNumberNode` | `negative: boolean`, `lit: NumberLiteralNode`                                                                   |
 
-### Expression nodes (`ExprNode`)
+### Expression nodes (`ExpressionNode`)
 
 | Node               | Fields                                                           |
 | ------------------ | ---------------------------------------------------------------- |
-| `NumberLitNode`    | `value: string`                                                  |
-| `IdentRefNode`     | `name: string`                                                   |
-| `GroupedExprNode`  | `expr: ExprNode`                                                 |
-| `UnaryExprNode`    | `op: "-" \| "+" \| "NOT"`, `operand: ExprNode`                   |
-| `BinaryExprNode`   | `op: BinaryOp`, `left: ExprNode`, `right: ExprNode`              |
-| `FunctionCallNode` | `name: string`, `nameSpan`, `args: ExprNode[]`                   |
-| `IfThenElseNode`   | `cond: ExprNode`, `thenBranch: ExprNode`, `elseBranch: ExprNode` |
+| `NumberLiteralNode`    | `value: string`                                                  |
+| `IdentifierReferenceNode`     | `name: string`                                                   |
+| `GroupedExpressionNode`  | `expr: ExpressionNode`                                                 |
+| `UnaryExpressionNode`    | `op: "-" \| "+" \| "NOT"`, `operand: ExpressionNode`                   |
+| `BinaryExpressionNode`   | `op: BinaryOperator`, `left: ExpressionNode`, `right: ExpressionNode`              |
+| `FunctionCallNode` | `name: string`, `nameSpan`, `args: ExpressionNode[]`                   |
+| `IfThenElseNode`   | `cond: ExpressionNode`, `thenBranch: ExpressionNode`, `elseBranch: ExpressionNode` |
 
-`BinaryOp` values: `"+"  "-"  "*"  "/"  "^"  "MOD"  "<"  "<="  ">"  ">="  "="  "<>"  "AND"  "OR"`
+`BinaryOperator` values: `"+"  "-"  "*"  "/"  "^"  "MOD"  "<"  "<="  ">"  ">="  "="  "<>"  "AND"  "OR"`
 
 ---
 
