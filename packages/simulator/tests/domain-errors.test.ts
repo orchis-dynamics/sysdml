@@ -74,4 +74,50 @@ aux result = LOG10(0)
 `);
 		expect(result.diagnostics[0]?.code).toBe(SimDiagnosticCode.MATH_DOMAIN_ERROR);
 	});
+
+	test('^ with negative base and integer exponent works (legal in ℝ)', () => {
+		const result = simulate(`
+model m
+time { start: 0 end: 0 step: 1 }
+stock s { init: 0 }
+aux result = (0 - 2) ^ 3
+`);
+		expect(result.diagnostics).toHaveLength(0);
+		expect(result.rows[0].result).toBe(-8);
+	});
+
+	test('^ with negative base and non-integer exponent halts', () => {
+		const result = simulate(`
+model m
+time { start: 0 end: 1 step: 1 }
+stock s { init: 0 }
+aux result = (0 - 2) ^ 0.5
+`);
+		expect(result.diagnostics[0]?.code).toBe(SimDiagnosticCode.MATH_DOMAIN_ERROR);
+		expect(result.diagnostics[0]?.message).toContain('negative base');
+	});
+});
+
+describe('INIT requires a bare identifier', () => {
+	test('INIT(expression) halts with INIT_REQUIRES_IDENT', () => {
+		const result = simulate(`
+model m
+time { start: 0 end: 1 step: 1 }
+stock s { init: 0 }
+aux x = 5
+aux result = INIT(x + 1)
+`);
+		expect(result.diagnostics[0]?.code).toBe(SimDiagnosticCode.INIT_REQUIRES_IDENT);
+	});
+
+	test('INIT(bare_ident) works', () => {
+		const result = simulate(`
+model m
+time { start: 0 end: 0 step: 1 }
+stock s { init: 7 }
+aux result = INIT(s)
+`);
+		expect(result.diagnostics).toHaveLength(0);
+		expect(result.rows[0].result).toBe(7);
+	});
 });

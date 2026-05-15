@@ -1,5 +1,7 @@
 import { describe, test, expect } from 'vitest';
 import { buildIR, evalAux, runExpr, runModel } from './helpers.js';
+import { EulerSimulator } from '../src/index.js';
+import { SimDiagnosticCode } from '../src/types.js';
 
 // ── Basic eval ──────────────────────────────────────────────────────────────
 
@@ -267,9 +269,18 @@ describe('division by zero: IEEE 754 propagation (decision pending)', () => {
 
 // ── Deferred v0.2 functions ─────────────────────────────────────────────────
 
-describe('deferred v0.2 functions throw with clear message', () => {
-  test('RANDOM throws mentioning v0.2', () => {
-    expect(() => evalAux('RANDOM(0, 1)')).toThrow('v0.2');
+describe('deferred v0.2 functions halt with FUNCTION_NOT_IN_V1 diagnostic', () => {
+  test('RANDOM emits FUNCTION_NOT_IN_V1 mentioning v0.2', () => {
+    const ir = buildIR(`
+model m
+time { start: 0 end: 0 step: 1 }
+stock s { init: 0 }
+aux result = RANDOM(0, 1)
+`);
+    const { diagnostics, rows } = new EulerSimulator().simulate(ir);
+    expect(rows).toEqual([]);
+    expect(diagnostics[0]?.code).toBe(SimDiagnosticCode.FUNCTION_NOT_IN_V1);
+    expect(diagnostics[0]?.message).toContain('v0.2');
   });
 });
 
