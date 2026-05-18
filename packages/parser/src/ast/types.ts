@@ -221,8 +221,10 @@ export interface FileNode {
 	type: "File";
 	/** The entry / first declared model. Always present. */
 	model: ModelDeclarationNode;
-	/** Surplus model declarations beyond the entry. Empty in v0.1; the IR
-	 * compile step rejects any element here with MULTI_MODEL_NOT_SUPPORTED. */
+	/** Surplus model declarations beyond the entry. Always empty in v0.1
+	 * source files; the IR compile pass will populate a
+	 * `MULTI_MODEL_NOT_SUPPORTED` diagnostic for each element here once
+	 * Task 5 lands (currently dropped silently by the compiler). */
 	extraModels: ModelDeclarationNode[];
 	decls: DeclarationNode[];
 	span: Span;
