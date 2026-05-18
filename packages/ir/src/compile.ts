@@ -195,11 +195,11 @@ export function compileAST(ast: FileNode): CompileResult {
 	// (future-proofing for submodels); any extra model declaration here is
 	// rejected with a diagnostic and ignored by the rest of the compile pass.
 	// These are non-fatal: the entry model still compiles into the IR.
-	for (const extra of ast.extraModels) {
+	for (const submodel of ast.submodels) {
 		nonFatalDiagnostics.push({
 			code: DiagnosticCode.MULTI_MODEL_NOT_SUPPORTED,
-			message: `Multi-model files are not supported in v0.1 (extra model '${extra.id}'). Only the first model declaration is compiled.`,
-			span: extra.span,
+			message: `Multi-model files are not supported in v0.1 (submodel '${submodel.id}'). Only the entry model declaration is compiled.`,
+			span: submodel.span,
 		});
 	}
 

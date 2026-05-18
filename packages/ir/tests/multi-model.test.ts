@@ -46,7 +46,7 @@ describe("MULTI_MODEL_NOT_SUPPORTED (B1)", () => {
 		expect(multi[1].message).toContain("sub_b");
 	});
 
-	test("the entry model still compiles into the IR even when extras are rejected", () => {
+	test("the entry model still compiles into the IR even when submodels are rejected", () => {
 		const { ast } = parseSource(
 			`model main\nmodel sub\ntime { start: 0 end: 10 step: 1 }\nstock s { init: 0 }`,
 		);
