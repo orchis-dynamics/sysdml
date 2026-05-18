@@ -1,5 +1,7 @@
 import { describe, test, expect } from 'vitest';
 import { buildIR, evalAux, runExpr, runModel } from './helpers.js';
+import { EulerSimulator } from '../src/index.js';
+import { SimDiagnosticCode } from '../src/types.js';
 
 // ── Basic eval ──────────────────────────────────────────────────────────────
 
@@ -254,23 +256,31 @@ aux smoothed = SMTH1(input_val, 5)
   });
 });
 
-// ── IEEE 754 propagation (D1) ───────────────────────────────────────────────
+// ── Domain semantics ────────────────────────────────────────────────────────
+// Division by zero still propagates IEEE 754 — decision pending (see stdlib.md).
+// LN/LOG10/SQRT halt with a MATH_DOMAIN_ERROR diagnostic — see domain-errors.test.ts.
 
-describe('IEEE 754 propagation (D1): domain violations do not throw', () => {
+describe('division by zero: IEEE 754 propagation (decision pending)', () => {
   test('1/0 → Infinity does not abort simulation', () => {
     expect(() => evalAux('1 / 0')).not.toThrow();
     expect(evalAux('1 / 0')).toBe(Infinity);
   });
-
-  test('LN(0) → -Infinity', () => expect(evalAux('LN(0)')).toBe(-Infinity));
-  test('SQRT(-1) → NaN',     () => expect(evalAux('SQRT(-1)')).toBeNaN());
 });
 
 // ── Deferred v0.2 functions ─────────────────────────────────────────────────
 
-describe('deferred v0.2 functions throw with clear message', () => {
-  test('RANDOM throws mentioning v0.2', () => {
-    expect(() => evalAux('RANDOM(0, 1)')).toThrow('v0.2');
+describe('deferred v0.2 functions halt with FUNCTION_NOT_IN_V1 diagnostic', () => {
+  test('RANDOM emits FUNCTION_NOT_IN_V1 mentioning v0.2', () => {
+    const ir = buildIR(`
+model m
+time { start: 0 end: 0 step: 1 }
+stock s { init: 0 }
+aux result = RANDOM(0, 1)
+`);
+    const { diagnostics, rows } = new EulerSimulator().simulate(ir);
+    expect(rows).toEqual([]);
+    expect(diagnostics[0]?.code).toBe(SimDiagnosticCode.FUNCTION_NOT_IN_V1);
+    expect(diagnostics[0]?.message).toContain('v0.2');
   });
 });
 

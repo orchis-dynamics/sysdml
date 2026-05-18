@@ -28,6 +28,7 @@ export const SimDiagnosticCode = {
   INVALID_DELAY_ORDER: 'INVALID_DELAY_ORDER',
   WARN_PULSE_INTERVAL: 'WARN_PULSE_INTERVAL',
   FUNCTION_NOT_IN_V1:  'FUNCTION_NOT_IN_V1',
+  MATH_DOMAIN_ERROR:   'MATH_DOMAIN_ERROR',
 } as const;
 
 export type SimDiagnosticCode = typeof SimDiagnosticCode[keyof typeof SimDiagnosticCode];
@@ -35,6 +36,13 @@ export type SimDiagnosticCode = typeof SimDiagnosticCode[keyof typeof SimDiagnos
 export interface SimDiagnostic {
   code: SimDiagnosticCode;
   message: string;
+}
+
+export class SimulationHaltedError extends Error {
+  constructor(public readonly diagnostic: SimDiagnostic) {
+    super(diagnostic.message);
+    this.name = 'SimulationHaltedError';
+  }
 }
 
 export interface SimulationResult {

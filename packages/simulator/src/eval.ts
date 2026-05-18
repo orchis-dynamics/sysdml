@@ -1,5 +1,6 @@
 import type { IRBinaryOperator, IRExpressionNode } from '@sysdml/ir';
 import type { EvalContext } from './types.js';
+import { SimDiagnosticCode, SimulationHaltedError } from './types.js';
 import { gfLookup } from './gf.js';
 import { evalBuiltin } from './functions.js';
 
@@ -26,7 +27,7 @@ function evalBinOp(op: IRBinaryOperator, left: number, right: number): number {
     case '-':   return left - right;
     case '*':   return left * right;
     case '/':   return left / right;
-    case '^':   return Math.pow(left, right);
+    case '^':   return power(left, right);
     case 'MOD': return flooredMod(left, right);
     case '<':   return left <  right ? 1 : 0;
     case '<=':  return left <= right ? 1 : 0;
@@ -41,6 +42,16 @@ function evalBinOp(op: IRBinaryOperator, left: number, right: number): number {
       throw new Error(`Unknown binary operator: ${exhaustive}`);
     }
   }
+}
+
+function power(base: number, exponent: number): number {
+  if (base < 0 && !Number.isInteger(exponent)) {
+    throw new SimulationHaltedError({
+      code: SimDiagnosticCode.MATH_DOMAIN_ERROR,
+      message: `${base}^${exponent} is undefined in the reals — negative base requires an integer exponent`,
+    });
+  }
+  return Math.pow(base, exponent);
 }
 
 function flooredMod(dividend: number, divisor: number): number {
@@ -76,7 +87,10 @@ function evalFunctionCall(
   if (name === 'PREVIOUS') return evalPrevious(argNodes, evalCtx);
 
   if (DEFERRED_V2_FUNCTIONS.has(name)) {
-    throw new Error(`${name} is not available in v0.1 — deferred to v0.2`);
+    throw new SimulationHaltedError({
+      code: SimDiagnosticCode.FUNCTION_NOT_IN_V1,
+      message: `${name} is not available in v0.1 — deferred to v0.2`,
+    });
   }
 
   const args = argNodes.map(argNode => evalExpr(argNode, evalCtx));
@@ -86,7 +100,10 @@ function evalFunctionCall(
 function evalInit(argNodes: readonly IRExpressionNode[], evalCtx: EvalContext): number {
   const argNode = argNodes[0];
   if (argNode.type !== 'Reference') {
-    throw new Error('INIT requires a bare identifier argument');
+    throw new SimulationHaltedError({
+      code: SimDiagnosticCode.INIT_REQUIRES_IDENT,
+      message: 'INIT requires a bare identifier argument',
+    });
   }
   return evalCtx.initEnv[argNode.id] ?? 0;
 }

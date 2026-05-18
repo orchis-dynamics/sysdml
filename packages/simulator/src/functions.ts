@@ -1,13 +1,14 @@
 import type { SimContext } from './types.js';
+import { SimDiagnosticCode, SimulationHaltedError } from './types.js';
 
 export function evalBuiltin(name: string, args: number[], ctx: SimContext): number {
   switch (name) {
     case 'ABS':    return Math.abs(args[0]);
     case 'INT':    return Math.floor(args[0]);
-    case 'SQRT':   return Math.sqrt(args[0]);
+    case 'SQRT':   return requirePositive('SQRT', args[0], true, Math.sqrt);
     case 'EXP':    return Math.exp(args[0]);
-    case 'LN':     return Math.log(args[0]);
-    case 'LOG10':  return Math.log10(args[0]);
+    case 'LN':     return requirePositive('LN', args[0], false, Math.log);
+    case 'LOG10':  return requirePositive('LOG10', args[0], false, Math.log10);
     case 'SIN':    return Math.sin(args[0]);
     case 'COS':    return Math.cos(args[0]);
     case 'TAN':    return Math.tan(args[0]);
@@ -29,6 +30,23 @@ export function evalBuiltin(name: string, args: number[], ctx: SimContext): numb
     case 'SAFEDIV':   return args[1] === 0 ? args[2] : args[0] / args[1];
     default: throw new Error(`Built-in function '${name}' is not yet implemented`);
   }
+}
+
+function requirePositive(
+  name: string,
+  x: number,
+  allowZero: boolean,
+  fn: (n: number) => number,
+): number {
+  const violates = allowZero ? x < 0 : x <= 0;
+  if (violates) {
+    const bound = allowZero ? '>= 0' : '> 0';
+    throw new SimulationHaltedError({
+      code: SimDiagnosticCode.MATH_DOMAIN_ERROR,
+      message: `${name}(${x}) is out of domain — argument must be ${bound}`,
+    });
+  }
+  return fn(x);
 }
 
 function evalStep(height: number, startTime: number, t: number): number {

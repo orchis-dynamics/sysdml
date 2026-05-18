@@ -2,6 +2,7 @@ import type { Plugin, ViteDevServer } from "vite";
 import { WebSocketServer, WebSocket } from "ws";
 import chokidar from "chokidar";
 import { readFileSync } from "node:fs";
+import type { EventEmitter } from "node:events";
 import { parseSource } from "@sysdml/parser";
 import { compileAST } from "@sysdml/ir";
 import type { IR } from "@sysdml/ir";
@@ -84,6 +85,7 @@ export function sysdmlDev(options: SysdmlDevOptions): Plugin {
         return;
       }
 
+      const httpServer: EventEmitter = server.httpServer;
       const handleUpgrade = (
         request: import("node:http").IncomingMessage,
         socket: import("node:stream").Duplex,
@@ -95,7 +97,7 @@ export function sysdmlDev(options: SysdmlDevOptions): Plugin {
           });
         }
       };
-      server.httpServer.on("upgrade", handleUpgrade);
+      httpServer.on("upgrade", handleUpgrade);
 
       wss.on("connection", (ws: WebSocket) => {
         clients.add(ws);
@@ -122,7 +124,7 @@ export function sysdmlDev(options: SysdmlDevOptions): Plugin {
       });
 
       return async () => {
-        server.httpServer?.off("upgrade", handleUpgrade);
+        httpServer.off("upgrade", handleUpgrade);
         await watcher.close();
         await new Promise<void>((resolve) => wss.close(() => resolve()));
         clients.clear();
