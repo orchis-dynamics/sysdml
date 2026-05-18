@@ -179,7 +179,8 @@ function validateGraphicalFunctionBody(
 
 export function compileAST(ast: FileNode): CompileResult {
 	const errors: IRDiagnostic[] = [];
-	const warnings: IRDiagnostic[] = [];
+	// Diagnostics that are reported but do not block IR emission (e.g. v0.1 multi-model rejection).
+	const nonFatalDiagnostics: IRDiagnostic[] = [];
 
 	// ── Collect typed decls ───────────────────────────────────────────────────
 
@@ -194,9 +195,9 @@ export function compileAST(ast: FileNode): CompileResult {
 	// v0.1 supports a single model per file. The grammar accepts model_decl+
 	// (future-proofing for submodels); any extra model declaration here is
 	// rejected with a diagnostic and ignored by the rest of the compile pass.
-	// These are non-fatal warnings: the entry model still compiles into the IR.
+	// These are non-fatal: the entry model still compiles into the IR.
 	for (const extra of ast.extraModels) {
-		warnings.push({
+		nonFatalDiagnostics.push({
 			code: DiagnosticCode.MULTI_MODEL_NOT_SUPPORTED,
 			message: `Multi-model files are not supported in v0.1 (extra model '${extra.id}'). Only the first model declaration is compiled.`,
 			span: extra.span,
@@ -452,7 +453,8 @@ export function compileAST(ast: FileNode): CompileResult {
 	// ── Emit ──────────────────────────────────────────────────────────────────
 
 	if (errors.length > 0) {
-		return { ir: null, diagnostics: [...warnings, ...errors] };
+		// Non-fatal diagnostics precede fatal ones; within each group, source order is preserved.
+		return { ir: null, diagnostics: [...nonFatalDiagnostics, ...errors] };
 	}
 
 	const ir: IR = {
@@ -469,5 +471,5 @@ export function compileAST(ast: FileNode): CompileResult {
 		],
 	};
 
-	return { ir, diagnostics: warnings };
+	return { ir, diagnostics: nonFatalDiagnostics };
 }
