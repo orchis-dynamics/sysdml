@@ -148,9 +148,13 @@ export class ASTBuilder {
 	}
 
 	private file(ctx: FileContext): FileNode {
+		const modelContexts = ctx.modelDecl();
+		const models = modelContexts.map((mc) => this.modelDecl(mc));
+		const [entry, ...extras] = models;
 		return {
 			type: "File",
-			model: this.modelDecl(ctx.modelDecl()),
+			model: entry,
+			extraModels: extras,
 			decls: ctx.decl().map((declContext) => this.decl(declContext)),
 			span: spanOf(ctx),
 		};

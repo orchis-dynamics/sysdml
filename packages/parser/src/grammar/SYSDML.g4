@@ -3,7 +3,7 @@ grammar SYSDML;
 // ─── Parser Rules ────────────────────────────────────────────────────────────
 
 file
-    : modelDecl decl* EOF
+    : modelDecl+ decl* EOF
     ;
 
 modelDecl
