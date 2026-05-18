@@ -179,6 +179,7 @@ function validateGraphicalFunctionBody(
 
 export function compileAST(ast: FileNode): CompileResult {
 	const errors: IRDiagnostic[] = [];
+	const warnings: IRDiagnostic[] = [];
 
 	// ── Collect typed decls ───────────────────────────────────────────────────
 
@@ -188,6 +189,19 @@ export function compileAST(ast: FileNode): CompileResult {
 	const flowDecls = ast.decls.filter(isFlowDeclaration);
 	const connectionDecls = ast.decls.filter(isConnectionDeclaration);
 	const graphicalFunctionDecls = ast.decls.filter(isGraphicalFunctionDeclaration);
+
+	// ── Multi-model rejection (B1) ────────────────────────────────────────────
+	// v0.1 supports a single model per file. The grammar accepts model_decl+
+	// (future-proofing for submodels); any extra model declaration here is
+	// rejected with a diagnostic and ignored by the rest of the compile pass.
+	// These are non-fatal warnings: the entry model still compiles into the IR.
+	for (const extra of ast.extraModels) {
+		warnings.push({
+			code: DiagnosticCode.MULTI_MODEL_NOT_SUPPORTED,
+			message: `Multi-model files are not supported in v0.1 (extra model '${extra.id}'). Only the first model declaration is compiled.`,
+			span: extra.span,
+		});
+	}
 
 	// ── Structural validation ─────────────────────────────────────────────────
 
@@ -438,7 +452,7 @@ export function compileAST(ast: FileNode): CompileResult {
 	// ── Emit ──────────────────────────────────────────────────────────────────
 
 	if (errors.length > 0) {
-		return { ir: null, diagnostics: errors };
+		return { ir: null, diagnostics: [...warnings, ...errors] };
 	}
 
 	const ir: IR = {
@@ -455,5 +469,5 @@ export function compileAST(ast: FileNode): CompileResult {
 		],
 	};
 
-	return { ir, diagnostics: [] };
+	return { ir, diagnostics: warnings };
 }
