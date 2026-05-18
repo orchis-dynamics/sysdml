@@ -12,16 +12,7 @@ let client: LanguageClient | undefined;
 let diagramPanel: DiagramPanel | undefined;
 
 export function activate(context: vscode.ExtensionContext): void {
-  const serverModule = context.asAbsolutePath(
-    path.join(
-      "node_modules",
-      "@sysdml",
-      "lsp-server",
-      "dist",
-      "src",
-      "server.js",
-    ),
-  );
+  const serverModule = context.asAbsolutePath(path.join("dist", "server.js"));
 
   const serverOptions: ServerOptions = {
     run: { module: serverModule, transport: TransportKind.stdio },
