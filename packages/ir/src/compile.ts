@@ -179,7 +179,6 @@ function validateGraphicalFunctionBody(
 
 export function compileAST(ast: FileNode): CompileResult {
 	const errors: IRDiagnostic[] = [];
-	// Diagnostics that are reported but do not block IR emission (e.g. v0.1 multi-model rejection).
 	const nonFatalDiagnostics: IRDiagnostic[] = [];
 
 	// ── Collect typed decls ───────────────────────────────────────────────────
@@ -453,7 +452,6 @@ export function compileAST(ast: FileNode): CompileResult {
 	// ── Emit ──────────────────────────────────────────────────────────────────
 
 	if (errors.length > 0) {
-		// Non-fatal diagnostics precede fatal ones; within each group, source order is preserved.
 		return { ir: null, diagnostics: [...nonFatalDiagnostics, ...errors] };
 	}
 
