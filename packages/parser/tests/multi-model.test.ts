@@ -35,3 +35,36 @@ describe("multi-model grammar relaxation (B1)", () => {
 		expect(ast!.submodels).toEqual([]);
 	});
 });
+
+describe("uniform model naming (B2)", () => {
+	test("a bare 'model' keyword with no identifier is a parse error", () => {
+		const src = `model\ntime { start: 0 end: 10 step: 1 }\nstock s { init: 0 }`;
+		const { ast, diagnostics } = parseSource(src);
+		expect(ast).toBeNull();
+		expect(diagnostics.length).toBeGreaterThan(0);
+	});
+
+	test("second 'model' declaration without an identifier is a parse error (post-B1)", () => {
+		const src = `model main\nmodel\ntime { start: 0 end: 10 step: 1 }\nstock s { init: 0 }`;
+		const { ast, diagnostics } = parseSource(src);
+		expect(ast).toBeNull();
+		expect(diagnostics.length).toBeGreaterThan(0);
+	});
+
+	test("third 'model' declaration without an identifier is a parse error (post-B1)", () => {
+		const src = `model main\nmodel sub\nmodel\ntime { start: 0 end: 10 step: 1 }\nstock s { init: 0 }`;
+		const { ast, diagnostics } = parseSource(src);
+		expect(ast).toBeNull();
+		expect(diagnostics.length).toBeGreaterThan(0);
+	});
+
+	test("every parsed model declaration carries a non-empty id (sanity check)", () => {
+		const src = `model main\nmodel sub_a\nmodel sub_b\ntime { start: 0 end: 10 step: 1 }\nstock s { init: 0 }`;
+		const { ast } = parseSource(src);
+		expect(ast).not.toBeNull();
+		expect(ast!.model.id).not.toBe("");
+		for (const submodel of ast!.submodels) {
+			expect(submodel.id).not.toBe("");
+		}
+	});
+});
