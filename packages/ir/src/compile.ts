@@ -13,6 +13,7 @@ import type {
 	Span,
 } from "@sysdml/parser";
 
+import { BUILTIN_FUNCTIONS } from "./builtins.js";
 import { DiagnosticCode } from "./diagnostics.js";
 import { compileExpr, resetLookupCounter } from "./expr.js";
 import type {
@@ -238,6 +239,21 @@ export function compileAST(ast: FileNode): CompileResult {
 				span,
 			});
 		seenIds.add(id);
+	}
+
+	// ── Builtin-shadow check (B4.1) ───────────────────────────────────────────
+	// A variable identifier (stock / flow / aux) may not collide with a builtin
+	// function name. Builtins are case-insensitive (per `stdlib.md` "Case
+	// handling"), so the comparison uppercases the user identifier before
+	// looking it up in BUILTIN_FUNCTIONS.
+	for (const { id, span } of allIdDecls) {
+		if (BUILTIN_FUNCTIONS.has(id.toUpperCase())) {
+			errors.push({
+				code: DiagnosticCode.IDENTIFIER_SHADOWS_BUILTIN,
+				message: `Variable identifier '${id}' shadows builtin function '${id.toUpperCase()}'`,
+				span,
+			});
+		}
 	}
 
 	// ── GF name uniqueness and conflict checks ────────────────────────────────

@@ -151,3 +151,60 @@ describe("variable equation required (B11)", () => {
 		expect(diagnostics.length).toBeGreaterThan(0);
 	});
 });
+
+function expectShadowsBuiltin(src: string, id: string) {
+	const { ast, diagnostics: parseDiagnostics } = parseSource(src);
+	expect(parseDiagnostics, `parser unexpectedly failed for src: ${src}`).toHaveLength(0);
+	expect(ast).not.toBeNull();
+	const { ir, diagnostics } = compileAST(ast!);
+	expect(ir, `expected null IR for shadow-builtin src: ${src}`).toBeNull();
+	const shadows = diagnostics.filter(
+		(d) => d.code === DiagnosticCode.IDENTIFIER_SHADOWS_BUILTIN,
+	);
+	expect(shadows.length, `expected IDENTIFIER_SHADOWS_BUILTIN for '${id}'`).toBeGreaterThan(0);
+	expect(shadows[0].message).toContain(`'${id}'`);
+	expect(shadows[0].message).toContain(id.toUpperCase());
+	expect(shadows[0].span).toBeDefined();
+}
+
+describe("IDENTIFIER_SHADOWS_BUILTIN (B4.1)", () => {
+	test("stock id matching a builtin function name (uppercase) is rejected", () => {
+		expectShadowsBuiltin(
+			`model m\n${TIME_BLOCK}\nstock MIN { init: 0 }`,
+			"MIN",
+		);
+	});
+
+	test("aux id matching a builtin function name (lowercase) is rejected — comparison is case-insensitive", () => {
+		expectShadowsBuiltin(
+			`model m\n${TIME_BLOCK}\nstock s { init: 0 }\naux abs = 1`,
+			"abs",
+		);
+	});
+
+	test("flow id matching a builtin function name (mixed case) is rejected", () => {
+		expectShadowsBuiltin(
+			`model m\n${TIME_BLOCK}\nstock s { init: 0 }\nflow Time { from: null to: s rate: 1 }`,
+			"Time",
+		);
+	});
+
+	test("a zero-arg builtin name (e.g. TIME, DT) is also shadowed", () => {
+		expectShadowsBuiltin(
+			`model m\n${TIME_BLOCK}\nstock DT { init: 0 }`,
+			"DT",
+		);
+	});
+
+	test("non-builtin identifiers are accepted (sanity)", () => {
+		const { ast } = parseSource(
+			`model m\n${TIME_BLOCK}\nstock population { init: 100 }\naux birth_rate = 0.02`,
+		);
+		expect(ast).not.toBeNull();
+		const { ir, diagnostics } = compileAST(ast!);
+		expect(ir).not.toBeNull();
+		expect(
+			diagnostics.find((d) => d.code === DiagnosticCode.IDENTIFIER_SHADOWS_BUILTIN),
+		).toBeUndefined();
+	});
+});
