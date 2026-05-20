@@ -1,7 +1,6 @@
 import { describe, test, expect } from "vitest";
 import { parseSource } from "../src/index.js";
 import type {
-	AuxiliaryDeclarationNode,
 	BinaryExpressionNode,
 	FunctionCallNode,
 	NumberLiteralNode,

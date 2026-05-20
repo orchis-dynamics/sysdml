@@ -71,7 +71,9 @@ describe("SFD parsing", () => {
 		if (stock === undefined) throw new Error("expected StockDeclaration in decls");
 		expect(stock.id).toBe("population");
 		expect(stock.props).toHaveLength(1);
-		expect(stock.props[0].init.type).toBe("NumberLiteral");
+		const firstProp = stock.props[0];
+		if (firstProp === undefined) throw new Error("expected one stock prop");
+		expect(firstProp.init.type).toBe("NumberLiteral");
 	});
 
 	test("aux decl", () => {

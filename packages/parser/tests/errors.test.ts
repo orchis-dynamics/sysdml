@@ -14,8 +14,10 @@ describe("error handling", () => {
 		const src = `model m\naux x =`;
 		const { diagnostics } = parseSource(src);
 		expect(diagnostics.length).toBeGreaterThan(0);
-		expect(typeof diagnostics[0].span.start.line).toBe("number");
-		expect(typeof diagnostics[0].span.start.col).toBe("number");
+		const firstDiagnostic = diagnostics[0];
+		if (firstDiagnostic === undefined) throw new Error("expected at least one diagnostic");
+		expect(typeof firstDiagnostic.span.start.line).toBe("number");
+		expect(typeof firstDiagnostic.span.start.col).toBe("number");
 	});
 
 	test("unknown token produces diagnostic", () => {

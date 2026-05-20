@@ -4,7 +4,6 @@ import type {
 	AuxiliaryDeclarationNode,
 	ConnectionDeclarationNode,
 	FlowDeclarationNode,
-	GraphicalFunctionDeclarationNode,
 	PositionNode,
 	StockDeclarationNode,
 } from "../src/index.js";
@@ -30,14 +29,6 @@ function aux(src: string): AuxiliaryDeclarationNode {
 	if (!ast) throw new Error(`Parse failed: ${diagnostics[0]?.message}`);
 	const decl = ast.decls.find((d) => d.type === "AuxiliaryDeclaration");
 	if (!decl || decl.type !== "AuxiliaryDeclaration") throw new Error("No AuxiliaryDeclaration found");
-	return decl;
-}
-
-function gf(src: string): GraphicalFunctionDeclarationNode {
-	const { ast, diagnostics } = parseSource(`model m\n${src}`);
-	if (!ast) throw new Error(`Parse failed: ${diagnostics[0]?.message}`);
-	const decl = ast.decls.find((d) => d.type === "GraphicalFunctionDeclaration");
-	if (!decl || decl.type !== "GraphicalFunctionDeclaration") throw new Error("No GraphicalFunctionDeclaration found");
 	return decl;
 }
 

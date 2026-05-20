@@ -16,7 +16,9 @@ describe("multi-model grammar relaxation (B1)", () => {
 		expect(ast).not.toBeNull();
 		expect(ast!.model.id).toBe("main");
 		expect(ast!.submodels).toHaveLength(1);
-		expect(ast!.submodels[0].id).toBe("sub");
+		const firstSubmodel = ast!.submodels[0];
+		if (firstSubmodel === undefined) throw new Error("expected one submodel");
+		expect(firstSubmodel.id).toBe("sub");
 	});
 
 	test("a third model declaration also lands in submodels in source order", () => {

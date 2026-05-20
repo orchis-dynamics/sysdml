@@ -167,8 +167,12 @@ describe("named gf — multiple in same model", () => {
 			(declaration) => declaration.type === "GraphicalFunctionDeclaration",
 		) as GraphicalFunctionDeclarationNode[];
 		expect(graphicalFunctionDeclarations).toHaveLength(2);
-		expect(graphicalFunctionDeclarations[0].id).toBe("f1");
-		expect(graphicalFunctionDeclarations[1].id).toBe("f2");
+		const [firstDeclaration, secondDeclaration] = graphicalFunctionDeclarations;
+		if (firstDeclaration === undefined || secondDeclaration === undefined) {
+			throw new Error("expected two gf declarations");
+		}
+		expect(firstDeclaration.id).toBe("f1");
+		expect(secondDeclaration.id).toBe("f2");
 	});
 });
 
@@ -248,8 +252,11 @@ describe("lookup() inline function", () => {
 		const aux = ast.decls.find(
 			(declaration) => declaration.type === "AuxiliaryDeclaration",
 		) as AuxiliaryDeclarationNode;
-		if (aux.expr.type === "FunctionCall")
-			expect(aux.expr.args[0].type).toBe("IdentifierReference");
+		if (aux.expr.type === "FunctionCall") {
+			const firstArg = aux.expr.args[0];
+			if (firstArg === undefined) throw new Error("expected first arg");
+			expect(firstArg.type).toBe("IdentifierReference");
+		}
 	});
 	test("four total args (input + 3 ypts)", () => {
 		const ast = parseOk(wrap("aux result = lookup(s, 0, 0.5, 1)"));
