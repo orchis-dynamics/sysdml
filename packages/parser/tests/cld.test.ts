@@ -62,6 +62,7 @@ describe("CLD arrow syntax", () => {
 		const { ast, diagnostics } = parseSource(`model m\nA ->+ B`);
 		expect(diagnostics).toHaveLength(0);
 		const decl = ast!.decls[0];
+		if (decl === undefined) throw new Error("expected a declaration");
 		expect(isConnection(decl)).toBe(true);
 		if (isConnection(decl)) {
 			expect(decl.polarity).toBe("+");
@@ -74,6 +75,7 @@ describe("CLD arrow syntax", () => {
 		const { ast, diagnostics } = parseSource(`model m\nA ->- B`);
 		expect(diagnostics).toHaveLength(0);
 		const decl = ast!.decls[0];
+		if (decl === undefined) throw new Error("expected a declaration");
 		if (isConnection(decl)) expect(decl.polarity).toBe("-");
 	});
 
@@ -81,6 +83,7 @@ describe("CLD arrow syntax", () => {
 		const { ast, diagnostics } = parseSource(`model m\nX => Y`);
 		expect(diagnostics).toHaveLength(0);
 		const decl = ast!.decls[0];
+		if (decl === undefined) throw new Error("expected a declaration");
 		if (isConnection(decl)) expect(decl.polarity).toBe("=>");
 	});
 
