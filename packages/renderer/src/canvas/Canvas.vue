@@ -107,22 +107,113 @@ function onNodePointerUp() {
 
 const containerRef = ref<HTMLDivElement | null>(null);
 
-function nodeCenter(id: string): { x: number; y: number } {
+type Point = { x: number; y: number };
+const CONNECTION_BULGE = 60;
+const LABEL_OFFSET = 12;
+const LABEL_PARAM = 0.85;
+
+function nodeCenter(id: string): Point {
   const node = resolvedNodes.value.find((n) => n.id === id);
   if (!node) return { x: 0, y: 0 };
   return { x: node.x + node.width / 2, y: node.y + node.height / 2 };
 }
 
-function edgePath(edge: LayoutEdge): string {
-  const src = nodeCenter(edge.source);
-  const tgt = nodeCenter(edge.target);
-  if (edge.kind === "flow") {
-    return `M ${src.x} ${src.y} L ${tgt.x} ${tgt.y}`;
-  }
-  const mx = (src.x + tgt.x) / 2;
-  const my = (src.y + tgt.y) / 2 - 60;
-  return `M ${src.x} ${src.y} Q ${mx} ${my} ${tgt.x} ${tgt.y}`;
+function targetBox(id: string): LayoutNode | null {
+  return resolvedNodes.value.find((n) => n.id === id) ?? null;
 }
+
+// Walks from p0 toward p1 and returns the point where the segment first enters
+// the axis-aligned box. Assumes p1 is inside (or on) the box; if p0 is also
+// inside, returns p0 unchanged.
+function clipToBox(p0: Point, p1: Point, box: LayoutNode): Point {
+  const minX = box.x;
+  const maxX = box.x + box.width;
+  const minY = box.y;
+  const maxY = box.y + box.height;
+  const dx = p1.x - p0.x;
+  const dy = p1.y - p0.y;
+
+  const tEnterX = dx === 0 ? -Infinity : ((dx > 0 ? minX : maxX) - p0.x) / dx;
+  const tEnterY = dy === 0 ? -Infinity : ((dy > 0 ? minY : maxY) - p0.y) / dy;
+  const tEnter = Math.max(tEnterX, tEnterY);
+  const t = Math.min(1, Math.max(0, tEnter));
+  return { x: p0.x + t * dx, y: p0.y + t * dy };
+}
+
+function connectionControlPoint(src: Point, tgt: Point): Point {
+  return { x: (src.x + tgt.x) / 2, y: (src.y + tgt.y) / 2 - CONNECTION_BULGE };
+}
+
+function quadraticPoint(p0: Point, p1: Point, p2: Point, t: number): Point {
+  const a = (1 - t) * (1 - t);
+  const b = 2 * (1 - t) * t;
+  const c = t * t;
+  return { x: a * p0.x + b * p1.x + c * p2.x, y: a * p0.y + b * p1.y + c * p2.y };
+}
+
+function quadraticTangent(p0: Point, p1: Point, p2: Point, t: number): Point {
+  return {
+    x: 2 * (1 - t) * (p1.x - p0.x) + 2 * t * (p2.x - p1.x),
+    y: 2 * (1 - t) * (p1.y - p0.y) + 2 * t * (p2.y - p1.y),
+  };
+}
+
+function edgeEndpoints(edge: LayoutEdge): { src: Point; ctrl: Point | null; end: Point } {
+  const src = nodeCenter(edge.source);
+  const tgtCenter = nodeCenter(edge.target);
+  const box = targetBox(edge.target);
+  if (edge.kind === "flow") {
+    const end = box ? clipToBox(src, tgtCenter, box) : tgtCenter;
+    return { src, ctrl: null, end };
+  }
+  const ctrl = connectionControlPoint(src, tgtCenter);
+  const end = box ? clipToBox(ctrl, tgtCenter, box) : tgtCenter;
+  return { src, ctrl, end };
+}
+
+function edgePath(edge: LayoutEdge): string {
+  const { src, ctrl, end } = edgeEndpoints(edge);
+  if (ctrl === null) {
+    return `M ${src.x} ${src.y} L ${end.x} ${end.y}`;
+  }
+  return `M ${src.x} ${src.y} Q ${ctrl.x} ${ctrl.y} ${end.x} ${end.y}`;
+}
+
+interface PolarityLabel {
+  id: string;
+  x: number;
+  y: number;
+  text: string;
+  color: string;
+}
+
+const polarityLabels = computed<PolarityLabel[]>(() => {
+  const labels: PolarityLabel[] = [];
+  for (const edge of layout.value.edges) {
+    if (edge.kind !== "connection") continue;
+    if (edge.polarity !== "+" && edge.polarity !== "-") continue;
+    const { src, ctrl, end } = edgeEndpoints(edge);
+    if (ctrl === null) continue;
+    const point = quadraticPoint(src, ctrl, end, LABEL_PARAM);
+    const tangent = quadraticTangent(src, ctrl, end, LABEL_PARAM);
+    const length = Math.hypot(tangent.x, tangent.y) || 1;
+    let perpX = -tangent.y / length;
+    let perpY = tangent.x / length;
+    // Place label on the convex (control-point) side of the curve.
+    if (perpX * (ctrl.x - point.x) + perpY * (ctrl.y - point.y) < 0) {
+      perpX = -perpX;
+      perpY = -perpY;
+    }
+    labels.push({
+      id: edge.id,
+      x: point.x + perpX * LABEL_OFFSET,
+      y: point.y + perpY * LABEL_OFFSET,
+      text: edge.polarity === "+" ? "+" : "−",
+      color: edge.polarity === "+" ? "#059669" : "#ef4444",
+    });
+  }
+  return labels;
+});
 
 function edgeStroke(edge: LayoutEdge): string {
   if (edge.kind === "flow") return "#57534e"; // stone-600
@@ -131,8 +222,8 @@ function edgeStroke(edge: LayoutEdge): string {
   return "#a8a29e"; // stone-400
 }
 
-function edgeMarker(edge: LayoutEdge): string | undefined {
-  if (edge.kind !== "connection") return undefined;
+function edgeMarker(edge: LayoutEdge): string {
+  if (edge.kind === "flow") return "url(#arrow-neutral)";
   if (edge.polarity === "+") return "url(#arrow-positive)";
   if (edge.polarity === "-") return "url(#arrow-negative)";
   return "url(#arrow-neutral)";
@@ -197,6 +288,18 @@ onUnmounted(() => {
           fill="none"
           :marker-end="edgeMarker(edge)"
         />
+        <text
+          v-for="label in polarityLabels"
+          :key="`label-${label.id}`"
+          :x="label.x"
+          :y="label.y"
+          :fill="label.color"
+          font-size="14"
+          font-weight="600"
+          text-anchor="middle"
+          dominant-baseline="middle"
+          pointer-events="none"
+        >{{ label.text }}</text>
       </svg>
 
       <div
