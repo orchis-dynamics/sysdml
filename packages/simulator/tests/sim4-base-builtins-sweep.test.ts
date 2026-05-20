@@ -78,7 +78,9 @@ describe("§3.5.3 Delay / smoothing (8 of 9 ✅; DELAY ⬜ v0.2)", () => {
 	test("TREND(10, 5, 10) at t=0 returns 0 (input == smooth init)", () => {
 		// TREND desugars to (input - smooth) / (avg_time * smooth). At t=0 the
 		// smooth equals its init argument, so input=init=10 gives 0/50 = 0.
-		// init_trend=0 with input=0 would divide by zero, so we seed init=10.
+		// init_trend=0 with input=0 would yield 0/0 = NaN, so we seed init=10
+		// (the underlying simulator divergence from stdlib.md §4.4 is tracked
+		// by [SIM4.5 → v0.2]).
 		expect(evalAux("TREND(10, 5, 10)")).toBe(0);
 	});
 	test("FORCST(10, 5, 10, 10) at t=0 returns input * (1 + 0*horizon) = 10", () => {
