@@ -30,7 +30,9 @@ describe("function call syntax", () => {
 		if (isFunctionCall(expr)) {
 			expect(expr.name).toBe("ABS");
 			expect(expr.args).toHaveLength(1);
-			expect(expr.args[0].type).toBe("IdentifierReference");
+			const firstArg = expr.args[0];
+			if (firstArg === undefined) throw new Error("expected first arg");
+			expect(firstArg.type).toBe("IdentifierReference");
 		}
 	});
 
@@ -80,8 +82,10 @@ describe("function call syntax", () => {
 		const expr = auxExpr("MAX(ABS(x), 0)");
 		expect(isFunctionCall(expr)).toBe(true);
 		if (isFunctionCall(expr)) {
+			const secondArg = expr.args[1];
+			if (secondArg === undefined) throw new Error("expected second arg");
 			expect(isFunctionCall(expr.args[0])).toBe(true);
-			expect(expr.args[1].type).toBe("NumberLiteral");
+			expect(secondArg.type).toBe("NumberLiteral");
 		}
 	});
 
@@ -89,7 +93,9 @@ describe("function call syntax", () => {
 		const expr = auxExpr("ABS(x + 1)");
 		expect(isFunctionCall(expr)).toBe(true);
 		if (isFunctionCall(expr)) {
-			expect(expr.args[0].type).toBe("BinaryExpression");
+			const firstArg = expr.args[0];
+			if (firstArg === undefined) throw new Error("expected first arg");
+			expect(firstArg.type).toBe("BinaryExpression");
 		}
 	});
 
