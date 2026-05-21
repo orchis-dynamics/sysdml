@@ -13,6 +13,15 @@ const layout = computed(() => (props.ir ? computeLayout(props.ir) : { nodes: [],
 
 const dragOffsets = ref(new Map<string, { x: number; y: number }>());
 
+const colorTheme = {
+  edge: {
+    positive: "stroke-emerald-600",
+    negative: "stroke-red-600",
+    flow: "stroke-stone-600",
+    default: "stroke-black",
+  },
+};
+
 function resolvedNode(node: LayoutNode): LayoutNode {
   const override = dragOffsets.value.get(node.id);
   return override ? { ...node, x: node.x + override.x, y: node.y + override.y } : node;
@@ -20,9 +29,12 @@ function resolvedNode(node: LayoutNode): LayoutNode {
 
 const resolvedNodes = computed(() => layout.value.nodes.map(resolvedNode));
 
-watch(() => props.ir, () => {
-  dragOffsets.value = new Map();
-});
+watch(
+  () => props.ir,
+  () => {
+    dragOffsets.value = new Map();
+  },
+);
 
 const translateX = ref(0);
 const translateY = ref(0);
@@ -171,7 +183,7 @@ function edgeEndpoints(edge: LayoutEdge): { src: Point; ctrl: Point | null; end:
   return { src, ctrl, end };
 }
 
-function edgePath(edge: LayoutEdge): string {
+function getEdgePath(edge: LayoutEdge): string {
   const { src, ctrl, end } = edgeEndpoints(edge);
   if (ctrl === null) {
     return `M ${src.x} ${src.y} L ${end.x} ${end.y}`;
@@ -215,13 +227,13 @@ const polarityLabels = computed<PolarityLabel[]>(() => {
   return labels;
 });
 
-function edgeStroke(edge: LayoutEdge): string {
-  if (edge.kind === "flow") return "#57534e"; // stone-600
-  if (edge.polarity === "+") return "#059669"; // emerald-600
-  if (edge.polarity === "-") return "#ef4444"; // red-500
-  return "#a8a29e"; // stone-400
-}
+function getEdgeClassList(edge: LayoutEdge): string {
+  if (edge.kind === "flow") return colorTheme.edge.flow;
+  if (edge.polarity === "+") return colorTheme.edge.positive;
+  if (edge.polarity === "-") return colorTheme.edge.negative;
 
+  return colorTheme.edge.default;
+}
 
 const svgWidth = ref(800);
 const svgHeight = ref(600);
@@ -270,8 +282,8 @@ onUnmounted(() => {
         <path
           v-for="edge in layout.edges"
           :key="edge.id"
-          :d="edgePath(edge)"
-          :stroke="edgeStroke(edge)"
+          :class="getEdgeClassList(edge)"
+          :d="getEdgePath(edge)"
           stroke-width="1"
           fill="none"
           marker-end="url(#arrow)"
@@ -287,7 +299,9 @@ onUnmounted(() => {
           text-anchor="middle"
           dominant-baseline="middle"
           pointer-events="none"
-        >{{ label.text }}</text>
+        >
+          {{ label.text }}
+        </text>
       </svg>
 
       <div
