@@ -222,12 +222,6 @@ function edgeStroke(edge: LayoutEdge): string {
   return "#a8a29e"; // stone-400
 }
 
-function edgeMarker(edge: LayoutEdge): string {
-  if (edge.kind === "flow") return "url(#arrow-neutral)";
-  if (edge.polarity === "+") return "url(#arrow-positive)";
-  if (edge.polarity === "-") return "url(#arrow-negative)";
-  return "url(#arrow-neutral)";
-}
 
 const svgWidth = ref(800);
 const svgHeight = ref(600);
@@ -269,14 +263,8 @@ onUnmounted(() => {
         :height="svgHeight"
       >
         <defs>
-          <marker id="arrow-positive" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
-            <path d="M0,0 L0,6 L8,3 z" fill="#059669" />
-          </marker>
-          <marker id="arrow-negative" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
-            <path d="M0,0 L0,6 L8,3 z" fill="#ef4444" />
-          </marker>
-          <marker id="arrow-neutral" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
-            <path d="M0,0 L0,6 L8,3 z" fill="#a8a29e" />
+          <marker id="arrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+            <path d="M0,0 L0,6 L8,3 z" fill="context-stroke" />
           </marker>
         </defs>
         <path
@@ -286,7 +274,7 @@ onUnmounted(() => {
           :stroke="edgeStroke(edge)"
           stroke-width="1"
           fill="none"
-          :marker-end="edgeMarker(edge)"
+          marker-end="url(#arrow)"
         />
         <text
           v-for="label in polarityLabels"
