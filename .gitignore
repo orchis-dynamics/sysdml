@@ -14,3 +14,4 @@ CLAUDE.md
 AGENT_CONTEXT.md
 run.sh
 .DS_Store
+*.vsix
