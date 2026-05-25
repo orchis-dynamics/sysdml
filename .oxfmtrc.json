@@ -1,6 +1,13 @@
 {
 	"$schema": "./node_modules/oxfmt/configuration_schema.json",
-	"ignorePatterns": [],
+	"ignorePatterns": [
+		"**/dist/**",
+		"**/renderer-dist/**",
+		"**/generated/**",
+		"**/.antlr/**",
+		"**/node_modules/**",
+		"pnpm-lock.yaml"
+	],
 	"printWidth": 80,
 	"useTabs": true,
 	"sortImports": true,

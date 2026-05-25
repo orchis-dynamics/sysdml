@@ -8,7 +8,7 @@ import { compileAST } from "@sysdml/ir";
 import type { IR } from "@sysdml/ir";
 import type { InboundMessage } from "../src/transport/types.js";
 
-const WS_PATH = "/__sysdml_ws__";
+export const SYSDML_WS_PATH = "/__sysdml_ws__";
 
 interface SysdmlDevOptions {
   file: string | undefined;
@@ -65,12 +65,14 @@ export function sysdmlDev(options: SysdmlDevOptions): Plugin {
     name: "sysdml-dev",
     apply: "serve",
 
-    config() {
-      return {
-        define: {
-          __SYSDML_WS_PATH__: JSON.stringify(WS_PATH),
+    transformIndexHtml() {
+      return [
+        {
+          tag: "script",
+          injectTo: "head-prepend",
+          children: `window.SYSDML_WS_URL = (location.protocol === "https:" ? "wss:" : "ws:") + "//" + location.host + ${JSON.stringify(SYSDML_WS_PATH)};`,
         },
-      };
+      ];
     },
 
     configureServer(server: ViteDevServer) {
@@ -91,13 +93,12 @@ export function sysdmlDev(options: SysdmlDevOptions): Plugin {
         socket: import("node:stream").Duplex,
         head: Buffer,
       ) => {
-        if (request.url === WS_PATH) {
+        if (request.url === SYSDML_WS_PATH) {
           wss.handleUpgrade(request, socket, head, (ws) => {
             wss.emit("connection", ws, request);
           });
         }
       };
-      httpServer.on("upgrade", handleUpgrade);
 
       wss.on("connection", (ws: WebSocket) => {
         clients.add(ws);
@@ -123,12 +124,16 @@ export function sysdmlDev(options: SysdmlDevOptions): Plugin {
         currentIR = message.type === "update" ? message.ir : null;
       });
 
-      return async () => {
+      httpServer.once("listening", () => {
+        httpServer.on("upgrade", handleUpgrade);
+      });
+
+      httpServer.on("close", () => {
         httpServer.off("upgrade", handleUpgrade);
-        await watcher.close();
-        await new Promise<void>((resolve) => wss.close(() => resolve()));
+        void watcher.close();
+        wss.close();
         clients.clear();
-      };
+      });
     },
   };
 }

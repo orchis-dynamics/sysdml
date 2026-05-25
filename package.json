@@ -6,8 +6,16 @@
   "scripts": {
     "build": "pnpm -r build",
     "test": "pnpm -r test",
-    "lint": "pnpm -r lint",
+    "lint": "oxlint",
+    "lint:fix": "oxlint --fix",
+    "fmt": "oxfmt",
+    "fmt:check": "oxfmt --check",
     "clean": "pnpm -r exec rm -rf dist && rm -rf node_modules"
+  },
+  "devDependencies": {
+    "oxfmt": "^0.47.0",
+    "oxlint": "^1.62.0",
+    "oxlint-tsgolint": "^0.22.1"
   },
   "engines": {
     "node": ">=20",
