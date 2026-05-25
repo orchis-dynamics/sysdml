@@ -78,3 +78,68 @@ function computeSkeletonCenter(
     const centers = [...skeletonNodes.values()].map(nodeCenter);
     return averagePositions(centers);
 }
+
+const COINCIDENT_EPSILON = 1e-6;
+
+export function computeRepulsion(
+    positions: Map<string, IRPosition>,
+    k: number,
+): Map<string, IRPosition> {
+    const displacement = initializeDisplacement(positions);
+    const ids = [...positions.keys()];
+
+    for (let i = 0; i < ids.length; i++) {
+        for (let j = i + 1; j < ids.length; j++) {
+            const idA = ids[i];
+            const idB = ids[j];
+            const positionA = positions.get(idA)!;
+            const positionB = positions.get(idB)!;
+
+            const deltaX = positionA.x - positionB.x;
+            const deltaY = positionA.y - positionB.y;
+            let distance = Math.hypot(deltaX, deltaY);
+
+            let unitX: number;
+            let unitY: number;
+            if (distance < COINCIDENT_EPSILON) {
+                // Jitter coincident nodes with a deterministic unit vector
+                // derived from their ids so results are reproducible.
+                const angle = hashAngle(idA + idB);
+                unitX = Math.cos(angle);
+                unitY = Math.sin(angle);
+                distance = COINCIDENT_EPSILON;
+            } else {
+                unitX = deltaX / distance;
+                unitY = deltaY / distance;
+            }
+
+            const magnitude = (k * k) / distance;
+            const repulsionA = displacement.get(idA)!;
+            const repulsionB = displacement.get(idB)!;
+            repulsionA.x += unitX * magnitude;
+            repulsionA.y += unitY * magnitude;
+            repulsionB.x -= unitX * magnitude;
+            repulsionB.y -= unitY * magnitude;
+        }
+    }
+
+    return displacement;
+}
+
+function initializeDisplacement(
+    positions: Map<string, IRPosition>,
+): Map<string, IRPosition> {
+    const displacement = new Map<string, IRPosition>();
+    positions.forEach((_, id) => displacement.set(id, { x: 0, y: 0 }));
+    return displacement;
+}
+
+function hashAngle(seed: string): number {
+    let hash = 2166136261;
+    for (let i = 0; i < seed.length; i++) {
+        hash ^= seed.charCodeAt(i);
+        hash = Math.imul(hash, 16777619);
+    }
+    // Map to [0, 2π)
+    return ((hash >>> 0) / 0xffffffff) * Math.PI * 2;
+}

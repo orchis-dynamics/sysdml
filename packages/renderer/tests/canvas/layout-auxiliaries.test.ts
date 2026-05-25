@@ -50,3 +50,34 @@ describe("seedAuxiliaryPositions", () => {
         expect(seeds.get("orphan")).toEqual({ x: 0, y: 0 });
     });
 });
+
+import { computeRepulsion } from "../../src/canvas/layout-auxiliaries";
+
+describe("computeRepulsion", () => {
+    test("pushes two coincident nodes apart along an arbitrary unit vector", () => {
+        // Coincident nodes get a tiny jitter; the magnitudes must be equal and opposite.
+        const positions = new Map([
+            ["a", { x: 0, y: 0 }],
+            ["b", { x: 0, y: 0 }],
+        ]);
+        const displacement = computeRepulsion(positions, 50);
+        const da = displacement.get("a")!;
+        const db = displacement.get("b")!;
+        expect(da.x).toBeCloseTo(-db.x, 6);
+        expect(da.y).toBeCloseTo(-db.y, 6);
+        expect(Math.hypot(da.x, da.y)).toBeGreaterThan(0);
+    });
+
+    test("repulsion magnitude follows k^2 / distance", () => {
+        const positions = new Map([
+            ["a", { x: 0, y: 0 }],
+            ["b", { x: 10, y: 0 }],
+        ]);
+        const k = 50;
+        const displacement = computeRepulsion(positions, k);
+        // f = (k^2 / dist) along the unit vector from b to a, applied to a
+        // expected |dx| on a = k^2 / dist = 2500 / 10 = 250
+        expect(displacement.get("a")!.x).toBeCloseTo(-250, 6);
+        expect(displacement.get("b")!.x).toBeCloseTo(250, 6);
+    });
+});
