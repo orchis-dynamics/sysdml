@@ -197,34 +197,34 @@ function quadraticTangent(p0: Point, p1: Point, p2: Point, t: number): Point {
 }
 
 function edgeEndpoints(edge: LayoutEdge): {
-	src: Point;
-	ctrl: Point | null;
+	source: Point;
+	controlPoint: Point | null;
 	corner: Point | null;
 	end: Point;
 } {
-	const src = nodeCenter(edge.source);
-	const tgtCenter = nodeCenter(edge.target);
+	const source = nodeCenter(edge.source);
+	const targetCenter = nodeCenter(edge.target);
 	const box = targetBox(edge.target);
 	if (edge.kind === "flow") {
-		const corner = flowElbowCorner(src, tgtCenter);
-		const segmentStart = corner ?? src;
-		const end = box ? clipToBox(segmentStart, tgtCenter, box) : tgtCenter;
-		return { src, ctrl: null, corner, end };
+		const corner = flowElbowCorner(source, targetCenter);
+		const segmentStart = corner ?? source;
+		const end = box ? clipToBox(segmentStart, targetCenter, box) : targetCenter;
+		return { source, controlPoint: null, corner, end };
 	}
-	const ctrl = connectionControlPoint(src, tgtCenter);
-	const end = box ? clipToBox(ctrl, tgtCenter, box) : tgtCenter;
-	return { src, ctrl, corner: null, end };
+	const controlPoint = connectionControlPoint(source, targetCenter);
+	const end = box ? clipToBox(controlPoint, targetCenter, box) : targetCenter;
+	return { source, controlPoint, corner: null, end };
 }
 
 function getEdgePath(edge: LayoutEdge): string {
-	const { src, ctrl, corner, end } = edgeEndpoints(edge);
-	if (ctrl !== null) {
-		return `M ${src.x} ${src.y} Q ${ctrl.x} ${ctrl.y} ${end.x} ${end.y}`;
+	const { source, controlPoint, corner, end } = edgeEndpoints(edge);
+	if (controlPoint !== null) {
+		return `M ${source.x} ${source.y} Q ${controlPoint.x} ${controlPoint.y} ${end.x} ${end.y}`;
 	}
 	if (corner !== null) {
-		return `M ${src.x} ${src.y} L ${corner.x} ${corner.y} L ${end.x} ${end.y}`;
+		return `M ${source.x} ${source.y} L ${corner.x} ${corner.y} L ${end.x} ${end.y}`;
 	}
-	return `M ${src.x} ${src.y} L ${end.x} ${end.y}`;
+	return `M ${source.x} ${source.y} L ${end.x} ${end.y}`;
 }
 
 interface PolarityLabel {
@@ -240,15 +240,15 @@ const polarityLabels = computed<PolarityLabel[]>(() => {
 	for (const edge of layout.value.edges) {
 		if (edge.kind !== "connection") continue;
 		if (edge.polarity !== "+" && edge.polarity !== "-") continue;
-		const { src, ctrl, end } = edgeEndpoints(edge);
-		if (ctrl === null) continue;
-		const point = quadraticPoint(src, ctrl, end, LABEL_PARAM);
-		const tangent = quadraticTangent(src, ctrl, end, LABEL_PARAM);
+		const { source, controlPoint, end } = edgeEndpoints(edge);
+		if (controlPoint === null) continue;
+		const point = quadraticPoint(source, controlPoint, end, LABEL_PARAM);
+		const tangent = quadraticTangent(source, controlPoint, end, LABEL_PARAM);
 		const length = Math.hypot(tangent.x, tangent.y) || 1;
 		let perpX = -tangent.y / length;
 		let perpY = tangent.x / length;
 		// Place label on the convex (control-point) side of the curve.
-		if (perpX * (ctrl.x - point.x) + perpY * (ctrl.y - point.y) < 0) {
+		if (perpX * (controlPoint.x - point.x) + perpY * (controlPoint.y - point.y) < 0) {
 			perpX = -perpX;
 			perpY = -perpY;
 		}
