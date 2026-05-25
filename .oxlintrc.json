@@ -12,11 +12,22 @@
 		"max-lines-per-function": [
 			"warn",
 			{
-				"max": 10,
+				"max": 30,
 				"skipBlankLines": true,
 				"skipComments": true
 			}
-		]
+		],
+		"max-params": ["warn", { "max": 4 }],
+		"max-depth": ["warn", { "max": 3 }],
+		"complexity": ["warn", { "max": 10 }],
+		"no-var": "warn",
+		"prefer-const": "warn",
+		"no-shadow": "warn",
+		"no-else-return": "warn",
+		"no-nested-ternary": "warn",
+		"no-unused-vars": "warn",
+		"no-unreachable": "error",
+		"no-console": "warn"
 	},
 	"env": {
 		"builtin": true

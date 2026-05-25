@@ -1,166 +1,180 @@
 import type { IR, IRStock, IRFlow, IRAuxiliary, IRPosition } from "@sysdml/ir";
 
-export enum NodeKindEnum {
-  Stock = 'stock',
-  Aux = 'aux',
-  Flow = 'flow'
-}
-export type NodeKind = `${NodeKindEnum}`;
-export type NodeSize = { width: number, height: number }
-
-export interface LayoutNode {
-  id: string;
-  kind: NodeKind;
-  position: IRPosition;
-  size: NodeSize
-}
-
-export type EdgeKind = "flow" | "connection";
-
-export interface LayoutEdge {
-  id: string;
-  kind: EdgeKind;
-  source: string;
-  target: string;
-  polarity?: "+" | "-" | "=>";
-  points: { x: number; y: number }[];
-}
-
-export interface LayoutResult {
-  nodes: LayoutNode[];
-  edges: LayoutEdge[];
-}
-
-const NODE_SIZE: Record<NodeKind, { width: number; height: number }> = {
-  stock: { width: 120, height: 48 },
-  aux: { width: 80, height: 32 },
-  flow: { width: 20, height: 20 },
-};
-
-const THEME = {
-  NODE: {
-    STOCK: {
-      PADDING: 8,
-      CHAR_WIDTH: 7.2,
-      LINE_HEIGHT: 16
-    }
-  }
-}
+import { THEME } from "./layout-theme";
+import {
+	LayoutEdge,
+	LayoutNode,
+	LayoutResult,
+	NodeKind,
+	NodeKindEnum,
+	NodeSize,
+} from "./layout-types";
 
 export function computeLayout(ir: IR): LayoutResult {
-  buildSFDLayout(ir);
-  return ir.stocks.length > 0 ? buildSFDLayout(ir) : layoutCLD(ir);
-  // return ir.stocks.length > 0 ? buildSFDLayout(ir) : layoutCLD(ir);
+	buildSFDLayout(ir);
+	return ir.stocks.length > 0 ? buildSFDLayout(ir) : layoutCLD(ir);
+	// return ir.stocks.length > 0 ? buildSFDLayout(ir) : layoutCLD(ir);
 }
-
-const MARGIN = 80;
 
 // function getLayoutNode(id: string, kind: NodeKind, x: number, y: number): LayoutNode {
 //   return { id, kind, x, y, width: calculateNodeWidth(id.length), height: NODE_SIZE[kind].height };
 // }
-// Deterministic node sizing based on exact monospace font size and paddings
-const CHAR_WIDTH = 7.2
-const STOCK_PADDING = 8
-const LINE_HEIGHT = 16
-const FLOW_SIZE = 24
 
 const NODE_SIZE_CALC: Record<NodeKind, (idLength: number) => NodeSize> = {
-  [NodeKindEnum.Stock]: (idLength: number) => ({
-    width: idLength * CHAR_WIDTH + 2 * STOCK_PADDING,
-    height: LINE_HEIGHT + 2 * STOCK_PADDING
-  }),
-  // TODO - set correct sizing
-  [NodeKindEnum.Aux]: (idLength: number) => ({
-    width: idLength * CHAR_WIDTH + 2 * STOCK_PADDING,
-    height: LINE_HEIGHT + 2 * STOCK_PADDING
-  }),
-  // TODO - set correct sizing
-  [NodeKindEnum.Flow]: (idLength: number) => ({
-    width: FLOW_SIZE,
-    height: FLOW_SIZE
-  })
+	[NodeKindEnum.Stock]: (idLength: number) => ({
+		width: idLength * THEME.CHAR_WIDTH + 2 * THEME.STOCK_PADDING,
+		height: THEME.LINE_HEIGHT + 2 * THEME.STOCK_PADDING,
+	}),
+	[NodeKindEnum.Aux]: (idLength: number) => ({
+		width: idLength * THEME.CHAR_WIDTH + 2 * THEME.STOCK_PADDING,
+		height: THEME.LINE_HEIGHT + 2 * THEME.STOCK_PADDING,
+	}),
+	[NodeKindEnum.Flow]: () => ({
+		width: THEME.FLOW_SIZE,
+		height: THEME.FLOW_SIZE,
+	}),
+};
+
+function constructLayoutNode(
+	id: string,
+	kind: NodeKind,
+	position: IRPosition,
+): LayoutNode {
+	const size = NODE_SIZE_CALC[kind](id.length);
+
+	return {
+		id,
+		kind,
+		position,
+		size,
+	};
 }
 
-function constructLayoutNode(id: string, kind: NodeKind, position: IRPosition): LayoutNode {
-  const size = NODE_SIZE_CALC[kind](id.length)
+type DirectionalSet = {
+	inputs: Array<string>;
+	outputs: Array<string>;
+	kind: NodeKind;
+};
+function buildDirectionalAdjacencyMap(
+	stocks: IRStock[],
+	flows: IRFlow[],
+): Map<string, DirectionalSet> {
+	const directionalAdjacencyMap = new Map<string, DirectionalSet>();
 
-  return {
-    id,
-    kind,
-    position,
-    size
-  }
+	stocks.forEach((stock) =>
+		directionalAdjacencyMap.set(stock.id, {
+			inputs: [],
+			outputs: [],
+			kind: NodeKindEnum.Stock,
+		}),
+	);
+
+	flows.forEach((flow) => {
+		if (!directionalAdjacencyMap.has(flow.id)) {
+			const set: DirectionalSet = {
+				inputs: flow.from ? [flow.from] : [],
+				outputs: flow.to ? [flow.to] : [],
+				kind: NodeKindEnum.Flow,
+			};
+
+			directionalAdjacencyMap.set(flow.id, set);
+		}
+
+		if (flow.from)
+			directionalAdjacencyMap.get(flow.from)?.outputs.push(flow.id);
+		if (flow.to) directionalAdjacencyMap.get(flow.to)?.inputs.push(flow.id);
+	});
+
+	return directionalAdjacencyMap;
 }
 
-function buildStockSkeleton(stocks: IRStock[], flows: IRFlow[]) {
-  const layoutNodes = new Map<string, LayoutNode>();
-  type DirectionalSet = { inputs: Array<string>, outputs: Array<string>, kind: NodeKind }
-  const directionalAdjacencyMap = new Map<string, DirectionalSet>()
+function constructSkeletonLayoutNodes(
+	directionalAdjacencyMap: Map<string, DirectionalSet>,
+	branches: Array<string[]>,
+): Map<string, LayoutNode> {
+	const layoutNodes = new Map<string, LayoutNode>();
 
-  stocks.forEach((stock) => directionalAdjacencyMap.set(stock.id, { inputs: [], outputs: [], kind: NodeKindEnum.Stock }))
-  flows.forEach((flow) => {
-    console.log(flow.id)
-    if (!directionalAdjacencyMap.has(flow.id)) {
-      const set: DirectionalSet = { inputs: [], outputs: [], kind: NodeKindEnum.Flow }
-      if (flow.from) set.inputs.push(flow.from)
-      if (flow.to) set.outputs.push(flow.to)
+	branches.forEach((branch, branchIterator) => {
+		let x = 0;
 
-      directionalAdjacencyMap.set(flow.id, set)
-    }
+		branch.forEach((nodeId) => {
+			const node = directionalAdjacencyMap.get(nodeId);
 
-    if (flow.from) directionalAdjacencyMap.get(flow.from)?.outputs.push(flow.id)
-    if (flow.to) directionalAdjacencyMap.get(flow.to)?.inputs.push(flow.id)
-  })
+			if (node) {
+				const constructedNode = constructLayoutNode(nodeId, node.kind, {
+					x,
+					y: 0 + branchIterator * THEME.SPACING,
+				});
+				x += constructedNode.size.width + THEME.SPACING;
 
-  const branchEntries = [...directionalAdjacencyMap.entries()].filter(([_, value]) => value.inputs.length === 0).map(([id]) => id)
+				layoutNodes.set(nodeId, constructedNode);
+			}
+		});
+	});
 
-  if (branchEntries && branchEntries.length > 0) {
-    const visitedBranches = new Set<string>()
+	// TOTO - constructAuxiliaryNodes.entries()
 
-    function collectBranch(startId: string): string[] {
-      if (visitedBranches.has(startId)) return []
-      visitedBranches.add(startId)
+	return layoutNodes;
+}
 
-      const node = directionalAdjacencyMap.get(startId)
-      if (!node) return []
+// function constructLayoutEdges(
+// directionalAdjacencyMap: Map<string, DirectionalSet>,
+// ): Map<string, LayoutEdge> {
+// 	const edges = new Map<string, LayoutEdge>();
 
-      return [startId, ...node.outputs.flatMap((outputId) => collectBranch(outputId))]
-    }
+// 	return edges;
+// }
 
-    const branches = branchEntries.map((entry) => collectBranch(entry))
+function contructAuxiliaryNodes(
+	directionalAdjacencyMap: Map<string, DirectionalSet>,
+	auxiliaries: IRAuxiliary[],
+) {
+	// Extend the directionalAdjacencyMap with auxilaries
+	// constructLayoutNode with positions generated through fruchterman-reingold force-directed algorithm
+	return;
+}
 
-    branches.forEach((branch, bi) => {
-      let currentX = 0
-      branch.forEach((nodeId, i, a) => {
-        const node = directionalAdjacencyMap.get(nodeId)
-        if (node) {
-          const constructedNode = constructLayoutNode(nodeId, node.kind, { x: currentX, y: 0 + bi * MARGIN })
-          console.log(constructedNode)
-          currentX += constructedNode.size.width + MARGIN
-          console.log(currentX)
+function buildSkeleton(stocks: IRStock[], flows: IRFlow[]) {
+	const directionalAdjacencyMap = buildDirectionalAdjacencyMap(stocks, flows);
 
-          layoutNodes.set(nodeId, constructedNode)
-        }
-      })
-    })
+	const entries = [...directionalAdjacencyMap.entries()];
 
-    console.log(branches)
-  } else {
+	const graphHasTails = entries.find(([_, value]) => value.inputs.length === 0);
 
-  }
+	const branchEntries = graphHasTails
+		? entries
+				.filter(([_, value]) => value.inputs.length === 0)
+				.map(([id]) => id)
+		: entries.map(([id]) => id);
 
-  console.log(directionalAdjacencyMap)
-  console.log(branchEntries)
-  return layoutNodes
+	const visitedBranches = new Set<string>();
+
+	function collectBranch(startId: string): string[] {
+		if (visitedBranches.has(startId)) return [];
+		visitedBranches.add(startId);
+
+		const node = directionalAdjacencyMap.get(startId);
+
+		return node
+			? [
+					startId,
+					...node.outputs.flatMap((outputId) => collectBranch(outputId)),
+				]
+			: [];
+	}
+
+	const branches = branchEntries.map((entry) => collectBranch(entry));
+	return constructSkeletonLayoutNodes(directionalAdjacencyMap, branches);
 }
 
 function buildSFDLayout(ir: IR): LayoutResult {
-  const nodes = new Map<string, LayoutNode>()
+	const nodes = new Map<string, LayoutNode>(
+		buildSkeleton(ir.stocks, ir.flows).entries(),
+	);
 
-  const sfNodes = buildStockSkeleton(ir.stocks, ir.flows)
-  sfNodes.forEach((n) => nodes.set(n.id, n))
+	const edges = new Map<string, LayoutEdge>();
 
-  return { nodes: [...nodes.values()], edges: [] }
+	return { nodes: [...nodes.values()], edges: [...edges.values()] };
 }
 
 // function layoutSFD(ir: IR): LayoutResult {
@@ -247,36 +261,49 @@ function buildSFDLayout(ir: IR): LayoutResult {
 // }
 
 function layoutCLD(ir: IR): LayoutResult {
-  const nodes: LayoutNode[] = [];
-  const edges: LayoutEdge[] = [];
+	const NODE_SIZE: Record<NodeKind, { width: number; height: number }> = {
+		stock: { width: 120, height: 48 },
+		aux: { width: 80, height: 32 },
+		flow: { width: 20, height: 20 },
+	};
 
-  const allNodes = [...ir.auxiliaries, ...ir.stocks];
-  const n = allNodes.length;
-  const radius = Math.max(120, n * 35);
-  const cx = radius + MARGIN + NODE_SIZE.aux.width / 2;
-  const cy = radius + MARGIN + NODE_SIZE.aux.height / 2;
+	const nodes: LayoutNode[] = [];
+	const edges: LayoutEdge[] = [];
 
-  allNodes.forEach((node, i) => {
-    const angle = (2 * Math.PI * i) / n - Math.PI / 2;
-    const isStock = ir.stocks.some((s) => s.id === node.id);
-    const kind: NodeKind = isStock ? "stock" : "aux";
-    const algorithmX = cx + radius * Math.cos(angle) - NODE_SIZE[kind].width / 2;
-    const algorithmY = cy + radius * Math.sin(angle) - NODE_SIZE[kind].height / 2;
-    nodes.push(
-      getLayoutNode(node.id, kind, node.position?.x ?? algorithmX, node.position?.y ?? algorithmY),
-    );
-  });
+	const allNodes = [...ir.auxiliaries, ...ir.stocks];
+	const n = allNodes.length;
+	const radius = Math.max(120, n * 35);
+	const cx = radius + THEME.SPACING + NODE_SIZE.aux.width / 2;
+	const cy = radius + THEME.SPACING + NODE_SIZE.aux.height / 2;
 
-  for (const c of ir.connections) {
-    edges.push({
-      id: `conn-${c.from}-${c.to}`,
-      kind: "connection",
-      source: c.from,
-      target: c.to,
-      polarity: c.polarity,
-      points: [],
-    });
-  }
+	allNodes.forEach((node, i) => {
+		const angle = (2 * Math.PI * i) / n - Math.PI / 2;
+		const isStock = ir.stocks.some((s) => s.id === node.id);
+		const kind: NodeKind = isStock ? "stock" : "aux";
+		const algorithmX =
+			cx + radius * Math.cos(angle) - NODE_SIZE[kind].width / 2;
+		const algorithmY =
+			cy + radius * Math.sin(angle) - NODE_SIZE[kind].height / 2;
+		nodes.push(
+			getLayoutNode(
+				node.id,
+				kind,
+				node.position?.x ?? algorithmX,
+				node.position?.y ?? algorithmY,
+			),
+		);
+	});
 
-  return { nodes, edges };
+	for (const c of ir.connections) {
+		edges.push({
+			id: `conn-${c.from}-${c.to}`,
+			kind: "connection",
+			source: c.from,
+			target: c.to,
+			polarity: c.polarity,
+			points: [],
+		});
+	}
+
+	return { nodes, edges };
 }

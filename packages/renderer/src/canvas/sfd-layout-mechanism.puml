@@ -1,0 +1,162 @@
+@startuml sfd-layout-mechanism
+title SFD auto-layout algorithm (first-run / unpositioned elements)
+
+start
+
+:Parse XMILE model into element collections
+(stocks, flows, clouds, auxiliaries, influences);
+
+:Partition elements by position
+(positioned vs. unpositioned);
+
+if (unpositioned set empty?) then (yes)
+  :Render as-is;
+  stop
+else (no)
+endif
+
+partition "Phase 1: Stock skeleton (Fruchterman-Reingold + grid snap)" {
+
+  :Build stock subgraph G_s
+  nodes = stocks
+  edges = stock-to-stock flows;
+
+  :Initialize positions
+  pinned = positioned stocks
+  others seeded near centroid with fixed-seed PRNG;
+
+  :Compute FR parameters
+  k = sqrt(area / N)
+  t = canvas_width / 10
+  cooling = 0.95
+  max_iter = 150
+  epsilon = 0.5 px;
+
+  repeat
+    :Reset displacement for all nodes;
+
+    :Repulsive pass over all node pairs
+    delta = pos_u - pos_v
+    dist = length(delta)
+    f_rep = (k * k / dist) * unit(delta)
+    accumulate into both nodes;
+
+    :Attractive pass over all edges
+    delta = pos_u - pos_v
+    dist = length(delta)
+    f_att = (dist * dist / k) * unit(delta)
+    subtract from u, add to v;
+
+    :Apply displacement to non-pinned nodes
+    step = unit(disp) * min(length(disp), t)
+    clamp pos to canvas;
+
+    :Cool temperature
+    t = t * cooling;
+
+  repeat while (iter < max_iter AND max_step > epsilon) is (yes) not (no)
+
+  :Snap each non-pinned stock to nearest
+  grid cell (cell_size = 20 px);
+
+  while (two stocks share a grid cell?) is (yes)
+    :Spiral search outward for nearest free cell
+    move one stock there;
+  endwhile (no)
+}
+
+partition "Phase 2: Flow routing (orthogonal pipes)" {
+
+  while (unrouted flows remain?) is (yes)
+
+    :Pop next flow f with endpoints a and b;
+
+    if (a or b is a cloud?) then (yes)
+      :Score sides of stock (N, E, S, W)
+      by attached pipes and nearby stocks;
+      :Place cloud on lowest-scoring side
+      at default pipe length;
+      :Route straight pipe stock-to-cloud;
+    else (both stocks)
+      if (endpoints share x or y?) then (yes)
+        :Straight pipe a-to-b;
+      else (no)
+        :Build two L-shape candidates
+        L1 = horizontal-first
+        L2 = vertical-first;
+        :Score each candidate
+        plus 100 per stock bbox crossed
+        plus 10 per existing pipe crossed
+        plus 1 per grid cell of length;
+        :Pick lower-scoring candidate;
+      endif
+    endif
+
+    :Place valve at pipe midpoint
+    (longer segment midpoint if L-shaped);
+
+  endwhile (no more flows)
+}
+
+partition "Phase 3: Auxiliary placement (constrained FR)" {
+
+  :Build aux influence subgraph G_a
+  aux nodes plus pinned proxies for
+  stocks, valves, and clouds;
+
+  :Seed unpositioned aux nodes near centroid
+  of their influence neighbours;
+
+  repeat
+    :Reset displacement;
+
+    :Standard FR repulsion plus attraction
+    only aux nodes accumulate net force;
+
+    :Line-segment repulsion against pipes
+    for each pipe segment and each free aux
+    if distance less than min_clearance
+    push aux perpendicular to pipe;
+
+    :Apply displacement to aux nodes only
+    with cooling schedule;
+
+  repeat while (iter < max_iter AND max_step > epsilon) is (yes) not (no)
+}
+
+partition "Phase 4: Influence routing (curved arrows)" {
+
+  while (unrouted influences remain?) is (yes)
+
+    :Pop next influence (src, tgt);
+    :Compute straight chord from src to tgt;
+
+    if (chord crosses any bbox or pipe?) then (no)
+      :Render as straight (or slight default curve);
+    else (yes)
+      :Try curvatures from candidate set
+      plus 0.2, plus 0.4, plus 0.6,
+      minus 0.2, minus 0.4, minus 0.6;
+      :For each curvature build quadratic Bezier
+      control point on chord midpoint
+      offset perpendicular by c * chord_length;
+      :Count crossings (bboxes, pipes, other arrows);
+      :Pick curvature with minimum crossings;
+    endif
+
+  endwhile (no more influences)
+}
+
+partition "Persistence" {
+  if (persist strategy?) then (lazy)
+    :Keep positions in renderer state only;
+    :Write back to XMILE on user save;
+  else (eager)
+    :Write x and y to model immediately;
+    :Render;
+  endif
+}
+
+stop
+
+@enduml
