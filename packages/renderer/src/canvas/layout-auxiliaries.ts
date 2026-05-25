@@ -1,6 +1,7 @@
 import type { IRAuxiliary, IRConnection, IRPosition } from "@sysdml/ir";
 
-import { LayoutNode } from "./layout-types";
+import { FR, THEME } from "./layout-theme";
+import { LayoutNode, NodeKindEnum } from "./layout-types";
 
 export function seedAuxiliaryPositions(
     auxiliaries: IRAuxiliary[],
@@ -214,4 +215,95 @@ export function computeAttraction(
     });
 
     return displacement;
+}
+
+export function constructAuxiliaryLayoutNodes(
+    auxiliaries: IRAuxiliary[],
+    connections: IRConnection[],
+    skeletonNodes: Map<string, LayoutNode>,
+): Map<string, LayoutNode> {
+    if (auxiliaries.length === 0) return new Map();
+
+    const seeds = seedAuxiliaryPositions(auxiliaries, connections, skeletonNodes);
+
+    // Combined position map: aux seeds + skeleton centers (pinned).
+    const positions = new Map<string, IRPosition>(seeds);
+    const pinned = new Set<string>();
+    skeletonNodes.forEach((node, id) => {
+        positions.set(id, nodeCenter(node));
+        pinned.add(id);
+    });
+
+    const auxIdSet = new Set(auxiliaries.map((auxiliary) => auxiliary.id));
+    const auxesWithExplicitPosition = new Set(
+        auxiliaries.filter((auxiliary) => auxiliary.position).map((auxiliary) => auxiliary.id),
+    );
+    auxesWithExplicitPosition.forEach((id) => pinned.add(id));
+
+    // Edges = IR connections that touch at least one aux node.
+    const frEdges: FrEdge[] = connections
+        .filter((connection) => auxIdSet.has(connection.from) || auxIdSet.has(connection.to))
+        .map((connection) => ({ from: connection.from, to: connection.to }));
+
+    const k = computeIdealEdgeLength(positions);
+    let temperature = FR.INITIAL_TEMPERATURE;
+    let currentPositions = positions;
+
+    for (let iteration = 0; iteration < FR.MAX_ITERATIONS; iteration++) {
+        const repulsion = computeRepulsion(currentPositions, k);
+        const attraction = computeAttraction(currentPositions, frEdges, k);
+        const combined = sumDisplacement(repulsion, attraction);
+        const { positions: next, maxStep } = applyDisplacement(
+            currentPositions,
+            combined,
+            pinned,
+            temperature,
+        );
+        currentPositions = next;
+        temperature *= FR.COOLING_FACTOR;
+        if (maxStep < FR.EPSILON) break;
+    }
+
+    const result = new Map<string, LayoutNode>();
+    auxiliaries.forEach((auxiliary) => {
+        const position = currentPositions.get(auxiliary.id)!;
+        const size = {
+            width: auxiliary.id.length * THEME.CHAR_WIDTH + 2 * THEME.STOCK_PADDING,
+            height: THEME.LINE_HEIGHT + 2 * THEME.STOCK_PADDING,
+        };
+        result.set(auxiliary.id, {
+            id: auxiliary.id,
+            kind: NodeKindEnum.Aux,
+            position,
+            size,
+        });
+    });
+
+    return result;
+}
+
+function computeIdealEdgeLength(positions: Map<string, IRPosition>): number {
+    if (positions.size === 0) {
+        return FR.AREA_SIDE_FALLBACK / 2;
+    }
+    const xs = [...positions.values()].map((position) => position.x);
+    const ys = [...positions.values()].map((position) => position.y);
+    const width = Math.max(FR.AREA_SIDE_FALLBACK, Math.max(...xs) - Math.min(...xs));
+    const height = Math.max(FR.AREA_SIDE_FALLBACK, Math.max(...ys) - Math.min(...ys));
+    return Math.sqrt((width * height) / positions.size);
+}
+
+function sumDisplacement(
+    displacementA: Map<string, IRPosition>,
+    displacementB: Map<string, IRPosition>,
+): Map<string, IRPosition> {
+    const sum = new Map<string, IRPosition>();
+    displacementA.forEach((value, id) => {
+        const other = displacementB.get(id) ?? { x: 0, y: 0 };
+        sum.set(id, { x: value.x + other.x, y: value.y + other.y });
+    });
+    displacementB.forEach((value, id) => {
+        if (!sum.has(id)) sum.set(id, { ...value });
+    });
+    return sum;
 }

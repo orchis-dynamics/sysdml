@@ -169,3 +169,64 @@ describe("applyDisplacement", () => {
         expect(result.positions.get("a")).toEqual({ x: 3, y: 4 });
     });
 });
+
+import { constructAuxiliaryLayoutNodes } from "../../src/canvas/layout-auxiliaries";
+
+describe("constructAuxiliaryLayoutNodes", () => {
+    test("returns empty map when there are no auxiliaries", () => {
+        const result = constructAuxiliaryLayoutNodes([], [], new Map());
+        expect(result.size).toBe(0);
+    });
+
+    test("preserves explicit IR position on auxiliaries", () => {
+        const result = constructAuxiliaryLayoutNodes(
+            [aux("p", { x: 42, y: 84 })],
+            [],
+            new Map(),
+        );
+        expect(result.get("p")!.position).toEqual({ x: 42, y: 84 });
+    });
+
+    test("produces a LayoutNode with kind=aux and a non-zero size", () => {
+        const result = constructAuxiliaryLayoutNodes(
+            [aux("birth_rate")],
+            [],
+            new Map(),
+        );
+        const node = result.get("birth_rate")!;
+        expect(node.kind).toBe("aux");
+        expect(node.size.width).toBeGreaterThan(0);
+        expect(node.size.height).toBeGreaterThan(0);
+    });
+
+    test("does not move pinned skeleton nodes (they are not in the result)", () => {
+        const skeleton = new Map<string, LayoutNode>([
+            ["s1", stockNode("s1", 100, 200)],
+        ]);
+        const result = constructAuxiliaryLayoutNodes(
+            [aux("a"), aux("b")],
+            [connection("s1", "a"), connection("a", "b")],
+            skeleton,
+        );
+        expect(result.has("s1")).toBe(false);
+        expect(result.get("a")).toBeDefined();
+        expect(result.get("b")).toBeDefined();
+    });
+
+    test("FR converges (final result is deterministic for the same input)", () => {
+        const skeleton = new Map<string, LayoutNode>([
+            ["s1", stockNode("s1", 0, 0)],
+            ["s2", stockNode("s2", 400, 0)],
+        ]);
+        const auxes = [aux("a"), aux("b")];
+        const connections = [
+            connection("s1", "a"),
+            connection("a", "b"),
+            connection("b", "s2"),
+        ];
+        const first = constructAuxiliaryLayoutNodes(auxes, connections, skeleton);
+        const second = constructAuxiliaryLayoutNodes(auxes, connections, skeleton);
+        expect(first.get("a")!.position).toEqual(second.get("a")!.position);
+        expect(first.get("b")!.position).toEqual(second.get("b")!.position);
+    });
+});
