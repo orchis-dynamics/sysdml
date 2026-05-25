@@ -13,14 +13,8 @@ import {
 } from "./layout-types";
 
 export function computeLayout(ir: IR): LayoutResult {
-	buildSFDLayout(ir);
 	return ir.stocks.length > 0 ? buildSFDLayout(ir) : layoutCLD(ir);
-	// return ir.stocks.length > 0 ? buildSFDLayout(ir) : layoutCLD(ir);
 }
-
-// function getLayoutNode(id: string, kind: NodeKind, x: number, y: number): LayoutNode {
-//   return { id, kind, x, y, width: calculateNodeWidth(id.length), height: NODE_SIZE[kind].height };
-// }
 
 const NODE_SIZE_CALC: Record<NodeKind, (idLength: number) => NodeSize> = {
 	[NodeKindEnum.Stock]: (idLength: number) => ({
@@ -168,89 +162,6 @@ function buildSFDLayout(ir: IR): LayoutResult {
 	return { nodes: [...nodes.values()], edges: [...edges.values()] };
 }
 
-// function layoutSFD(ir: IR): LayoutResult {
-//   const OFFSET = 200;
-//   const nodes = new Map<string, LayoutNode>();
-//   const edges = new Map<string, LayoutEdge>();
-
-//   type Tagged =
-//     | (IRStock & { kind: "stock" })
-//     | (IRFlow & { kind: "flow" })
-//     | (IRAuxiliary & { kind: "aux" });
-
-//   const nodeMap = new Map<string, Tagged>();
-//   ir.stocks.forEach((s) => nodeMap.set(s.id, { ...s, kind: "stock" }));
-//   ir.flows.forEach((f) => nodeMap.set(f.id, { ...f, kind: "flow" }));
-//   ir.auxiliaries.forEach((a) => nodeMap.set(a.id, { ...a, kind: "aux" }));
-
-//   let stockCount = 0;
-//   for (const node of nodeMap.values()) {
-//     if (node.kind === "stock") {
-//       const x = node.position?.x ?? stockCount * 2 * OFFSET;
-//       const y = node.position?.y ?? 0;
-//       nodes.set(node.id, getLayoutNode(node.id, "stock", x, y));
-//       stockCount++;
-//     }
-
-//     if (node.kind === "flow") {
-//       const from = node.from ? nodes.get(node.from) : null;
-//       const to = node.to ? nodes.get(node.to) : null;
-//       const algorithmX = from
-//         ? from.x + OFFSET + from.width / 2
-//         : to
-//           ? to.x - OFFSET
-//           : 0;
-//       const algorithmY = from?.y ?? to?.y ?? 0;
-//       const x = node.position?.x ?? algorithmX;
-//       const y = node.position?.y ?? algorithmY;
-//       nodes.set(node.id, getLayoutNode(node.id, "flow", x, y));
-
-//       edges.set(node.id, {
-//         id: node.id,
-//         kind: "flow",
-//         source: node.from ?? node.id,
-//         target: node.to ?? node.id,
-//         points: [
-//           { x: to?.x ?? x, y: to?.y ?? y },
-//           { x: from?.x ?? x, y: from?.y ?? y },
-//         ],
-//       });
-//     }
-
-//     if (node.kind === "aux") {
-//       const related = ir.connections
-//         .filter((c) => c.from === node.id || c.to === node.id)
-//         .map((c) => (c.from === node.id ? c.to : c.from));
-//       const xs = related.map((id) => nodes.get(id)?.x).filter((v): v is number => v !== undefined);
-//       const ys = related.map((id) => nodes.get(id)?.y).filter((v): v is number => v !== undefined);
-//       const algorithmX = xs.length ? xs.reduce((a, b) => a + b) / xs.length : 0;
-//       const algorithmY = (ys.length ? ys.reduce((a, b) => a + b) / ys.length : 0) - OFFSET / 2;
-//       const x = node.position?.x ?? algorithmX;
-//       const y = node.position?.y ?? algorithmY;
-//       nodes.set(node.id, getLayoutNode(node.id, "aux", x, y));
-//     }
-//   }
-
-//   ir.connections.forEach((conn) => {
-//     const edgeId = `${conn.from}_to_${conn.to}`;
-//     const src = nodes.get(conn.from);
-//     const tgt = nodes.get(conn.to);
-//     edges.set(edgeId, {
-//       id: edgeId,
-//       kind: "connection",
-//       source: conn.from,
-//       target: conn.to,
-//       polarity: conn.polarity,
-//       points: [
-//         { x: src?.x ?? 0, y: src?.y ?? 0 },
-//         { x: tgt?.x ?? 0, y: tgt?.y ?? 0 },
-//       ],
-//     });
-//   });
-
-//   return { nodes: [...nodes.values()], edges: [...edges.values()] };
-// }
-
 function layoutCLD(ir: IR): LayoutResult {
 	const NODE_SIZE: Record<NodeKind, { width: number; height: number }> = {
 		stock: { width: 120, height: 48 },
@@ -276,12 +187,10 @@ function layoutCLD(ir: IR): LayoutResult {
 		const algorithmY =
 			cy + radius * Math.sin(angle) - NODE_SIZE[kind].height / 2;
 		nodes.push(
-			getLayoutNode(
-				node.id,
-				kind,
-				node.position?.x ?? algorithmX,
-				node.position?.y ?? algorithmY,
-			),
+			constructLayoutNode(node.id, kind, {
+				x: node.position?.x ?? algorithmX,
+				y: node.position?.y ?? algorithmY,
+			}),
 		);
 	});
 
