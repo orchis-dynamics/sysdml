@@ -144,6 +144,41 @@ function hashAngle(seed: string): number {
     return ((hash >>> 0) / 0xffffffff) * Math.PI * 2;
 }
 
+export interface DisplacementApplication {
+    positions: Map<string, IRPosition>;
+    maxStep: number;
+}
+
+export function applyDisplacement(
+    positions: Map<string, IRPosition>,
+    displacement: Map<string, IRPosition>,
+    pinned: Set<string>,
+    temperature: number,
+): DisplacementApplication {
+    const next = new Map<string, IRPosition>();
+    let maxStep = 0;
+
+    positions.forEach((position, id) => {
+        if (pinned.has(id)) {
+            next.set(id, position);
+            return;
+        }
+        const stepVector = displacement.get(id) ?? { x: 0, y: 0 };
+        const length = Math.hypot(stepVector.x, stepVector.y);
+        if (length < COINCIDENT_EPSILON) {
+            next.set(id, position);
+            return;
+        }
+        const clamped = Math.min(length, temperature);
+        const stepX = (stepVector.x / length) * clamped;
+        const stepY = (stepVector.y / length) * clamped;
+        next.set(id, { x: position.x + stepX, y: position.y + stepY });
+        if (clamped > maxStep) maxStep = clamped;
+    });
+
+    return { positions: next, maxStep };
+}
+
 export interface FrEdge {
     from: string;
     to: string;

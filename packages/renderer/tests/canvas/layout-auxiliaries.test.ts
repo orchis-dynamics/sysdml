@@ -121,3 +121,51 @@ describe("computeAttraction", () => {
         expect(displacement.get("b")).toEqual({ x: 0, y: 0 });
     });
 });
+
+import { applyDisplacement } from "../../src/canvas/layout-auxiliaries";
+
+describe("applyDisplacement", () => {
+    test("does not move pinned ids", () => {
+        const positions = new Map([
+            ["a", { x: 0, y: 0 }],
+            ["b", { x: 0, y: 0 }],
+        ]);
+        const displacement = new Map([
+            ["a", { x: 5, y: 0 }],
+            ["b", { x: 5, y: 0 }],
+        ]);
+        const { positions: next } = applyDisplacement(
+            positions,
+            displacement,
+            new Set(["a"]),
+            10,
+        );
+        expect(next.get("a")).toEqual({ x: 0, y: 0 });
+        expect(next.get("b")).toEqual({ x: 5, y: 0 });
+    });
+
+    test("clamps step length to temperature", () => {
+        const positions = new Map([["a", { x: 0, y: 0 }]]);
+        // Displacement length 50, temperature 10 → step length 10
+        const displacement = new Map([["a", { x: 30, y: 40 }]]);
+        const { positions: next } = applyDisplacement(
+            positions,
+            displacement,
+            new Set(),
+            10,
+        );
+        const dx = next.get("a")!.x;
+        const dy = next.get("a")!.y;
+        expect(Math.hypot(dx, dy)).toBeCloseTo(10, 6);
+        expect(dx).toBeCloseTo(6, 6); // 30/50 * 10
+        expect(dy).toBeCloseTo(8, 6); // 40/50 * 10
+    });
+
+    test("returns max step length applied this iteration", () => {
+        const positions = new Map([["a", { x: 0, y: 0 }]]);
+        const displacement = new Map([["a", { x: 3, y: 4 }]]);
+        const result = applyDisplacement(positions, displacement, new Set(), 100);
+        expect(result.maxStep).toBeCloseTo(5, 6);
+        expect(result.positions.get("a")).toEqual({ x: 3, y: 4 });
+    });
+});
