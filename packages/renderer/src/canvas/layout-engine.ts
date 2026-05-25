@@ -1,5 +1,6 @@
 import type { IR, IRStock, IRFlow, IRAuxiliary, IRPosition } from "@sysdml/ir";
 
+import { constructLayoutEdges } from "./layout-edges";
 import { THEME } from "./layout-theme";
 import {
 	LayoutEdge,
@@ -112,25 +113,18 @@ function constructSkeletonLayoutNodes(
 		});
 	});
 
-	// TOTO - constructAuxiliaryNodes.entries()
+	// TOTO - constructAuxiliaryNodes() and add them too
 
 	return layoutNodes;
 }
 
-// function constructLayoutEdges(
-// directionalAdjacencyMap: Map<string, DirectionalSet>,
-// ): Map<string, LayoutEdge> {
-// 	const edges = new Map<string, LayoutEdge>();
-
-// 	return edges;
-// }
 
 function contructAuxiliaryNodes(
 	directionalAdjacencyMap: Map<string, DirectionalSet>,
 	auxiliaries: IRAuxiliary[],
 ) {
-	// Extend the directionalAdjacencyMap with auxilaries
-	// constructLayoutNode with positions generated through fruchterman-reingold force-directed algorithm
+	// TODO - Extend the directionalAdjacencyMap with auxilaries
+	// TODO - constructLayoutNode with positions generated through fruchterman-reingold force-directed algorithm
 	return;
 }
 
@@ -172,7 +166,7 @@ function buildSFDLayout(ir: IR): LayoutResult {
 		buildSkeleton(ir.stocks, ir.flows).entries(),
 	);
 
-	const edges = new Map<string, LayoutEdge>();
+	const edges = constructLayoutEdges(ir.flows, ir.connections);
 
 	return { nodes: [...nodes.values()], edges: [...edges.values()] };
 }
