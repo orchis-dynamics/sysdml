@@ -143,3 +143,40 @@ function hashAngle(seed: string): number {
     // Map to [0, 2π)
     return ((hash >>> 0) / 0xffffffff) * Math.PI * 2;
 }
+
+export interface FrEdge {
+    from: string;
+    to: string;
+}
+
+export function computeAttraction(
+    positions: Map<string, IRPosition>,
+    edges: FrEdge[],
+    k: number,
+): Map<string, IRPosition> {
+    const displacement = initializeDisplacement(positions);
+
+    edges.forEach((edge) => {
+        const positionFrom = positions.get(edge.from);
+        const positionTo = positions.get(edge.to);
+        if (!positionFrom || !positionTo) return;
+
+        const deltaX = positionFrom.x - positionTo.x;
+        const deltaY = positionFrom.y - positionTo.y;
+        const distance = Math.hypot(deltaX, deltaY);
+        if (distance < COINCIDENT_EPSILON) return;
+
+        const unitX = deltaX / distance;
+        const unitY = deltaY / distance;
+        const magnitude = (distance * distance) / k;
+
+        const dFrom = displacement.get(edge.from)!;
+        const dTo = displacement.get(edge.to)!;
+        dFrom.x -= unitX * magnitude;
+        dFrom.y -= unitY * magnitude;
+        dTo.x += unitX * magnitude;
+        dTo.y += unitY * magnitude;
+    });
+
+    return displacement;
+}

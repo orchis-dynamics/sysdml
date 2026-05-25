@@ -81,3 +81,43 @@ describe("computeRepulsion", () => {
         expect(displacement.get("b")!.x).toBeCloseTo(250, 6);
     });
 });
+
+import { computeAttraction } from "../../src/canvas/layout-auxiliaries";
+
+describe("computeAttraction", () => {
+    test("pulls two connected nodes together with magnitude dist^2 / k", () => {
+        const positions = new Map([
+            ["a", { x: 0, y: 0 }],
+            ["b", { x: 10, y: 0 }],
+        ]);
+        const k = 50;
+        const displacement = computeAttraction(
+            positions,
+            [{ from: "a", to: "b" }],
+            k,
+        );
+        // f = dist^2 / k = 100 / 50 = 2; applied as +x on a, -x on b
+        expect(displacement.get("a")!.x).toBeCloseTo(2, 6);
+        expect(displacement.get("b")!.x).toBeCloseTo(-2, 6);
+    });
+
+    test("ignores edges referencing unknown nodes", () => {
+        const positions = new Map([["a", { x: 0, y: 0 }]]);
+        const displacement = computeAttraction(
+            positions,
+            [{ from: "a", to: "missing" }],
+            50,
+        );
+        expect(displacement.get("a")).toEqual({ x: 0, y: 0 });
+    });
+
+    test("returns zero displacement when there are no edges", () => {
+        const positions = new Map([
+            ["a", { x: 0, y: 0 }],
+            ["b", { x: 10, y: 0 }],
+        ]);
+        const displacement = computeAttraction(positions, [], 50);
+        expect(displacement.get("a")).toEqual({ x: 0, y: 0 });
+        expect(displacement.get("b")).toEqual({ x: 0, y: 0 });
+    });
+});
