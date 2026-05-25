@@ -38,14 +38,29 @@ enum VisualEdgeKindEnum {
 }
 type VisualEdgeKind = `${VisualEdgeKindEnum}`;
 
-const colorTheme: { edge: Record<VisualEdgeKind, string> } = {
+const colorTheme: {
+	edge: { stroke: Record<VisualEdgeKind, string>; fill: Record<VisualEdgeKind, string> };
+} = {
 	edge: {
-		[VisualEdgeKindEnum.Positive]: "stroke-emerald-600",
-		[VisualEdgeKindEnum.Negative]: "stroke-red-600",
-		[VisualEdgeKindEnum.Flow]: "stroke-stone-600",
-		[VisualEdgeKindEnum.Default]: "stroke-black",
+		stroke: {
+			[VisualEdgeKindEnum.Positive]: "stroke-emerald-600",
+			[VisualEdgeKindEnum.Negative]: "stroke-red-600",
+			[VisualEdgeKindEnum.Flow]: "stroke-stone-600",
+			[VisualEdgeKindEnum.Default]: "stroke-black",
+		},
+		fill: {
+			[VisualEdgeKindEnum.Positive]: "fill-emerald-600",
+			[VisualEdgeKindEnum.Negative]: "fill-red-600",
+			[VisualEdgeKindEnum.Flow]: "fill-stone-600",
+			[VisualEdgeKindEnum.Default]: "fill-black",
+		},
 	},
 };
+
+const FLOW_PIPE_OUTER_STROKE_WIDTH = 6;
+const FLOW_PIPE_INNER_STROKE_WIDTH = 4;
+const FLOW_ARROWHEAD_LENGTH = 10;
+const FLOW_ARROWHEAD_HALF_WIDTH = 6;
 
 const nodeComponentMap: Record<NodeKind, Component> = {
 	aux: AuxNode,
@@ -271,9 +286,83 @@ function getEdgeType(edge: LayoutEdge): VisualEdgeKind {
 	return "default";
 }
 
-function getEdgeClassList(edge: LayoutEdge): string {
-	return colorTheme.edge[getEdgeType(edge)];
+function getEdgeStrokeClass(edge: LayoutEdge): string {
+	return colorTheme.edge.stroke[getEdgeType(edge)];
 }
+
+function getEdgeFillClass(edge: LayoutEdge): string {
+	return colorTheme.edge.fill[getEdgeType(edge)];
+}
+
+interface FlowEdgeGeometry {
+	pipePath: string;
+	arrowheadPoints: string;
+}
+
+function flowEdgeGeometry(edge: LayoutEdge): FlowEdgeGeometry {
+	const { source, corner, end } = edgeEndpoints(edge);
+	const previousPoint = corner ?? source;
+	const deltaX = end.x - previousPoint.x;
+	const deltaY = end.y - previousPoint.y;
+	const segmentLength = Math.hypot(deltaX, deltaY) || 1;
+	const directionX = deltaX / segmentLength;
+	const directionY = deltaY / segmentLength;
+	const pipeEndX = end.x - directionX * FLOW_ARROWHEAD_LENGTH;
+	const pipeEndY = end.y - directionY * FLOW_ARROWHEAD_LENGTH;
+	const pipePath = corner
+		? `M ${source.x} ${source.y} L ${corner.x} ${corner.y} L ${pipeEndX} ${pipeEndY}`
+		: `M ${source.x} ${source.y} L ${pipeEndX} ${pipeEndY}`;
+	const perpendicularX = -directionY;
+	const perpendicularY = directionX;
+	const baseLeftX = pipeEndX + perpendicularX * FLOW_ARROWHEAD_HALF_WIDTH;
+	const baseLeftY = pipeEndY + perpendicularY * FLOW_ARROWHEAD_HALF_WIDTH;
+	const baseRightX = pipeEndX - perpendicularX * FLOW_ARROWHEAD_HALF_WIDTH;
+	const baseRightY = pipeEndY - perpendicularY * FLOW_ARROWHEAD_HALF_WIDTH;
+	return {
+		pipePath,
+		arrowheadPoints: `${end.x},${end.y} ${baseLeftX},${baseLeftY} ${baseRightX},${baseRightY}`,
+	};
+}
+
+type EdgeRenderItem =
+	| {
+			kind: "flow";
+			id: string;
+			pipePath: string;
+			arrowheadPoints: string;
+			strokeClass: string;
+			fillClass: string;
+	  }
+	| {
+			kind: "other";
+			id: string;
+			path: string;
+			strokeClass: string;
+			markerId: string;
+	  };
+
+const edgeRenderItems = computed<EdgeRenderItem[]>(() =>
+	layout.value.edges.map((edge) => {
+		if (edge.kind === "flow") {
+			const { pipePath, arrowheadPoints } = flowEdgeGeometry(edge);
+			return {
+				kind: "flow",
+				id: edge.id,
+				pipePath,
+				arrowheadPoints,
+				strokeClass: getEdgeStrokeClass(edge),
+				fillClass: getEdgeFillClass(edge),
+			};
+		}
+		return {
+			kind: "other",
+			id: edge.id,
+			path: getEdgePath(edge),
+			strokeClass: getEdgeStrokeClass(edge),
+			markerId: getEdgeArrowTipId(edge),
+		};
+	}),
+);
 
 const edgeArrowTipId: Record<VisualEdgeKind, string> = {
 	positive: "arrow-tip-positive",
@@ -339,15 +428,31 @@ onUnmounted(() => {
 						:class="edgeArrowTipClassList[kind]"
 					/>
 				</defs>
-				<path
-					v-for="edge in layout.edges"
-					:key="edge.id"
-					:class="getEdgeClassList(edge)"
-					:d="getEdgePath(edge)"
-					stroke-width="1"
-					fill="none"
-					:marker-end="`url(#${getEdgeArrowTipId(edge)})`"
-				/>
+				<template v-for="item in edgeRenderItems" :key="item.id">
+					<template v-if="item.kind === 'flow'">
+						<path
+							:class="item.strokeClass"
+							:d="item.pipePath"
+							:stroke-width="FLOW_PIPE_OUTER_STROKE_WIDTH"
+							fill="none"
+						/>
+						<path
+							class="stroke-stone-50"
+							:d="item.pipePath"
+							:stroke-width="FLOW_PIPE_INNER_STROKE_WIDTH"
+							fill="none"
+						/>
+						<polygon :class="item.fillClass" :points="item.arrowheadPoints" />
+					</template>
+					<path
+						v-else
+						:class="item.strokeClass"
+						:d="item.path"
+						stroke-width="1"
+						fill="none"
+						:marker-end="`url(#${item.markerId})`"
+					/>
+				</template>
 				<text
 					v-for="label in polarityLabels"
 					:key="`label-${label.id}`"
