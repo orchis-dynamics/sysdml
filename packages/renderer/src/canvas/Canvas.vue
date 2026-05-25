@@ -199,26 +199,32 @@ function quadraticTangent(p0: Point, p1: Point, p2: Point, t: number): Point {
 function edgeEndpoints(edge: LayoutEdge): {
 	src: Point;
 	ctrl: Point | null;
+	corner: Point | null;
 	end: Point;
 } {
 	const src = nodeCenter(edge.source);
 	const tgtCenter = nodeCenter(edge.target);
 	const box = targetBox(edge.target);
 	if (edge.kind === "flow") {
-		const end = box ? clipToBox(src, tgtCenter, box) : tgtCenter;
-		return { src, ctrl: null, end };
+		const corner = flowElbowCorner(src, tgtCenter);
+		const segmentStart = corner ?? src;
+		const end = box ? clipToBox(segmentStart, tgtCenter, box) : tgtCenter;
+		return { src, ctrl: null, corner, end };
 	}
 	const ctrl = connectionControlPoint(src, tgtCenter);
 	const end = box ? clipToBox(ctrl, tgtCenter, box) : tgtCenter;
-	return { src, ctrl, end };
+	return { src, ctrl, corner: null, end };
 }
 
 function getEdgePath(edge: LayoutEdge): string {
-	const { src, ctrl, end } = edgeEndpoints(edge);
-	if (ctrl === null) {
-		return `M ${src.x} ${src.y} L ${end.x} ${end.y}`;
+	const { src, ctrl, corner, end } = edgeEndpoints(edge);
+	if (ctrl !== null) {
+		return `M ${src.x} ${src.y} Q ${ctrl.x} ${ctrl.y} ${end.x} ${end.y}`;
 	}
-	return `M ${src.x} ${src.y} Q ${ctrl.x} ${ctrl.y} ${end.x} ${end.y}`;
+	if (corner !== null) {
+		return `M ${src.x} ${src.y} L ${corner.x} ${corner.y} L ${end.x} ${end.y}`;
+	}
+	return `M ${src.x} ${src.y} L ${end.x} ${end.y}`;
 }
 
 interface PolarityLabel {
