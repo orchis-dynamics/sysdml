@@ -6,7 +6,17 @@ settings:
 
 importers:
 
-  .: {}
+  .:
+    devDependencies:
+      oxfmt:
+        specifier: ^0.47.0
+        version: 0.47.0
+      oxlint:
+        specifier: ^1.62.0
+        version: 1.64.0(oxlint-tsgolint@0.22.1)
+      oxlint-tsgolint:
+        specifier: ^0.22.1
+        version: 0.22.1
 
   packages/ir:
     dependencies:
@@ -17,15 +27,6 @@ importers:
       '@types/node':
         specifier: ^20.12.0
         version: 20.19.41
-      oxfmt:
-        specifier: ^0.47.0
-        version: 0.47.0
-      oxlint:
-        specifier: ^1.62.0
-        version: 1.64.0(oxlint-tsgolint@0.22.1)
-      oxlint-tsgolint:
-        specifier: ^0.22.1
-        version: 0.22.1
       typescript:
         specifier: ^5.4.5
         version: 5.9.3
@@ -73,15 +74,6 @@ importers:
       antlr-ng:
         specifier: ^1.0.10
         version: 1.0.10
-      oxfmt:
-        specifier: ^0.47.0
-        version: 0.47.0
-      oxlint:
-        specifier: ^1.62.0
-        version: 1.64.0(oxlint-tsgolint@0.22.1)
-      oxlint-tsgolint:
-        specifier: ^0.22.1
-        version: 0.22.1
       typescript:
         specifier: ^5.4.5
         version: 5.9.3

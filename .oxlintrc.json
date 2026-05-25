@@ -1,0 +1,31 @@
+{
+	"$schema": "./node_modules/oxlint/configuration_schema.json",
+	"plugins": ["typescript", "unicorn", "oxc"],
+	"categories": {
+		"correctness": "error"
+	},
+	"options": {
+		"typeAware": true,
+		"typeCheck": true
+	},
+	"rules": {
+		"max-lines-per-function": [
+			"warn",
+			{
+				"max": 10,
+				"skipBlankLines": true,
+				"skipComments": true
+			}
+		]
+	},
+	"env": {
+		"builtin": true
+	},
+	"ignorePatterns": [
+		"**/dist/**",
+		"**/renderer-dist/**",
+		"**/generated/**",
+		"**/.antlr/**",
+		"**/node_modules/**"
+	]
+}

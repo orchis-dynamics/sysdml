@@ -7,10 +7,6 @@
 	"scripts": {
 		"clean": "rm -rf dist node_modules",
 		"build": "tsc",
-		"lint": "oxlint",
-		"lint:fix": "oxlint --fix",
-		"fmt": "oxfmt",
-		"fmt:check": "oxfmt --check",
 		"test": "vitest run",
 		"test:watch": "vitest"
 	},
@@ -19,9 +15,6 @@
 	},
 	"devDependencies": {
 		"@types/node": "^20.12.0",
-		"oxfmt": "^0.47.0",
-		"oxlint": "^1.62.0",
-		"oxlint-tsgolint": "^0.22.1",
 		"typescript": "^5.4.5",
 		"vitest": "^4.1.5"
 	}

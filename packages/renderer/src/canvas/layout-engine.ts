@@ -145,6 +145,8 @@ function buildStockSkeleton(stocks: IRStock[], flows: IRFlow[]) {
     })
 
     console.log(branches)
+  } else {
+
   }
 
   console.log(directionalAdjacencyMap)
