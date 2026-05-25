@@ -15,5 +15,17 @@ export function constructLayoutEdges(
         edges.set(id, { id, kind: "flow", source, target, points: [] });
     });
 
+    connections.forEach((connection) => {
+        const id = `conn-${connection.from}-${connection.to}`;
+        edges.set(id, {
+            id,
+            kind: "connection",
+            source: connection.from,
+            target: connection.to,
+            polarity: connection.polarity,
+            points: [],
+        });
+    });
+
     return edges;
 }
