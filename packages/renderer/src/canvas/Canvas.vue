@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, watch } from "vue";
+import { ref, computed, onMounted, onUnmounted, watch, type Component } from "vue";
 import type { IR } from "@sysdml/ir";
 import { computeLayout } from "./layout-engine.js";
-import type { LayoutNode, LayoutEdge } from "./layout-engine.js";
+import type { LayoutNode, LayoutEdge, NodeKind } from "./layout-engine.js";
 import StockNode from "./nodes/StockNode.vue";
 import AuxNode from "./nodes/AuxNode.vue";
 import FlowNode from "./nodes/FlowNode.vue";
+import ArrowTip from "./ArrowTip.vue";
 
 const props = defineProps<{ ir: IR | null }>();
 
@@ -13,18 +14,34 @@ const layout = computed(() => (props.ir ? computeLayout(props.ir) : { nodes: [],
 
 const dragOffsets = ref(new Map<string, { x: number; y: number }>());
 
-const colorTheme = {
+enum VisualEdgeKindEnum {
+  Default = "default",
+  Flow = "flow",
+  Positive = "positive",
+  Negative = "negative",
+}
+type VisualEdgeKind = `${VisualEdgeKindEnum}`;
+
+const colorTheme: { edge: Record<VisualEdgeKind, string> } = {
   edge: {
-    positive: "stroke-emerald-600",
-    negative: "stroke-red-600",
-    flow: "stroke-stone-600",
-    default: "stroke-black",
+    [VisualEdgeKindEnum.Positive]: "stroke-emerald-600",
+    [VisualEdgeKindEnum.Negative]: "stroke-red-600",
+    [VisualEdgeKindEnum.Flow]: "stroke-stone-600",
+    [VisualEdgeKindEnum.Default]: "stroke-black",
   },
+};
+
+const nodeComponentMap: Record<NodeKind, Component> = {
+  aux: AuxNode,
+  flow: FlowNode,
+  stock: StockNode,
 };
 
 function resolvedNode(node: LayoutNode): LayoutNode {
   const override = dragOffsets.value.get(node.id);
-  return override ? { ...node, x: node.x + override.x, y: node.y + override.y } : node;
+  return override
+    ? { ...node, position: { x: node.position.x + override.x, y: node.position.y + override.y } }
+    : node;
 }
 
 const resolvedNodes = computed(() => layout.value.nodes.map(resolvedNode));
@@ -127,7 +144,7 @@ const LABEL_PARAM = 0.85;
 function nodeCenter(id: string): Point {
   const node = resolvedNodes.value.find((n) => n.id === id);
   if (!node) return { x: 0, y: 0 };
-  return { x: node.x + node.width / 2, y: node.y + node.height / 2 };
+  return { x: node.position.x + node.size.width / 2, y: node.position.y + node.size.height / 2 };
 }
 
 function targetBox(id: string): LayoutNode | null {
@@ -138,10 +155,10 @@ function targetBox(id: string): LayoutNode | null {
 // the axis-aligned box. Assumes p1 is inside (or on) the box; if p0 is also
 // inside, returns p0 unchanged.
 function clipToBox(p0: Point, p1: Point, box: LayoutNode): Point {
-  const minX = box.x;
-  const maxX = box.x + box.width;
-  const minY = box.y;
-  const maxY = box.y + box.height;
+  const minX = box.position.x;
+  const maxX = box.position.x + box.size.width;
+  const minY = box.position.y;
+  const maxY = box.position.y + box.size.height;
   const dx = p1.x - p0.x;
   const dy = p1.y - p0.y;
 
@@ -227,12 +244,34 @@ const polarityLabels = computed<PolarityLabel[]>(() => {
   return labels;
 });
 
-function getEdgeClassList(edge: LayoutEdge): string {
-  if (edge.kind === "flow") return colorTheme.edge.flow;
-  if (edge.polarity === "+") return colorTheme.edge.positive;
-  if (edge.polarity === "-") return colorTheme.edge.negative;
+function getEdgeType(edge: LayoutEdge): VisualEdgeKind {
+  if (edge.kind === "flow") return "flow";
+  if (edge.polarity === "+") return "positive";
+  if (edge.polarity === "-") return "negative";
 
-  return colorTheme.edge.default;
+  return "default";
+}
+
+function getEdgeClassList(edge: LayoutEdge): string {
+  return colorTheme.edge[getEdgeType(edge)];
+}
+
+const edgeArrowTipId: Record<VisualEdgeKind, string> = {
+  positive: "arrow-tip-positive",
+  negative: "arrow-tip-negative",
+  flow: "arrow-tip-flow",
+  default: "arrow-tip-default",
+};
+
+const edgeArrowTipClassList: Record<VisualEdgeKind, string> = {
+  positive: "text-emerald-600",
+  negative: "text-red-600",
+  flow: "text-stone-600",
+  default: "text-black",
+};
+
+function getEdgeArrowTipId(edge: LayoutEdge): string {
+  return edgeArrowTipId[getEdgeType(edge)];
 }
 
 const svgWidth = ref(800);
@@ -264,7 +303,7 @@ onUnmounted(() => {
     @wheel.prevent="onWheel"
   >
     <div
-      class="absolute inset-0 origin-top-left"
+      class="absolute inset-0 origin-top-left font-mono"
       :style="{ transform }"
       @pointermove="onNodePointerMove"
       @pointerup="onNodePointerUp"
@@ -275,9 +314,12 @@ onUnmounted(() => {
         :height="svgHeight"
       >
         <defs>
-          <marker id="arrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
-            <path d="M0,0 L0,6 L8,3 z" fill="context-stroke" />
-          </marker>
+          <!-- TODO - fix the arrow tip color -->
+          <ArrowTip
+            v-for="kind in VisualEdgeKindEnum"
+            :id="edgeArrowTipId[kind]"
+            :class="edgeArrowTipClassList[kind]"
+          />
         </defs>
         <path
           v-for="edge in layout.edges"
@@ -286,7 +328,7 @@ onUnmounted(() => {
           :d="getEdgePath(edge)"
           stroke-width="1"
           fill="none"
-          marker-end="url(#arrow)"
+          :marker-end="`url(#${getEdgeArrowTipId(edge)})`"
         />
         <text
           v-for="label in polarityLabels"
@@ -308,12 +350,11 @@ onUnmounted(() => {
         v-for="node in resolvedNodes"
         :key="node.id"
         class="absolute"
-        :style="{ left: `${node.x}px`, top: `${node.y}px` }"
+        :style="{ left: `${node.position.x}px`, top: `${node.position.y}px` }"
         @pointerdown="onNodePointerDown($event, node)"
+        @click="() => console.log(node)"
       >
-        <StockNode v-if="node.kind === 'stock'" :label="node.id" />
-        <AuxNode v-else-if="node.kind === 'aux'" :label="node.id" />
-        <FlowNode v-else :label="node.id" />
+        <component :is="nodeComponentMap[node.kind]" :label="node.id" />
       </div>
     </div>
 
