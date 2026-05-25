@@ -1,5 +1,6 @@
-import type { IR, IRStock, IRFlow, IRAuxiliary, IRPosition } from "@sysdml/ir";
+import type { IR, IRStock, IRFlow, IRPosition } from "@sysdml/ir";
 
+import { constructAuxiliaryLayoutNodes } from "./layout-auxiliaries";
 import { constructLayoutEdges } from "./layout-edges";
 import { THEME } from "./layout-theme";
 import {
@@ -113,19 +114,7 @@ function constructSkeletonLayoutNodes(
 		});
 	});
 
-	// TOTO - constructAuxiliaryNodes() and add them too
-
 	return layoutNodes;
-}
-
-
-function contructAuxiliaryNodes(
-	directionalAdjacencyMap: Map<string, DirectionalSet>,
-	auxiliaries: IRAuxiliary[],
-) {
-	// TODO - Extend the directionalAdjacencyMap with auxilaries
-	// TODO - constructLayoutNode with positions generated through fruchterman-reingold force-directed algorithm
-	return;
 }
 
 function buildSkeleton(stocks: IRStock[], flows: IRFlow[]) {
@@ -162,9 +151,17 @@ function buildSkeleton(stocks: IRStock[], flows: IRFlow[]) {
 }
 
 function buildSFDLayout(ir: IR): LayoutResult {
-	const nodes = new Map<string, LayoutNode>(
-		buildSkeleton(ir.stocks, ir.flows).entries(),
+	const skeleton = buildSkeleton(ir.stocks, ir.flows);
+	const auxiliaryNodes = constructAuxiliaryLayoutNodes(
+		ir.auxiliaries,
+		ir.connections,
+		skeleton,
 	);
+
+	const nodes = new Map<string, LayoutNode>([
+		...skeleton.entries(),
+		...auxiliaryNodes.entries(),
+	]);
 
 	const edges = constructLayoutEdges(ir.flows, ir.connections);
 
