@@ -6,3 +6,12 @@ export const THEME = {
 	FLOW_SIZE: 24,
 	SPACING: 120,
 };
+
+export const FR = {
+	MAX_ITERATIONS: 150,
+	COOLING_FACTOR: 0.95,
+	EPSILON: 0.5,
+	INITIAL_TEMPERATURE: 80,
+	// Fallback area side length when the skeleton has no positioned nodes.
+	AREA_SIDE_FALLBACK: 600,
+};
