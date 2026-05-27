@@ -53,7 +53,14 @@ async function dispatchParse(args: string[]): Promise<number> {
 		process.stderr.write(`Missing file argument.\n${USAGE}`);
 		return 1;
 	}
-	const source = await readFile(file, "utf8");
+	let source: string;
+	try {
+		source = await readFile(file, "utf8");
+	} catch (error) {
+		const message = error instanceof Error ? error.message : String(error);
+		process.stderr.write(`Cannot read file ${file}: ${message}\n`);
+		return 1;
+	}
 	const result = runParseCommand(source);
 	if (result.stdout) process.stdout.write(result.stdout);
 	if (result.stderr) process.stderr.write(result.stderr);
@@ -80,7 +87,14 @@ async function dispatchSimulate(args: string[]): Promise<number> {
 		process.stderr.write(`Missing file argument.\n${USAGE}`);
 		return 1;
 	}
-	const source = await readFile(file, "utf8");
+	let source: string;
+	try {
+		source = await readFile(file, "utf8");
+	} catch (error) {
+		const message = error instanceof Error ? error.message : String(error);
+		process.stderr.write(`Cannot read file ${file}: ${message}\n`);
+		return 1;
+	}
 	const result = runSimulateCommand(source, {
 		format: values.csv ? "csv" : "json",
 	});

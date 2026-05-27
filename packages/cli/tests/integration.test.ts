@@ -78,4 +78,28 @@ describe("sysdml CLI (built binary)", () => {
 		expect(stdout).toBe("");
 		expect(stderr).toContain("--- Diagnostics ---");
 	});
+
+	it("exits 1 with USAGE on stderr when no args are given", () => {
+		const { stdout, stderr, status } = runCli();
+		expect(status).toBe(1);
+		expect(stdout).toBe("");
+		expect(stderr).toContain("Usage:");
+	});
+
+	it("exits 1 on unknown subcommand", () => {
+		const { stderr, status } = runCli("foobar");
+		expect(status).toBe(1);
+		expect(stderr).toContain("Unknown subcommand: foobar");
+	});
+
+	it("exits 1 with clean message when input file does not exist", () => {
+		const { stdout, stderr, status } = runCli(
+			"simulate",
+			"/tmp/definitely-does-not-exist-12345.sysdml",
+		);
+		expect(status).toBe(1);
+		expect(stdout).toBe("");
+		expect(stderr).not.toContain("Fatal:");
+		expect(stderr).toContain("Cannot read file");
+	});
 });

@@ -7,6 +7,12 @@
 	"type": "module",
 	"main": "./dist/src/index.js",
 	"types": "./dist/src/index.d.ts",
+	"exports": {
+		"./pipeline": {
+			"types": "./dist/src/pipeline.d.ts",
+			"default": "./dist/src/pipeline.js"
+		}
+	},
 	"scripts": {
 		"clean": "rm -rf dist node_modules",
 		"build": "tsc",
