@@ -1,4 +1,4 @@
-import { formatDiagnosticBlock, formatParseDiagnostic } from "./diagnostics.js";
+import { formatDiagnosticBlock, formatParserDiagnostic } from "./diagnostics.js";
 import { runPipeline } from "./pipeline.js";
 import type { CommandResult } from "./types.js";
 
@@ -9,7 +9,7 @@ export function runParseCommand(source: string): CommandResult {
 		return {
 			stdout: "",
 			stderr: formatDiagnosticBlock(
-				parseDiagnostics.map(formatParseDiagnostic),
+				parseDiagnostics.map(formatParserDiagnostic),
 			),
 			exitCode: 1,
 		};

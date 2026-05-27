@@ -1,8 +1,8 @@
 import { formatCsv } from "./csv.js";
 import {
 	formatDiagnosticBlock,
-	formatParseDiagnostic,
-	formatCompileDiagnostic,
+	formatParserDiagnostic,
+	formatIRDiagnostic,
 } from "./diagnostics.js";
 import { runPipeline } from "./pipeline.js";
 import type { CommandResult } from "./types.js";
@@ -22,7 +22,7 @@ export function runSimulateCommand(
 		return {
 			stdout: "",
 			stderr: formatDiagnosticBlock(
-				parseDiagnostics.map(formatParseDiagnostic),
+				parseDiagnostics.map(formatParserDiagnostic),
 			),
 			exitCode: 1,
 		};
@@ -32,7 +32,7 @@ export function runSimulateCommand(
 		return {
 			stdout: "",
 			stderr: formatDiagnosticBlock(
-				compileDiagnostics.map(formatCompileDiagnostic),
+				compileDiagnostics.map(formatIRDiagnostic),
 			),
 			exitCode: 1,
 		};

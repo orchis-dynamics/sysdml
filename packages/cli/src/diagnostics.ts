@@ -1,5 +1,5 @@
 import type { IRDiagnostic } from "@sysdml/ir";
-import type { Diagnostic as ParseDiagnostic } from "@sysdml/parser";
+import type { Diagnostic as ParserDiagnostic } from "@sysdml/parser";
 
 export function formatDiagnosticBlock(lines: string[]): string {
 	return (
@@ -8,11 +8,11 @@ export function formatDiagnosticBlock(lines: string[]): string {
 	);
 }
 
-export function formatParseDiagnostic(diagnostic: ParseDiagnostic): string {
+export function formatParserDiagnostic(diagnostic: ParserDiagnostic): string {
 	return `[${diagnostic.span.start.line}:${diagnostic.span.start.col}] ${diagnostic.message}`;
 }
 
-export function formatCompileDiagnostic(diagnostic: IRDiagnostic): string {
+export function formatIRDiagnostic(diagnostic: IRDiagnostic): string {
 	const location = diagnostic.span
 		? `[${diagnostic.span.start.line}:${diagnostic.span.start.col}] `
 		: "";
