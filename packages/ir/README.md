@@ -48,13 +48,14 @@ npm test
 
 `compileAST` takes a `FileNode` (the root AST node produced by `@sysdml/parser`) and returns a `CompileResult`:
 
+- **Multi-model handling** — files with more than one `model` declaration emit a non-fatal `MULTI_MODEL_NOT_SUPPORTED` diagnostic for each submodel; only the entry model is compiled.
 - **Structural validation** — requires exactly one `time` block and at least one `stock`.
 - **Duplicate checks** — rejects duplicate identifiers across stocks, aux, and flows; rejects duplicate or conflicting graphical-function names.
+- **Builtin-shadow check** — rejects variable identifiers (stock / aux / flow) that match a built-in function name (case-insensitive).
 - **Flow endpoint checks** — ensures `from` and `to` references resolve to declared stocks.
 - **Expression compilation** — walks every expression tree, resolves identifier references, validates function names and arities, and lowers `GroupedExpression` / `UnaryPlus` / `IF_THEN_ELSE` calls to canonical IR nodes.
 - **Graphical function validation** — checks required fields, xscale/xpts mutual exclusivity, xpts strict-ascending order, and the `step` kind invariant.
-- **Inline `aux` GF lowering** — an `aux` block-form with an embedded `gf` body is compiled into a synthetic named `IRGraphicalFunction` (prefixed `__aux_gf_<id>`) and a `GraphicalFunctionCall` expression.
-- **`LOOKUP` lowering** — `LOOKUP(input, y0, y1, …)` calls are compiled to synthetic `IRGraphicalFunction` entries with auto-generated names.
+- **`LOOKUP` lowering** — `LOOKUP(input, y0, y1, …)` calls are compiled to synthetic `IRGraphicalFunction` entries with auto-generated names (prefixed `__lookup_<n>`).
 
 ---
 
@@ -85,12 +86,24 @@ interface IRTime {
 }
 ```
 
+### `IRPosition`
+
+Layout coordinates carried through from the parser AST onto stock, aux, flow, and connection nodes.
+
+```ts
+interface IRPosition {
+	x: number;
+	y: number;
+}
+```
+
 ### `IRStock`
 
 ```ts
 interface IRStock {
 	id: string;
 	init: IRExpressionNode;
+	position?: IRPosition;
 }
 ```
 
@@ -100,10 +113,13 @@ interface IRStock {
 interface IRAuxiliary {
 	id: string;
 	expr: IRExpressionNode;
+	position?: IRPosition;
 }
 ```
 
 ### `IRFlow`
+
+`via` is the list of waypoints describing the flow's polyline route between endpoints.
 
 ```ts
 interface IRFlow {
@@ -111,6 +127,8 @@ interface IRFlow {
 	from: string | null; // null = open source
 	to: string | null; // null = open sink
 	rate: IRExpressionNode;
+	position?: IRPosition;
+	via?: IRPosition[];
 }
 ```
 
@@ -121,6 +139,8 @@ interface IRConnection {
 	from: string;
 	polarity: "+" | "-" | "=>";
 	to: string;
+	angle?: number;       // degrees, for curved-arrow rendering
+	via?: IRPosition;     // optional single waypoint
 }
 ```
 
@@ -201,11 +221,13 @@ type IRExpressionNode =
 
 | Code                       | Meaning                                                        |
 | -------------------------- | -------------------------------------------------------------- |
+| `MULTI_MODEL_NOT_SUPPORTED`| Extra `model` declaration beyond the entry model (non-fatal)   |
 | `MISSING_TIME_BLOCK`       | No `time` block found                                          |
 | `DUPLICATE_TIME_BLOCK`     | More than one `time` block                                     |
 | `MISSING_STOCK`            | No stocks declared                                             |
 | `MISSING_STOCK_INIT`       | Stock is missing its `init` property                           |
 | `DUPLICATE_IDENTIFIER`     | Same name used for two stocks, aux, or flows                   |
+| `IDENTIFIER_SHADOWS_BUILTIN` | Variable identifier collides with a built-in function name   |
 | `MISSING_FLOW_PROPERTY`    | Flow missing `from`, `to`, or `rate`                           |
 | `INVALID_FLOW_ENDPOINT`    | `from` or `to` references an undeclared stock                  |
 | `UNDEFINED_IDENTIFIER`     | Expression references an unknown variable                      |
