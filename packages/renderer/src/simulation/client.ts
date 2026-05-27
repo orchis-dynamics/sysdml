@@ -1,3 +1,5 @@
+/// <reference types="vite/client" />
+
 import type { IR } from "@sysdml/ir";
 import type { SimulationResult } from "@sysdml/simulator";
 import type { WorkerRequest, WorkerResponse } from "./types.js";
@@ -41,4 +43,10 @@ export class SimulatorClient {
   dispose(): void {
     this.worker.terminate();
   }
+}
+
+import SimulatorWorker from "./worker.ts?worker&inline";
+
+export function createDefaultSimulatorClient(): SimulatorClient {
+  return new SimulatorClient(() => new SimulatorWorker());
 }
