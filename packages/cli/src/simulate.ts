@@ -1,6 +1,8 @@
 import { runPipeline } from "./pipeline.js";
 import { formatCsv } from "./csv.js";
 import type { CommandResult } from "./parse.js";
+import type { Diagnostic as ParseDiagnostic } from "@sysdml/parser";
+import type { IRDiagnostic } from "@sysdml/ir";
 
 export interface SimulateOptions {
 	format: "json" | "csv";
@@ -29,15 +31,19 @@ export function runSimulateCommand(
 		};
 	}
 
+	if (simulation === null) {
+		throw new Error("unreachable: simulation is null while ir is non-null");
+	}
+
 	const stdout =
 		options.format === "csv"
-			? formatCsv(ir, simulation!)
+			? formatCsv(ir, simulation)
 			: JSON.stringify(simulation, null, 2) + "\n";
 
 	const stderr =
-		simulation!.diagnostics.length > 0
+		simulation.diagnostics.length > 0
 			? formatDiagnostics(
-					simulation!.diagnostics.map(
+					simulation.diagnostics.map(
 						(diagnostic) => `[${diagnostic.code}] ${diagnostic.message}`,
 					),
 				)
@@ -50,18 +56,11 @@ function formatDiagnostics(lines: string[]): string {
 	return ["--- Diagnostics ---", ...lines.map((line) => `  ${line}`)].join("\n") + "\n";
 }
 
-function formatParseDiagnostic(diagnostic: {
-	span: { start: { line: number; col: number } };
-	message: string;
-}): string {
+function formatParseDiagnostic(diagnostic: ParseDiagnostic): string {
 	return `[${diagnostic.span.start.line}:${diagnostic.span.start.col}] ${diagnostic.message}`;
 }
 
-function formatCompileDiagnostic(diagnostic: {
-	code: string;
-	message: string;
-	span?: { start: { line: number; col: number } };
-}): string {
+function formatCompileDiagnostic(diagnostic: IRDiagnostic): string {
 	const location = diagnostic.span
 		? `[${diagnostic.span.start.line}:${diagnostic.span.start.col}] `
 		: "";
