@@ -25,7 +25,7 @@
 		"@sysdml/simulator": "workspace:*"
 	},
 	"devDependencies": {
-		"@types/node": "^20.12.0",
+		"@types/node": "^24.12.4",
 		"typescript": "^5.4.5",
 		"vitest": "^4.1.5"
 	}
