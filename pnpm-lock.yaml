@@ -18,6 +18,28 @@ importers:
         specifier: ^0.22.1
         version: 0.22.1
 
+  packages/cli:
+    dependencies:
+      '@sysdml/ir':
+        specifier: workspace:*
+        version: link:../ir
+      '@sysdml/parser':
+        specifier: workspace:*
+        version: link:../parser
+      '@sysdml/simulator':
+        specifier: workspace:*
+        version: link:../simulator
+    devDependencies:
+      '@types/node':
+        specifier: ^20.12.0
+        version: 20.19.41
+      typescript:
+        specifier: ^5.4.5
+        version: 5.9.3
+      vitest:
+        specifier: ^3.0.0
+        version: 3.2.4(@types/node@20.19.41)(jiti@2.7.0)(lightningcss@1.32.0)
+
   packages/ir:
     dependencies:
       '@sysdml/parser':
