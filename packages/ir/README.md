@@ -2,6 +2,8 @@
 
 TypeScript compiler that lowers a `@sysdml/parser` AST into a typed Intermediate Representation (IR) ready for simulation.
 
+> Part of the [SysDML monorepo](../../README.md). See the root README for the overall architecture and how the packages fit together.
+
 ## Usage
 
 ```ts
