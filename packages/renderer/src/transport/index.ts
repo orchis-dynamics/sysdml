@@ -6,7 +6,6 @@ import { WebSocketAdapter } from "./websocket.js";
 declare const window: Window & {
   SYSDML_WS_URL?: string;
 };
-declare function acquireVsCodeApi(): unknown;
 
 export function createTransport(): IRTransport {
   if (typeof acquireVsCodeApi !== "undefined") {

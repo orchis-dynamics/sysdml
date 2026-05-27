@@ -2,8 +2,6 @@ import type { IRTransport, InboundMessage, OutboundMessage } from "./types.js";
 import { isInboundMessage } from "./types.js";
 import type { IR } from "@sysdml/ir";
 
-declare function acquireVsCodeApi(): { postMessage(msg: unknown): void };
-
 export class PostMessageAdapter implements IRTransport {
   private irCallbacks: Array<(ir: IR) => void> = [];
   private errorCallbacks: Array<(message: string) => void> = [];
