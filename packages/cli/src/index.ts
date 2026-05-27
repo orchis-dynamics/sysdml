@@ -13,9 +13,14 @@ const USAGE = `Usage:
 async function main(): Promise<number> {
 	const args = process.argv.slice(2);
 
-	if (args.length === 0 || args[0] === "--help" || args[0] === "-h") {
+	if (args.length === 0) {
+		process.stderr.write(USAGE);
+		return 1;
+	}
+
+	if (args[0] === "--help" || args[0] === "-h") {
 		process.stdout.write(USAGE);
-		return args.length === 0 ? 1 : 0;
+		return 0;
 	}
 
 	const subcommand = args[0];
@@ -33,7 +38,15 @@ async function main(): Promise<number> {
 }
 
 async function dispatchParse(args: string[]): Promise<number> {
-	const { positionals } = parseArgs({ args, allowPositionals: true });
+	let positionals: string[];
+	try {
+		({ positionals } = parseArgs({ args, allowPositionals: true }));
+	} catch (error) {
+		process.stderr.write(
+			`${error instanceof Error ? error.message : String(error)}\n${USAGE}`,
+		);
+		return 1;
+	}
 	const file = positionals[0];
 	if (!file) {
 		process.stderr.write(`Missing file argument.\n${USAGE}`);
@@ -47,11 +60,20 @@ async function dispatchParse(args: string[]): Promise<number> {
 }
 
 async function dispatchSimulate(args: string[]): Promise<number> {
-	const { values, positionals } = parseArgs({
-		args,
-		options: { csv: { type: "boolean", default: false } },
-		allowPositionals: true,
-	});
+	let values: { csv?: boolean };
+	let positionals: string[];
+	try {
+		({ values, positionals } = parseArgs({
+			args,
+			options: { csv: { type: "boolean", default: false } },
+			allowPositionals: true,
+		}));
+	} catch (error) {
+		process.stderr.write(
+			`${error instanceof Error ? error.message : String(error)}\n${USAGE}`,
+		);
+		return 1;
+	}
 	const file = positionals[0];
 	if (!file) {
 		process.stderr.write(`Missing file argument.\n${USAGE}`);
