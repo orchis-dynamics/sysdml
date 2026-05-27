@@ -1,8 +1,9 @@
-import { runPipeline } from "./pipeline.js";
+import type { IRDiagnostic } from "@sysdml/ir";
+import type { Diagnostic as ParseDiagnostic } from "@sysdml/parser";
+
 import { formatCsv } from "./csv.js";
 import type { CommandResult } from "./parse.js";
-import type { Diagnostic as ParseDiagnostic } from "@sysdml/parser";
-import type { IRDiagnostic } from "@sysdml/ir";
+import { runPipeline } from "./pipeline.js";
 
 export interface SimulateOptions {
 	format: "json" | "csv";
@@ -26,7 +27,9 @@ export function runSimulateCommand(
 	if (ir === null) {
 		return {
 			stdout: "",
-			stderr: formatDiagnostics(compileDiagnostics.map(formatCompileDiagnostic)),
+			stderr: formatDiagnostics(
+				compileDiagnostics.map(formatCompileDiagnostic),
+			),
 			exitCode: 1,
 		};
 	}
@@ -53,7 +56,10 @@ export function runSimulateCommand(
 }
 
 function formatDiagnostics(lines: string[]): string {
-	return ["--- Diagnostics ---", ...lines.map((line) => `  ${line}`)].join("\n") + "\n";
+	return (
+		["--- Diagnostics ---", ...lines.map((line) => `  ${line}`)].join("\n") +
+		"\n"
+	);
 }
 
 function formatParseDiagnostic(diagnostic: ParseDiagnostic): string {

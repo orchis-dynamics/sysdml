@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+
 import { runParseCommand } from "../src/parse.js";
 
 const minimalModel = `model Test

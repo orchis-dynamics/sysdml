@@ -10,7 +10,9 @@ export function formatCsv(ir: IR, result: SimulationResult): string {
 
 	const headerRow = ["time", ...columnIds].join(",");
 	const dataRows = result.rows.map((row) =>
-		[String(row.time), ...columnIds.map((id) => String(row[id] ?? 0))].join(","),
+		[String(row.time), ...columnIds.map((id) => String(row[id] ?? 0))].join(
+			",",
+		),
 	);
 
 	return [headerRow, ...dataRows].join("\n") + "\n";

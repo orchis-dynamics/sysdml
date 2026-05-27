@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { readFile } from "node:fs/promises";
 import { parseArgs } from "node:util";
+
 import { runParseCommand } from "./parse.js";
 import { runSimulateCommand } from "./simulate.js";
 
@@ -91,6 +92,8 @@ async function dispatchSimulate(args: string[]): Promise<number> {
 main()
 	.then((exitCode) => process.exit(exitCode))
 	.catch((error) => {
-		process.stderr.write(`Fatal: ${error instanceof Error ? error.message : String(error)}\n`);
+		process.stderr.write(
+			`Fatal: ${error instanceof Error ? error.message : String(error)}\n`,
+		);
 		process.exit(2);
 	});

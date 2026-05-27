@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+
 import { runPipeline } from "../src/pipeline.js";
 
 const minimalModel = `model Test
