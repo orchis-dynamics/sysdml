@@ -1,9 +1,18 @@
 {
-	"name": "@sysdml/ir",
+	"name": "@sysdml/cli",
 	"version": "0.1.0",
+	"bin": {
+		"sysdml": "./dist/src/index.js"
+	},
 	"type": "module",
 	"main": "./dist/src/index.js",
 	"types": "./dist/src/index.d.ts",
+	"exports": {
+		"./pipeline": {
+			"types": "./dist/src/pipeline.d.ts",
+			"default": "./dist/src/pipeline.js"
+		}
+	},
 	"scripts": {
 		"clean": "rm -rf dist node_modules",
 		"build": "tsc",
@@ -11,7 +20,9 @@
 		"test:watch": "vitest"
 	},
 	"dependencies": {
-		"@sysdml/parser": "workspace:*"
+		"@sysdml/ir": "workspace:*",
+		"@sysdml/parser": "workspace:*",
+		"@sysdml/simulator": "workspace:*"
 	},
 	"devDependencies": {
 		"@types/node": "^24.12.4",
