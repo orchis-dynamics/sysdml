@@ -2,6 +2,8 @@
 
 ANTLR4 TypeScript parser for SYSDML. Converts source text into a typed AST covering Stock-and-Flow Diagram (SFD) and Causal Loop Diagram (CLD) syntax.
 
+> Part of the [SysDML monorepo](../../README.md). See the root README for the overall architecture and how the packages fit together.
+
 ## Usage
 
 ```ts
