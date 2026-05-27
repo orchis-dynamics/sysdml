@@ -4,12 +4,11 @@ import { PostMessageAdapter } from "./postmessage.js";
 import { WebSocketAdapter } from "./websocket.js";
 
 declare const window: Window & {
-  __VSCODE_CONTEXT__?: boolean;
   SYSDML_WS_URL?: string;
 };
 
 export function createTransport(): IRTransport {
-  if (window.__VSCODE_CONTEXT__ === true) {
+  if (typeof acquireVsCodeApi !== "undefined") {
     return new PostMessageAdapter();
   }
 

@@ -1,59 +1,78 @@
 {
-  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
-  "name": "SysDML",
-  "scopeName": "source.sysdml",
-  "fileTypes": ["sdml"],
-  "patterns": [
-    { "include": "#comments" },
-    { "include": "#keywords-control" },
-    { "include": "#keywords-operator" },
-    { "include": "#keywords-property" },
-    { "include": "#constants-language" },
-    { "include": "#operators-connection" },
-    { "include": "#literals-numeric" },
-    { "include": "#identifiers" }
-  ],
-  "repository": {
-    "comments": {
-      "patterns": [
-        {
-          "name": "comment.line.double-slash.sysdml",
-          "match": "//.*$"
-        },
-        {
-          "name": "comment.block.sysdml",
-          "begin": "/\\*",
-          "end": "\\*/"
-        }
-      ]
-    },
-    "keywords-control": {
-      "name": "keyword.control.sysdml",
-      "match": "\\b(model|stock|aux|flow|time|gf)\\b"
-    },
-    "keywords-operator": {
-      "name": "keyword.operator.word.sysdml",
-      "match": "\\b(IF|THEN|ELSE|AND|OR|NOT|MOD)\\b"
-    },
-    "keywords-property": {
-      "name": "keyword.other.property.sysdml",
-      "match": "\\b(from|to|rate|init|start|end|step|kind|xscale|xpts|ypts|yscale|input)\\b"
-    },
-    "constants-language": {
-      "name": "constant.language.sysdml",
-      "match": "\\bnull\\b"
-    },
-    "operators-connection": {
-      "name": "keyword.operator.connection.sysdml",
-      "match": "->\\+|->-|=>"
-    },
-    "literals-numeric": {
-      "name": "constant.numeric.sysdml",
-      "match": "\\b[0-9]+(?:\\.[0-9]*)?\\b|\\.(?=[0-9])[0-9]+"
-    },
-    "identifiers": {
-      "name": "variable.other.sysdml",
-      "match": "\\b[a-zA-Z_][a-zA-Z0-9_]*\\b"
-    }
-  }
+	"$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+	"name": "SysDML",
+	"scopeName": "source.sysdml",
+	"fileTypes": ["sysdml"],
+	"patterns": [
+		{ "include": "#comments" },
+		{ "include": "#keywords-control" },
+		{ "include": "#keywords-operator" },
+		{ "include": "#keywords-property" },
+		{ "include": "#constants-language" },
+		{ "include": "#operators-connection" },
+		{ "include": "#operators-comparison" },
+		{ "include": "#operators-logical" },
+		{ "include": "#operators-arithmetic" },
+		{ "include": "#literals-numeric" },
+		{ "include": "#identifiers" }
+	],
+	"repository": {
+		"comments": {
+			"patterns": [
+				{
+					"name": "comment.line.double-slash.sysdml",
+					"match": "//.*$"
+				},
+				{
+					"name": "comment.line.number-sign.sysdml",
+					"match": "#.*$"
+				},
+				{
+					"name": "comment.block.sysdml",
+					"begin": "/\\*",
+					"end": "\\*/"
+				}
+			]
+		},
+		"keywords-control": {
+			"name": "keyword.control.sysdml",
+			"match": "\\b(model|stock|aux|flow|time|gf)\\b"
+		},
+		"keywords-operator": {
+			"name": "keyword.operator.word.sysdml",
+			"match": "\\b(IF|THEN|ELSE|AND|OR|NOT|MOD)\\b"
+		},
+		"keywords-property": {
+			"name": "keyword.other.property.sysdml",
+			"match": "\\b(from|to|rate|init|start|end|step|kind|xscale|xpts|ypts|yscale|position|via|angle)\\b"
+		},
+		"constants-language": {
+			"name": "constant.language.sysdml",
+			"match": "\\bnull\\b"
+		},
+		"operators-connection": {
+			"name": "keyword.operator.connection.sysdml",
+			"match": "->\\+|->-|=>"
+		},
+		"operators-comparison": {
+			"name": "keyword.operator.comparison.sysdml",
+			"match": "<=|>=|<>|==|!=|<|>|=|!"
+		},
+		"operators-logical": {
+			"name": "keyword.operator.logical.sysdml",
+			"match": "&&|\\|\\|"
+		},
+		"operators-arithmetic": {
+			"name": "keyword.operator.arithmetic.sysdml",
+			"match": "[+\\-*/^]"
+		},
+		"literals-numeric": {
+			"name": "constant.numeric.sysdml",
+			"match": "\\b[0-9]+(?:\\.[0-9]*)?\\b|\\.(?=[0-9])[0-9]+"
+		},
+		"identifiers": {
+			"name": "variable.other.sysdml",
+			"match": "\\b[a-zA-Z_][a-zA-Z0-9_]*\\b"
+		}
+	}
 }

@@ -93,13 +93,23 @@ function buildWebViewHtml(
   const indexPath = vscode.Uri.joinPath(rendererDistPath, "index.html").fsPath;
   let html = fs.readFileSync(indexPath, "utf-8");
 
-  // Replace /assets/ paths with webview URIs
   html = html.replace(/\/(assets\/[^"']+)/g, (_, assetPath: string) => {
     return webview.asWebviewUri(vscode.Uri.joinPath(rendererDistPath, assetPath)).toString();
   });
 
-  // Inject VS Code context flag before </head>
-  html = html.replace("</head>", '<script>window.__VSCODE_CONTEXT__ = true;</script>\n</head>');
+  html = html.replace(/ crossorigin/g, "");
+
+  const cspSource = webview.cspSource;
+  const csp = [
+    "default-src 'none'",
+    `img-src ${cspSource} https: data:`,
+    `style-src ${cspSource} 'unsafe-inline'`,
+    `script-src ${cspSource}`,
+    `font-src ${cspSource}`,
+    `connect-src ${cspSource}`,
+  ].join("; ");
+  const cspMeta = `<meta http-equiv="Content-Security-Policy" content="${csp}">`;
+  html = html.replace(/<head>/i, `<head>\n    ${cspMeta}`);
 
   return html;
 }
