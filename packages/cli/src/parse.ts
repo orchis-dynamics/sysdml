@@ -1,22 +1,16 @@
+import { formatDiagnosticBlock, formatParseDiagnostic } from "./diagnostics.js";
 import { runPipeline } from "./pipeline.js";
-
-export interface CommandResult {
-	stdout: string;
-	stderr: string;
-	exitCode: number;
-}
+import type { CommandResult } from "./types.js";
 
 export function runParseCommand(source: string): CommandResult {
 	const { ast, parseDiagnostics } = runPipeline(source);
 
 	if (ast === null) {
-		const lines = parseDiagnostics.map(
-			(diagnostic) =>
-				`  [${diagnostic.span.start.line}:${diagnostic.span.start.col}] ${diagnostic.message}`,
-		);
 		return {
 			stdout: "",
-			stderr: ["--- Diagnostics ---", ...lines].join("\n") + "\n",
+			stderr: formatDiagnosticBlock(
+				parseDiagnostics.map(formatParseDiagnostic),
+			),
 			exitCode: 1,
 		};
 	}

@@ -1,9 +1,11 @@
-import type { IRDiagnostic } from "@sysdml/ir";
-import type { Diagnostic as ParseDiagnostic } from "@sysdml/parser";
-
 import { formatCsv } from "./csv.js";
-import type { CommandResult } from "./parse.js";
+import {
+	formatDiagnosticBlock,
+	formatParseDiagnostic,
+	formatCompileDiagnostic,
+} from "./diagnostics.js";
 import { runPipeline } from "./pipeline.js";
+import type { CommandResult } from "./types.js";
 
 export interface SimulateOptions {
 	format: "json" | "csv";
@@ -19,7 +21,9 @@ export function runSimulateCommand(
 	if (ast === null) {
 		return {
 			stdout: "",
-			stderr: formatDiagnostics(parseDiagnostics.map(formatParseDiagnostic)),
+			stderr: formatDiagnosticBlock(
+				parseDiagnostics.map(formatParseDiagnostic),
+			),
 			exitCode: 1,
 		};
 	}
@@ -27,7 +31,7 @@ export function runSimulateCommand(
 	if (ir === null) {
 		return {
 			stdout: "",
-			stderr: formatDiagnostics(
+			stderr: formatDiagnosticBlock(
 				compileDiagnostics.map(formatCompileDiagnostic),
 			),
 			exitCode: 1,
@@ -45,7 +49,7 @@ export function runSimulateCommand(
 
 	const stderr =
 		simulation.diagnostics.length > 0
-			? formatDiagnostics(
+			? formatDiagnosticBlock(
 					simulation.diagnostics.map(
 						(diagnostic) => `[${diagnostic.code}] ${diagnostic.message}`,
 					),
@@ -53,22 +57,4 @@ export function runSimulateCommand(
 			: "";
 
 	return { stdout, stderr, exitCode: 0 };
-}
-
-function formatDiagnostics(lines: string[]): string {
-	return (
-		["--- Diagnostics ---", ...lines.map((line) => `  ${line}`)].join("\n") +
-		"\n"
-	);
-}
-
-function formatParseDiagnostic(diagnostic: ParseDiagnostic): string {
-	return `[${diagnostic.span.start.line}:${diagnostic.span.start.col}] ${diagnostic.message}`;
-}
-
-function formatCompileDiagnostic(diagnostic: IRDiagnostic): string {
-	const location = diagnostic.span
-		? `[${diagnostic.span.start.line}:${diagnostic.span.start.col}] `
-		: "";
-	return `${location}[${diagnostic.code}] ${diagnostic.message}`;
 }
