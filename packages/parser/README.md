@@ -47,6 +47,8 @@ Every file must begin with a model declaration. All other declarations follow in
 model <id>
 ```
 
+A file may contain multiple `model` declarations. The first is the entry model (`ast.model`); any subsequent ones land in `ast.submodels`, reserved for a future `module` instantiation construct. Only one model is supported at the moment.
+
 ### Time block
 
 ```
@@ -61,7 +63,8 @@ time {
 
 ```
 stock <id> {
-  init: <expr>
+  init:      <expr>
+  position?: { x: <num>, y: <num> }   # layout
 }
 ```
 
@@ -71,9 +74,11 @@ stock <id> {
 
 ```
 flow <id> {
-  from: <id> | null
-  to:   <id> | null
-  rate: <expr>
+  from:      <id> | null
+  to:        <id> | null
+  rate:      <expr>
+  position?: { x: <num>, y: <num> }            # layout
+  via?:      [{ x: <num>, y: <num> }, ...]     # waypoints
 }
 ```
 
@@ -85,11 +90,11 @@ The general form is an identifier bound to an expression:
 aux <id> = <expr>
 ```
 
-For graphical aux, call either a named `gf` (see below) or the inline `lookup()` built-in:
+For graphical aux, call either a named `gf` (see below) or the inline `LOOKUP()` built-in:
 
 ```
 aux <id> = my_curve(<expr>)
-aux <id> = lookup(<expr>, <y0>, <y1>, …)
+aux <id> = LOOKUP(<expr>, <y0>, <y1>, …)
 ```
 
 An optional trailing metadata block carries layout information:
@@ -104,11 +109,11 @@ A standalone named lookup table that can be called as a function in expressions.
 
 ```
 gf <id> {
-  kind:   linear | extra | step   # optional, default linear
-  xscale: [<min>, <max>]          # domain bounds (use with ypts)
-  xpts:   [<n>, ...]              # explicit x values (alternative to xscale)
-  ypts:   [<n>, ...]              # output values (required)
-  yscale: [<min>, <max>]          # optional range bounds
+  kind?:   linear | extra | step   # default linear
+  xscale?: [<min>, <max>]          # domain bounds (use with ypts)
+  xpts?:   [<n>, ...]              # explicit x values (alternative to xscale)
+  ypts:    [<n>, ...]              # output values
+  yscale?: [<min>, <max>]          # range bounds
 }
 ```
 
@@ -142,6 +147,15 @@ aux crowding_effect = effect_of_crowding(density)
 <from> => <to>     # flow-to-stock connection
 ```
 
+Any connection may carry an optional layout block:
+
+```
+<from> ->+ <to> {
+  angle?: <num>                       # degrees
+  via?:   { x: <num>, y: <num> }      # waypoint
+}
+```
+
 ---
 
 ## Expressions
@@ -150,10 +164,10 @@ Expressions appear in `aux`, `stock init`, and `flow rate`.
 
 ### Literals and references
 
-| Syntax               | Meaning              |
-| -------------------- | -------------------- |
-| `42`, `3.14`         | Number literal (integer or decimal). Scientific notation is not supported — write `2*10^-6` instead. |
-| `population`         | Identifier reference |
+| Syntax       | Meaning                                                                                              |
+| ------------ | ---------------------------------------------------------------------------------------------------- |
+| `42`, `3.14` | Number literal (integer or decimal). Scientific notation is not supported — write `2*10^-6` instead. |
+| `population` | Identifier reference                                                                                 |
 
 ### Arithmetic operators
 
@@ -205,7 +219,7 @@ FUNC(arg)
 FUNC(arg1, arg2, ...)
 ```
 
-The parser accepts any identifier as a function name; unknown names are rejected at a later compiler stage.
+The parser accepts any identifier as a function name; unknown names are rejected at a later compiler stage. See [Built-in functions](#built-in-functions) for the names the IR and simulator recognise.
 
 ### If/then/else
 
@@ -234,6 +248,25 @@ IF a THEN (IF b THEN c ELSE d) ELSE e
 | 7            | `AND` `&&`              |
 | 8            | `OR` `\|\|`             |
 | 9 (loosest)  | `IF … THEN … ELSE`      |
+
+---
+
+## Built-in functions
+
+The parser does not validate function names — every `FUNC(...)` becomes a `FunctionCall` AST node, and the IR compiler decides whether the name is meaningful. The table below summarises the built-ins currently evaluable end-to-end. See [@sysdml/ir](../ir/README.md#built-in-functions) for the full registry (including statistical functions whose arities are reserved but not yet evaluated).
+
+| Category          | Functions                                                                                             |
+| ----------------- | ----------------------------------------------------------------------------------------------------- |
+| Math (1 arg)      | `ABS` `INT` `SQRT` `EXP` `LN` `LOG10` `SIN` `COS` `TAN` `ARCSIN` `ARCCOS` `ARCTAN` `SIGN`             |
+| Math (2/3 args)   | `MIN(a, b)` `MAX(a, b)` `SAFEDIV(value, divisor, default)`                                            |
+| Zero-arg          | `TIME` `DT` `STARTTIME` `STOPTIME` `PI` `INF`                                                         |
+| Test inputs       | `STEP(height, start)` `RAMP(slope, start)` `PULSE(magnitude, start[, interval])`                      |
+| Delay & smoothing | `DELAY1` `DELAY3` `DELAYN` `SMTH1` `SMTH3` `SMTHN` `TREND` `FORCST` — desugared into stocks and flows |
+| Memory            | `INIT(x)` `PREVIOUS(x, default)` — evaluated against per-step memory at simulation time               |
+| Conditional       | `IF_THEN_ELSE(cond, then, else)` — equivalent to the `IF … THEN … ELSE` keyword form                  |
+| Inline lookup     | `LOOKUP(input, y0, y1, …)` — lowered to a synthetic graphical function call                           |
+
+Function names are case-insensitive at the IR level (`SQRT`, `sqrt`, `Sqrt` all match the same built-in).
 
 ---
 
@@ -288,46 +321,47 @@ Every node has a `span: { start: { line, col }, end: { line, col } }` (1-based).
 
 ### Top-level
 
-| Node            | Fields                                      |
-| --------------- | ------------------------------------------- |
-| `FileNode`      | `model: ModelDeclarationNode`, `decls: DeclarationNode[]` |
-| `ModelDeclarationNode` | `id: string`, `idSpan`                      |
+| Node                   | Fields                                                                                         |
+| ---------------------- | ---------------------------------------------------------------------------------------------- |
+| `FileNode`             | `model: ModelDeclarationNode`, `submodels: ModelDeclarationNode[]`, `decls: DeclarationNode[]` |
+| `ModelDeclarationNode` | `id: string`, `idSpan`                                                                         |
 
 ### Declaration nodes (`DeclarationNode`)
 
-| Node                 | Fields                                                                                                                                                        |
-| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `TimeDeclarationNode`       | `props: TimePropertyNode[]`                                                                                                                                       |
-| `TimePropertyNode`       | `key: "start" \| "end" \| "step"`, `value: NumberLiteralNode`                                                                                                     |
-| `StockDeclarationNode`      | `id: string`, `idSpan`, `props: StockPropertyNode[]`                                                                                                              |
-| `StockPropertyNode`      | `init: ExpressionNode`                                                                                                                                              |
-| `FlowDeclarationNode`       | `id: string`, `idSpan`, `props: FlowPropertyNode[]`                                                                                                               |
-| `FlowPropertyNode`       | `key: "from" \| "to"`, `value: EndpointNode` — or — `key: "rate"`, `value: ExpressionNode`                                                                          |
-| `EndpointNode`       | `value: string \| null`                                                                                                                                       |
-| `AuxiliaryDeclarationNode`        | `id: string`, `idSpan`, `expr: ExpressionNode`, `position?: PositionNode` |
-| `GraphicalFunctionDeclarationNode`         | `id: string`, `idSpan`, `body: GraphicalFunctionBodyNode`                                                                                                                    |
-| `ConnectionDeclarationNode` | `from: string`, `fromSpan`, `polarity: "+" \| "-" \| "=>"`, `to: string`, `toSpan`                                                                            |
+| Node                               | Fields                                                                                                                     |
+| ---------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `TimeDeclarationNode`              | `props: TimePropertyNode[]`                                                                                                |
+| `TimePropertyNode`                 | `key: "start" \| "end" \| "step"`, `value: NumberLiteralNode`                                                              |
+| `StockDeclarationNode`             | `id: string`, `idSpan`, `props: StockPropertyNode[]`, `position?: PositionNode`                                            |
+| `StockPropertyNode`                | `init: ExpressionNode`                                                                                                     |
+| `FlowDeclarationNode`              | `id: string`, `idSpan`, `props: FlowPropertyNode[]`, `position?: PositionNode`, `via?: PositionNode[]`                     |
+| `FlowPropertyNode`                 | `key: "from" \| "to"`, `value: EndpointNode` — or — `key: "rate"`, `value: ExpressionNode`                                 |
+| `EndpointNode`                     | `value: string \| null`                                                                                                    |
+| `AuxiliaryDeclarationNode`         | `id: string`, `idSpan`, `expr: ExpressionNode`, `position?: PositionNode`                                                  |
+| `GraphicalFunctionDeclarationNode` | `id: string`, `idSpan`, `body: GraphicalFunctionBodyNode`                                                                  |
+| `ConnectionDeclarationNode`        | `from: string`, `fromSpan`, `polarity: "+" \| "-" \| "=>"`, `to: string`, `toSpan`, `angle?: number`, `via?: PositionNode` |
+| `PositionNode`                     | `x: number`, `y: number`                                                                                                   |
 
 ### Graphical function nodes
 
-| Node               | Fields                                                                                                      |
-| ------------------ | ----------------------------------------------------------------------------------------------------------- |
-| `GraphicalFunctionBodyNode`       | `props: GraphicalFunctionPropertyNode[]`                                                                                       |
-| `GraphicalFunctionPropertyNode`       | `key: "kind"`, `value: string` — or — `key: "xscale" \| "xpts" \| "ypts" \| "yscale"`, `value: NumberListNode` |
-| `NumberListNode`      | `values: SignedNumberNode[]`                                                                                |
-| `SignedNumberNode` | `negative: boolean`, `lit: NumberLiteralNode`                                                                   |
+| Node                            | Fields                                                                                                         |
+| ------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| `GraphicalFunctionBodyNode`     | `props: GraphicalFunctionPropertyNode[]`                                                                       |
+| `GraphicalFunctionPropertyNode` | `key: "kind"`, `value: string` — or — `key: "xscale" \| "xpts" \| "ypts" \| "yscale"`, `value: NumberListNode` |
+| `NumberListNode`                | `values: SignedNumberNode[]`                                                                                   |
+| `SignedNumberNode`              | `negative: boolean`, `lit: NumberLiteralNode`                                                                  |
 
 ### Expression nodes (`ExpressionNode`)
 
-| Node               | Fields                                                           |
-| ------------------ | ---------------------------------------------------------------- |
-| `NumberLiteralNode`    | `value: string`                                                  |
-| `IdentifierReferenceNode`     | `name: string`                                                   |
-| `GroupedExpressionNode`  | `expr: ExpressionNode`                                                 |
-| `UnaryExpressionNode`    | `op: "-" \| "+" \| "NOT"`, `operand: ExpressionNode`                   |
-| `BinaryExpressionNode`   | `op: BinaryOperator`, `left: ExpressionNode`, `right: ExpressionNode`              |
-| `FunctionCallNode` | `name: string`, `nameSpan`, `args: ExpressionNode[]`                   |
-| `IfThenElseNode`   | `cond: ExpressionNode`, `thenBranch: ExpressionNode`, `elseBranch: ExpressionNode` |
+| Node                      | Fields                                                                             |
+| ------------------------- | ---------------------------------------------------------------------------------- |
+| `NumberLiteralNode`       | `value: string`                                                                    |
+| `IdentifierReferenceNode` | `name: string`                                                                     |
+| `GroupedExpressionNode`   | `expr: ExpressionNode`                                                             |
+| `UnaryExpressionNode`     | `op: "-" \| "+" \| "NOT"`, `operand: ExpressionNode`                               |
+| `BinaryExpressionNode`    | `op: BinaryOperator`, `left: ExpressionNode`, `right: ExpressionNode`              |
+| `FunctionCallNode`        | `name: string`, `nameSpan`, `args: ExpressionNode[]`                               |
+| `IfThenElseNode`          | `cond: ExpressionNode`, `thenBranch: ExpressionNode`, `elseBranch: ExpressionNode` |
 
 `BinaryOperator` values: `"+"  "-"  "*"  "/"  "^"  "MOD"  "<"  "<="  ">"  ">="  "="  "<>"  "AND"  "OR"`
 
