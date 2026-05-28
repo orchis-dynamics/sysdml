@@ -33,8 +33,9 @@ describe("isAllowedWorkerUrl", () => {
     expect(isAllowedWorkerUrl("data:text/javascript,alert(1)")).toBe(false);
   });
 
-  test("rejects blob: URLs (legacy inline-worker pattern)", () => {
-    expect(isAllowedWorkerUrl("blob:https://example.com/abc-def")).toBe(false);
+  test("accepts blob: URLs (required for VS Code webview cross-origin worker workaround)", () => {
+    expect(isAllowedWorkerUrl("blob:https://example.com/abc-def")).toBe(true);
+    expect(isAllowedWorkerUrl("blob:vscode-webview://abc-def/12345")).toBe(true);
   });
 
   test("rejects URLs without .js extension", () => {

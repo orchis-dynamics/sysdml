@@ -1,4 +1,11 @@
+// blob: URLs are accepted because they're the only way to construct a Worker
+// in the VS Code webview (whose iframe origin `vscode-webview://[guid]` is
+// different from where resources are served, so cross-origin URLs are rejected
+// by the Worker constructor). Only same-origin code can call
+// URL.createObjectURL, so an attacker would already need script execution to
+// produce a blob: URL — accepting them doesn't widen the attack surface.
 const ALLOWED_WORKER_URL_PATTERNS: ReadonlyArray<RegExp> = [
+  /^blob:/,
   /^https?:\/\/[^/]+\/[^?]*assets\/[A-Za-z0-9._-]+\.js(\?.*)?$/,
   /^vscode-webview-resource:\/\/[^/]+\/[^?]*\/assets\/[A-Za-z0-9._-]+\.js(\?.*)?$/,
   /^\.{0,2}\/[^?]*\.js(\?.*)?$/,
