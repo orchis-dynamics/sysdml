@@ -93,7 +93,7 @@ function buildWebViewHtml(
   const indexPath = vscode.Uri.joinPath(rendererDistPath, "index.html").fsPath;
   let html = fs.readFileSync(indexPath, "utf-8");
 
-  html = html.replace(/\/(assets\/[^"']+)/g, (_, assetPath: string) => {
+  html = html.replace(/\.?\/(assets\/[^"']+)/g, (_, assetPath: string) => {
     return webview.asWebviewUri(vscode.Uri.joinPath(rendererDistPath, assetPath)).toString();
   });
 
