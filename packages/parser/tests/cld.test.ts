@@ -128,8 +128,9 @@ describe("model declaration keywords", () => {
 		expect(ast!.model.kind).toBe("sfd");
 	});
 
-	test("ModelDeclarationNode carries kind = 'sfd' for legacy model keyword", () => {
-		const { ast } = parseSource(`model m\nA ->+ B`);
-		expect(ast!.model.kind).toBe("sfd");
+	test("`model` keyword is no longer accepted", () => {
+		const { ast, diagnostics } = parseSource(`model m\nA ->+ B`);
+		expect(diagnostics.length).toBeGreaterThan(0);
+		expect(ast).toBeNull();
 	});
 });
