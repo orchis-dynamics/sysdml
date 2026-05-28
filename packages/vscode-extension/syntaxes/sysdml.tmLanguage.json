@@ -36,7 +36,7 @@
 		},
 		"keywords-control": {
 			"name": "keyword.control.sysdml",
-			"match": "\\b(model|stock|aux|flow|time|gf)\\b"
+			"match": "\\b(sfd|cld|stock|aux|flow|time|gf)\\b"
 		},
 		"keywords-operator": {
 			"name": "keyword.operator.word.sysdml",
