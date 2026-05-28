@@ -101,7 +101,9 @@ describe("CLD arrow syntax", () => {
 			"=>",
 		]);
 	});
+});
 
+describe("model declaration keywords", () => {
 	test("accepts `sfd` keyword", () => {
 		const { ast, diagnostics } = parseSource(`sfd m\nA ->+ B`);
 		expect(diagnostics).toHaveLength(0);
