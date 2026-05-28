@@ -3,6 +3,16 @@
 import type { IR } from "@sysdml/ir";
 import type { SimulationResult } from "@sysdml/simulator";
 import type { WorkerRequest, WorkerResponse } from "./types.js";
+// The worker import form is selected at build time by the `workerInline` Vite
+// plugin (see vite.config.ts):
+//   --mode vscode → "?worker&inline"  (blob: URL — same-origin with the
+//                                       vscode-webview://[guid] iframe origin;
+//                                       required because VS Code serves
+//                                       resources from a different origin and
+//                                       Worker constructors enforce same-origin)
+//   default (web) → "?worker"          (separate same-origin hashed asset, the
+//                                       cleaner pattern for single-origin
+//                                       deployments like the hosted Monaco demo)
 import SimulatorWorker from "./worker.ts?worker";
 
 export type WorkerFactory = () => Worker;

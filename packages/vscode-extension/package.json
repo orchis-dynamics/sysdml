@@ -49,7 +49,7 @@
     "build:dev": "node esbuild.js",
     "watch": "node esbuild.js --watch",
     "package": "pnpm run build && vsce package --no-dependencies",
-    "build:renderer": "cd ../renderer && npm run build && rm -rf ../vscode-extension/renderer-dist && cp -r dist/ ../vscode-extension/renderer-dist/"
+    "build:renderer": "cd ../renderer && npm run build:vscode && rm -rf ../vscode-extension/renderer-dist && cp -r dist/ ../vscode-extension/renderer-dist/"
   },
   "devDependencies": {
     "@sysdml/ir": "workspace:*",
