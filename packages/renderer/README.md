@@ -29,10 +29,10 @@ Stale results from rapid IR updates are discarded by job ID — only the most re
 
 ### Reusing the simulator outside the Vue app
 
-The simulator client is decoupled from the transport — any embedding context (e.g. a future browser-only Monaco demo) can import and drive it directly:
+The simulator client is decoupled from the transport, so the module is structured to be lifted into a standalone package (or into a future browser-only Monaco demo) without changes. Today there is no public `exports` entry — consumers inside the monorepo import from `./src/simulation/client.js` directly; this path will be promoted to a proper subpath export once an external consumer materialises.
 
 ```ts
-import { createDefaultSimulatorClient } from "@sysdml/renderer/src/simulation/client.js";
+import { createDefaultSimulatorClient } from "./src/simulation/client.js";
 
 const simulator = createDefaultSimulatorClient();
 simulator.onResult((result) => { /* ... */ });

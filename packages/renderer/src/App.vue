@@ -11,23 +11,25 @@ const simulation = ref<SimulationResult | null>(null);
 const errorMessage = ref<string | null>(null);
 const simulationError = ref<string | null>(null);
 
-const simulator = createDefaultSimulatorClient();
-simulator.onResult((result) => {
-  simulation.value = result;
-  simulationError.value = null;
-});
-simulator.onError((message) => {
-  simulation.value = null;
-  simulationError.value = message;
-});
+let simulator: ReturnType<typeof createDefaultSimulatorClient> | null = null;
 
 onMounted(() => {
+  simulator = createDefaultSimulatorClient();
+  simulator.onResult((result) => {
+    simulation.value = result;
+    simulationError.value = null;
+  });
+  simulator.onError((message) => {
+    simulation.value = null;
+    simulationError.value = message;
+  });
+
   const transport = createTransport();
 
   transport.onIR((incoming) => {
     ir.value = incoming;
     errorMessage.value = null;
-    simulator.simulate(incoming);
+    simulator?.simulate(incoming);
   });
 
   transport.onError((message) => {
@@ -38,7 +40,8 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
-  simulator.dispose();
+  simulator?.dispose();
+  simulator = null;
 });
 </script>
 

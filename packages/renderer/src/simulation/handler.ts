@@ -5,7 +5,7 @@ export function handleSimulationRequest(request: WorkerRequest): WorkerResponse 
   if (request.type !== "simulate") {
     return {
       type: "error",
-      jobId: (request as { jobId?: number }).jobId ?? 0,
+      jobId: (request as { jobId?: number }).jobId ?? -1,
       message: `Unknown request type: ${(request as { type: string }).type}`,
       diagnostic: null,
     };

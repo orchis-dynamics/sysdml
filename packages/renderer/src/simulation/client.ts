@@ -3,6 +3,7 @@
 import type { IR } from "@sysdml/ir";
 import type { SimulationResult } from "@sysdml/simulator";
 import type { WorkerRequest, WorkerResponse } from "./types.js";
+import SimulatorWorker from "./worker.ts?worker&inline";
 
 export type WorkerFactory = () => Worker;
 
@@ -10,12 +11,14 @@ export class SimulatorClient {
   private readonly worker: Worker;
   private nextJobId = 1;
   private latestJobId = 0;
+  private disposed = false;
   private resultListeners = new Set<(result: SimulationResult) => void>();
   private errorListeners = new Set<(message: string) => void>();
 
   constructor(workerFactory: WorkerFactory) {
     this.worker = workerFactory();
     this.worker.addEventListener("message", (event: MessageEvent<WorkerResponse>) => {
+      if (this.disposed) return;
       const response = event.data;
       if (response.jobId !== this.latestJobId) return;
       if (response.type === "result") {
@@ -41,11 +44,10 @@ export class SimulatorClient {
   }
 
   dispose(): void {
+    this.disposed = true;
     this.worker.terminate();
   }
 }
-
-import SimulatorWorker from "./worker.ts?worker&inline";
 
 export function createDefaultSimulatorClient(): SimulatorClient {
   return new SimulatorClient(() => new SimulatorWorker());
