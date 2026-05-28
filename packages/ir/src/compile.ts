@@ -213,6 +213,8 @@ export function compileAST(ast: FileNode): CompileResult {
 			code: DiagnosticCode.MISSING_TIME_BLOCK,
 			message: "Missing required time block",
 		});
+	// Two time blocks are invalid for both kinds — even a CLD that never
+	// simulates cannot meaningfully declare time twice.
 	if (timeDecls.length > 1)
 		errors.push({
 			code: DiagnosticCode.DUPLICATE_TIME_BLOCK,
