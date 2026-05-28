@@ -8,7 +8,7 @@ import { DiagnosticCode } from "../src/diagnostics.js";
 describe("MULTI_MODEL_NOT_SUPPORTED (B1)", () => {
 	test("single-model file produces no MULTI_MODEL_NOT_SUPPORTED", () => {
 		const { ast } = parseSource(
-			`model only\ntime { start: 0 end: 10 step: 1 }\nstock s { init: 0 }`,
+			`sfd only\ntime { start: 0 end: 10 step: 1 }\nstock s { init: 0 }`,
 		);
 		expect(ast).not.toBeNull();
 		const { diagnostics } = compileAST(ast!);
@@ -19,7 +19,7 @@ describe("MULTI_MODEL_NOT_SUPPORTED (B1)", () => {
 
 	test("two-model file emits one MULTI_MODEL_NOT_SUPPORTED diagnostic against the second model", () => {
 		const { ast } = parseSource(
-			`model main\nmodel sub\ntime { start: 0 end: 10 step: 1 }\nstock s { init: 0 }`,
+			`sfd main\nsfd sub\ntime { start: 0 end: 10 step: 1 }\nstock s { init: 0 }`,
 		);
 		expect(ast).not.toBeNull();
 		const { diagnostics } = compileAST(ast!);
@@ -34,7 +34,7 @@ describe("MULTI_MODEL_NOT_SUPPORTED (B1)", () => {
 
 	test("three-model file emits two MULTI_MODEL_NOT_SUPPORTED diagnostics in source order", () => {
 		const { ast } = parseSource(
-			`model main\nmodel sub_a\nmodel sub_b\ntime { start: 0 end: 10 step: 1 }\nstock s { init: 0 }`,
+			`sfd main\nsfd sub_a\nsfd sub_b\ntime { start: 0 end: 10 step: 1 }\nstock s { init: 0 }`,
 		);
 		expect(ast).not.toBeNull();
 		const { diagnostics } = compileAST(ast!);
@@ -48,7 +48,7 @@ describe("MULTI_MODEL_NOT_SUPPORTED (B1)", () => {
 
 	test("the entry model still compiles into the IR even when submodels are rejected", () => {
 		const { ast } = parseSource(
-			`model main\nmodel sub\ntime { start: 0 end: 10 step: 1 }\nstock s { init: 0 }`,
+			`sfd main\nsfd sub\ntime { start: 0 end: 10 step: 1 }\nstock s { init: 0 }`,
 		);
 		expect(ast).not.toBeNull();
 		const { ir } = compileAST(ast!);

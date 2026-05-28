@@ -19,7 +19,7 @@ function parse(src: string) {
 
 function wrap(body: string): string {
 	return `
-model m
+sfd m
 time { start: 0 end: 10 step: 1 }
 stock s { init: 100 }
 ${body}

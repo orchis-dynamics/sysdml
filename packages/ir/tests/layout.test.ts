@@ -18,7 +18,7 @@ function compile(src: string): IR {
 }
 
 const BASE = `
-model m
+sfd m
 time { start: 0\n end: 10\n step: 1 }
 `.trim();
 
