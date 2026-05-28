@@ -101,4 +101,18 @@ describe("CLD arrow syntax", () => {
 			"=>",
 		]);
 	});
+
+	test("accepts `sfd` keyword", () => {
+		const { ast, diagnostics } = parseSource(`sfd m\nA ->+ B`);
+		expect(diagnostics).toHaveLength(0);
+		expect(ast).not.toBeNull();
+		expect(ast!.model.id).toBe("m");
+	});
+
+	test("accepts `cld` keyword", () => {
+		const { ast, diagnostics } = parseSource(`cld m\nA ->+ B`);
+		expect(diagnostics).toHaveLength(0);
+		expect(ast).not.toBeNull();
+		expect(ast!.model.id).toBe("m");
+	});
 });

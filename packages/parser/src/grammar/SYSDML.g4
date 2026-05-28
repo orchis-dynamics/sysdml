@@ -7,7 +7,7 @@ file
     ;
 
 modelDecl
-    : MODEL IDENT
+    : (MODEL | SFD | CLD) IDENT
     ;
 
 decl
@@ -181,6 +181,8 @@ number
 // Casing policy: SFD/GF block-property keywords use lowercase literals;
 //                logical/conditional keywords use UPPERCASE literals.
 MODEL   : 'model' ;
+SFD     : 'sfd'   ;
+CLD     : 'cld'   ;
 TIME    : 'time'  ;
 STOCK   : 'stock' ;
 AUX     : 'aux'   ;
