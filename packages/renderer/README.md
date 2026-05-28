@@ -18,7 +18,9 @@ Selection is automatic — `createTransport()` in `src/transport/index.ts` picks
 
 ## Simulation
 
-The renderer runs `@sysdml/simulator` in a dedicated Web Worker (`src/simulation/worker.ts`) inlined into the main bundle via Vite's `?worker&inline` import. Whenever a new IR arrives via the transport, `App.vue` calls `simulator.simulate(ir)` and the result lands in two reactive refs:
+The renderer runs `@sysdml/simulator` in a dedicated Web Worker (`src/simulation/worker.ts`), bundled by Vite as a separate hashed same-origin asset (`?worker`). The worker is loaded relative to the main bundle via `import.meta.url` — no `blob:` URLs, no inline base64. This pattern is safe under strict `require-trusted-types-for 'script'` CSP enforcement (planned for the hosted Monaco demo).
+
+Whenever a new IR arrives via the transport, `App.vue` calls `simulator.simulate(ir)` and the result lands in two reactive refs:
 
 - `simulation: Ref<SimulationResult | null>` — the simulator's output: `rows` (per-step values keyed by IR identifier) and `diagnostics` (warnings or halt codes from `SimDiagnosticCode`)
 - `simulationError: Ref<string | null>` — an unexpected JS exception thrown by the simulator (rare — programmer errors, malformed IR)
@@ -26,6 +28,10 @@ The renderer runs `@sysdml/simulator` in a dedicated Web Worker (`src/simulation
 Halted simulations (e.g. `MATH_DOMAIN_ERROR`) appear as entries in `simulation.value.diagnostics`, not as `simulationError`. The simulator folds its own `SimulationHaltedError` into the diagnostics array internally.
 
 Stale results from rapid IR updates are discarded by job ID — only the most recent simulation reaches the reactive state. This is handled inside `SimulatorClient` (`src/simulation/client.ts`).
+
+### Trusted Types policy
+
+A Trusted Types `default` policy is registered at app boot (`src/security/trusted-types.ts`, called from `main.ts`) to validate every script URL that reaches `new Worker(...)` and similar APIs. The allowlist accepts same-origin `https?://`, `vscode-webview-resource://`, and relative paths ending in `.js`; everything else (including `blob:`, `data:`, and `javascript:`) is rejected. In environments without Trusted Types (most current browsers) the policy is a no-op; under enforced CSP it provides a runtime tripwire against any future code path that would try to load a worker from an untrusted URL.
 
 ### Reusing the simulator outside the Vue app
 
