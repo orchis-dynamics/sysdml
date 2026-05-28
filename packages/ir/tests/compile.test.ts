@@ -309,3 +309,33 @@ describe("IRDiagnostic spans", () => {
 		expect(diag?.span).toBeDefined();
 	});
 });
+
+// ── CLD kind skips simulatable-only diagnostics ───────────────────────────────
+
+describe("CLD kind skips simulatable-only diagnostics", () => {
+	test("cld file with no time and no stock produces no MISSING_TIME_BLOCK or MISSING_STOCK", () => {
+		const ast = parse(`cld m\nA ->+ B\nB ->- A`);
+		const { ir, diagnostics } = compileAST(ast);
+		const codes = diagnostics.map((d) => d.code);
+		expect(codes).not.toContain("MISSING_TIME_BLOCK");
+		expect(codes).not.toContain("MISSING_STOCK");
+		expect(ir).not.toBeNull();
+		expect(ir!.connections).toHaveLength(2);
+		expect(ir!.stocks).toHaveLength(0);
+		expect(ir!.flows).toHaveLength(0);
+	});
+
+	test("sfd file with no time block still emits MISSING_TIME_BLOCK", () => {
+		const ast = parse(`sfd m\nstock s { init: 0 }`);
+		const { diagnostics } = compileAST(ast);
+		const codes = diagnostics.map((d) => d.code);
+		expect(codes).toContain("MISSING_TIME_BLOCK");
+	});
+
+	test("sfd file with no stock still emits MISSING_STOCK", () => {
+		const ast = parse(`sfd m\ntime { start: 0 end: 10 step: 1 }`);
+		const { diagnostics } = compileAST(ast);
+		const codes = diagnostics.map((d) => d.code);
+		expect(codes).toContain("MISSING_STOCK");
+	});
+});
