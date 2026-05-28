@@ -18,7 +18,14 @@ Selection is automatic — `createTransport()` in `src/transport/index.ts` picks
 
 ## Simulation
 
-The renderer runs `@sysdml/simulator` in a dedicated Web Worker (`src/simulation/worker.ts`), bundled by Vite as a separate hashed same-origin asset (`?worker`). The worker is loaded relative to the main bundle via `import.meta.url` — no `blob:` URLs, no inline base64. This pattern is safe under strict `require-trusted-types-for 'script'` CSP enforcement (planned for the hosted Monaco demo).
+The renderer runs `@sysdml/simulator` in a dedicated Web Worker (`src/simulation/worker.ts`). The worker bundle form is chosen at build time:
+
+| Build mode | Command | Worker form | Why |
+|---|---|---|---|
+| **Default (web)** | `pnpm build` | `?worker` — separate hashed same-origin asset, loaded via `new Worker("/assets/worker-<hash>.js")` | Hosted Monaco demo and any single-origin deployment; smaller main bundle; safe under strict `require-trusted-types-for 'script'` CSP. |
+| **VS Code** | `pnpm build:vscode` | `?worker&inline` — worker code embedded in main bundle as a `data:` URL, constructed at runtime | The VS Code webview iframe origin (`vscode-webview://[guid]`) differs from where extension resources are served (`https://file+.vscode-cdn.net/...`). Worker constructors enforce same-origin, so the only working pattern is an inline URL that inherits the iframe origin. |
+
+The selection is performed by a small `workerInline` Vite plugin (see `vite.config.ts`) that rewrites the `?worker` import to `?worker&inline` when `--mode vscode` is passed. Each build embeds only the variant it actually uses — no dead inline base64 leaks into the web bundle, and no unused worker chunk ships in the extension's renderer-dist.
 
 Whenever a new IR arrives via the transport, `App.vue` calls `simulator.simulate(ir)` and the result lands in two reactive refs:
 
@@ -31,7 +38,7 @@ Stale results from rapid IR updates are discarded by job ID — only the most re
 
 ### Trusted Types policy
 
-A Trusted Types `default` policy is registered at app boot (`src/security/trusted-types.ts`, called from `main.ts`) to validate every script URL that reaches `new Worker(...)` and similar APIs. The allowlist accepts same-origin `https?://`, `vscode-webview-resource://`, and relative paths ending in `.js`; everything else (including `blob:`, `data:`, and `javascript:`) is rejected. In environments without Trusted Types (most current browsers) the policy is a no-op; under enforced CSP it provides a runtime tripwire against any future code path that would try to load a worker from an untrusted URL.
+A Trusted Types `default` policy is registered at app boot (`src/security/trusted-types.ts`, called from `main.ts`) to validate every script URL that reaches `new Worker(...)` and similar APIs. The allowlist accepts `blob:`, same-origin `https?://`, `vscode-webview-resource://`, and relative paths ending in `.js`; everything else (including `javascript:` and `data:` not used by the inline worker) is rejected. `blob:` is accepted because `URL.createObjectURL` is same-origin-only, so an attacker would already need script execution in our origin to produce one — accepting blob: doesn't widen the attack surface. In environments without Trusted Types (most current browsers) the policy is a no-op; under enforced CSP it provides a runtime tripwire against any future code path that would try to load a worker from an untrusted URL.
 
 ### Reusing the simulator outside the Vue app
 
