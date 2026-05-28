@@ -55,7 +55,7 @@ describe("spans — 1-based, end-inclusive", () => {
 
 	// ── rule contexts via spanOf ─────────────────────────────────────────────
 
-	test("model decl span covers entire declaration", () => {
+	test("sfd decl span covers entire declaration", () => {
 		//  s  f  d     d  e  m  o
 		//  1  2  3  4  5  6  7  8
 		const { ast } = parseSource(`sfd demo`);

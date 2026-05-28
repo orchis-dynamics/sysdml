@@ -39,21 +39,21 @@ describe("multi-model grammar relaxation (B1)", () => {
 });
 
 describe("uniform model naming (B2)", () => {
-	test("a bare 'model' keyword with no identifier is a parse error", () => {
+	test("a bare 'sfd' keyword with no identifier is a parse error", () => {
 		const src = `sfd\ntime { start: 0 end: 10 step: 1 }\nstock s { init: 0 }`;
 		const { ast, diagnostics } = parseSource(src);
 		expect(ast).toBeNull();
 		expect(diagnostics.length).toBeGreaterThan(0);
 	});
 
-	test("second 'model' declaration without an identifier is a parse error (post-B1)", () => {
+	test("second 'sfd' declaration without an identifier is a parse error (post-B1)", () => {
 		const src = `sfd main\nsfd\ntime { start: 0 end: 10 step: 1 }\nstock s { init: 0 }`;
 		const { ast, diagnostics } = parseSource(src);
 		expect(ast).toBeNull();
 		expect(diagnostics.length).toBeGreaterThan(0);
 	});
 
-	test("third 'model' declaration without an identifier is a parse error (post-B1)", () => {
+	test("third 'sfd' declaration without an identifier is a parse error (post-B1)", () => {
 		const src = `sfd main\nsfd sub\nsfd\ntime { start: 0 end: 10 step: 1 }\nstock s { init: 0 }`;
 		const { ast, diagnostics } = parseSource(src);
 		expect(ast).toBeNull();
