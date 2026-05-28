@@ -107,7 +107,7 @@ function buildWebViewHtml(
     `script-src ${cspSource}`,
     `font-src ${cspSource}`,
     `connect-src ${cspSource}`,
-    `worker-src ${cspSource} blob:`,
+    `worker-src ${cspSource}`,
   ].join("; ");
   const cspMeta = `<meta http-equiv="Content-Security-Policy" content="${csp}">`;
   html = html.replace(/<head>/i, `<head>\n    ${cspMeta}`);
