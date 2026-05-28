@@ -161,10 +161,12 @@ export class ASTBuilder {
 	}
 
 	private modelDecl(ctx: ModelDeclContext): ModelDeclarationNode {
+		const kind: "cld" | "sfd" = ctx.CLD() ? "cld" : "sfd";
 		return {
 			type: "ModelDeclaration",
 			id: ctx.IDENT().getText(),
 			idSpan: tokenSpan(ctx.IDENT()),
+			kind,
 			span: spanOf(ctx),
 		};
 	}

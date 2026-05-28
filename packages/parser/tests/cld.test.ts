@@ -117,4 +117,19 @@ describe("model declaration keywords", () => {
 		expect(ast).not.toBeNull();
 		expect(ast!.model.id).toBe("m");
 	});
+
+	test("ModelDeclarationNode carries kind = 'cld' for cld keyword", () => {
+		const { ast } = parseSource(`cld m\nA ->+ B`);
+		expect(ast!.model.kind).toBe("cld");
+	});
+
+	test("ModelDeclarationNode carries kind = 'sfd' for sfd keyword", () => {
+		const { ast } = parseSource(`sfd m\nA ->+ B`);
+		expect(ast!.model.kind).toBe("sfd");
+	});
+
+	test("ModelDeclarationNode carries kind = 'sfd' for legacy model keyword", () => {
+		const { ast } = parseSource(`model m\nA ->+ B`);
+		expect(ast!.model.kind).toBe("sfd");
+	});
 });
