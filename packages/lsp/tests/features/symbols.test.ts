@@ -3,7 +3,7 @@ import { getDocumentSymbols } from "../../src/features/symbols.js";
 import { parseSource } from "@sysdml/parser";
 import { SymbolKind } from "vscode-languageserver/node.js";
 
-const SOURCE = `model test
+const SOURCE = `sfd test
 time {
   start: 0
   end: 10

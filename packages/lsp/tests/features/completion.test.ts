@@ -4,7 +4,7 @@ import { parseSource } from "@sysdml/parser";
 import { compileAST } from "@sysdml/ir";
 import { CompletionItemKind } from "vscode-languageserver/node.js";
 
-const SOURCE = `model test
+const SOURCE = `sfd test
 time {
   start: 0
   end: 10
@@ -67,7 +67,7 @@ describe("getCompletionItems", () => {
   });
 
   it("offers kind values after 'kind:'", () => {
-    const src = `model test\ntime { start: 0\n end: 10\n step: 1\n}\nstock s { init: 0 }\ngf lk { kind: `;
+    const src = `sfd test\ntime { start: 0\n end: 10\n step: 1\n}\nstock s { init: 0 }\ngf lk { kind: `;
     const items = getCompletionItems(src, null, null, { line: 6, character: 14 });
     const labels = items.map((i) => i.label);
     expect(labels).toContain("linear");
@@ -77,7 +77,7 @@ describe("getCompletionItems", () => {
 
   describe("layout keyword completions", () => {
     it("suggests 'position' inside a stock block", () => {
-      const src = "model m\nstock s {\n  init: 100\n  ";
+      const src = "sfd m\nstock s {\n  init: 100\n  ";
       const items = getCompletionItems(src, null, null, { line: 3, character: 2 });
       const labels = items.map((i) => i.label);
       expect(labels).toContain("position");
@@ -87,7 +87,7 @@ describe("getCompletionItems", () => {
     });
 
     it("suggests 'via' inside a flow block", () => {
-      const src = "model m\nflow f {\n  from: null\n  to: s\n  rate: 0.01\n  ";
+      const src = "sfd m\nflow f {\n  from: null\n  to: s\n  rate: 0.01\n  ";
       const items = getCompletionItems(src, null, null, { line: 5, character: 2 });
       const labels = items.map((i) => i.label);
       expect(labels).toContain("via");
@@ -97,7 +97,7 @@ describe("getCompletionItems", () => {
     });
 
     it("suggests 'angle' inside a connection block", () => {
-      const src = "model m\nstock s { init: 0 }\na ->+ s {\n  ";
+      const src = "sfd m\nstock s { init: 0 }\na ->+ s {\n  ";
       const items = getCompletionItems(src, null, null, { line: 3, character: 2 });
       const labels = items.map((i) => i.label);
       expect(labels).toContain("angle");
