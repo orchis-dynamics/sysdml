@@ -108,7 +108,7 @@ describe("SFD parsing", () => {
 	});
 
 	test("minimal inline model parses", () => {
-		const src = `model m\naux x = 42`;
+		const src = `sfd m\naux x = 42`;
 		const { ast, diagnostics } = parseSource(src);
 		expect(diagnostics).toHaveLength(0);
 		if (ast === null) throw new Error("expected non-null ast");
@@ -120,7 +120,7 @@ describe("SFD parsing", () => {
 	});
 
 	test("unary minus on aux expr", () => {
-		const src = `model m\naux x = -1`;
+		const src = `sfd m\naux x = -1`;
 		const { ast, diagnostics } = parseSource(src);
 		expect(diagnostics).toHaveLength(0);
 		if (ast === null) throw new Error("expected non-null ast");
@@ -135,7 +135,7 @@ describe("SFD parsing", () => {
 	});
 
 	test("grouped expression parses", () => {
-		const src = `model m\naux x = (1 + 2) * 3`;
+		const src = `sfd m\naux x = (1 + 2) * 3`;
 		const { ast, diagnostics } = parseSource(src);
 		expect(diagnostics).toHaveLength(0);
 		if (ast === null) throw new Error("expected non-null ast");

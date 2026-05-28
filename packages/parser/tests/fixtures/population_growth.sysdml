@@ -1,4 +1,4 @@
-model population_growth
+sfd population_growth
 
 time {
   start: 0

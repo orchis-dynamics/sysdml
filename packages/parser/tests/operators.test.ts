@@ -12,7 +12,7 @@ import type {
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 function auxExpr(src: string): ExpressionNode {
-	const { ast, diagnostics } = parseSource(`model m\naux x = ${src}`);
+	const { ast, diagnostics } = parseSource(`sfd m\naux x = ${src}`);
 	expect(diagnostics, `parse errors for ${src}`).toHaveLength(0);
 	if (ast === null) throw new Error(`expected non-null ast for: ${src}`);
 	const decl = ast.decls[0] as AuxiliaryDeclarationNode;
@@ -22,7 +22,7 @@ function auxExpr(src: string): ExpressionNode {
 }
 
 function parseFails(src: string) {
-	const { diagnostics } = parseSource(`model m\naux x = ${src}`);
+	const { diagnostics } = parseSource(`sfd m\naux x = ${src}`);
 	expect(
 		diagnostics.length,
 		`expected parse failure for ${src}`,
@@ -260,7 +260,7 @@ describe("C-style aliases fold to canonical AST", () => {
 
 	test("aux assignment is still single-= only (== is parse error in auxDecl position)", () => {
 		// `aux x == 5` would be: AUX IDENT then EQ_EQ — auxDecl rule requires single EQ
-		const { diagnostics } = parseSource(`model m\naux x == 5`);
+		const { diagnostics } = parseSource(`sfd m\naux x == 5`);
 		expect(diagnostics.length).toBeGreaterThan(0);
 	});
 
@@ -280,7 +280,7 @@ describe("integration with other rules", () => {
 
 	test("stock { init: a > 0 } parses", () => {
 		const { ast, diagnostics } = parseSource(
-			`model m\nstock s { init: a > 0 }`,
+			`sfd m\nstock s { init: a > 0 }`,
 		);
 		expect(diagnostics).toHaveLength(0);
 		expect(ast).not.toBeNull();
@@ -288,7 +288,7 @@ describe("integration with other rules", () => {
 
 	test("flow { rate: IF a THEN b ELSE c } parses", () => {
 		const { ast, diagnostics } = parseSource(
-			`model m\nstock s { init: 0 }\nflow f { from: null  to: s  rate: IF a THEN b ELSE c }`,
+			`sfd m\nstock s { init: 0 }\nflow f { from: null  to: s  rate: IF a THEN b ELSE c }`,
 		);
 		expect(diagnostics).toHaveLength(0);
 		expect(ast).not.toBeNull();

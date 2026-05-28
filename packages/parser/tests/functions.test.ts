@@ -8,7 +8,7 @@ import type {
 } from "../src/index.js";
 
 function auxExpr(src: string) {
-	const { ast, diagnostics } = parseSource(`model m\naux x = ${src}`);
+	const { ast, diagnostics } = parseSource(`sfd m\naux x = ${src}`);
 	expect(diagnostics).toHaveLength(0);
 	if (ast === null) throw new Error(`expected non-null ast for: ${src}`);
 	const decl = ast.decls[0] as AuxiliaryDeclarationNode;
@@ -100,7 +100,7 @@ describe("function call syntax", () => {
 	});
 
 	test("unknown name parses fine (compiler rejects it, not parser)", () => {
-		const { ast, diagnostics } = parseSource(`model m\naux x = unknown_fn(1)`);
+		const { ast, diagnostics } = parseSource(`sfd m\naux x = unknown_fn(1)`);
 		expect(diagnostics).toHaveLength(0);
 		expect(ast).not.toBeNull();
 	});

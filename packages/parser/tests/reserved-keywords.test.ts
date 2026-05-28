@@ -41,7 +41,7 @@ describe("declaration keywords cannot be used as variable identifiers (B4.3c, B1
 	for (const keyword of DECLARATION_KEYWORDS) {
 		test(`'${keyword}' rejected as stock id`, () => {
 			expectParseError(
-				`model m\n${TIME_BLOCK}\nstock ${keyword} { init: 0 }`,
+				`sfd m\n${TIME_BLOCK}\nstock ${keyword} { init: 0 }`,
 			);
 		});
 	}
@@ -51,7 +51,7 @@ describe("expression keywords cannot be used as variable identifiers (B10.6)", (
 	for (const keyword of EXPRESSION_KEYWORDS) {
 		test(`'${keyword}' rejected as aux id`, () => {
 			expectParseError(
-				`model m\n${TIME_BLOCK}\n${ONE_STOCK}\naux ${keyword} = 1`,
+				`sfd m\n${TIME_BLOCK}\n${ONE_STOCK}\naux ${keyword} = 1`,
 			);
 		});
 	}
