@@ -13,7 +13,7 @@ export function buildIR(src: string): IR {
 }
 
 export function modelSrc(body: string, time = 'start: 0 end: 0 step: 1'): string {
-  return `model m\ntime { ${time} }\nstock s { init: 0 }\n${body}`.trim();
+  return `sfd m\ntime { ${time} }\nstock s { init: 0 }\n${body}`.trim();
 }
 
 export function runModel(src: string): SimRow[] {

@@ -17,7 +17,7 @@ function simulate(modelSrc: string) {
 describe('math domain errors halt the simulation cleanly', () => {
 	test('LN(0) emits MATH_DOMAIN_ERROR and halts at t = start', () => {
 		const result = simulate(`
-model m
+sfd m
 time { start: 0 end: 5 step: 1 }
 stock s { init: 0 }
 aux result = LN(0)
@@ -30,7 +30,7 @@ aux result = LN(0)
 
 	test('LN of a stock that hits zero mid-run halts mid-simulation, returns rows so far', () => {
 		const result = simulate(`
-model m
+sfd m
 time { start: 0 end: 5 step: 1 }
 stock s { init: 3 }
 flow drain {
@@ -48,7 +48,7 @@ aux result = LN(s)
 
 	test('SQRT(-1) halts, but SQRT(0) does not', () => {
 		const bad = simulate(`
-model m
+sfd m
 time { start: 0 end: 1 step: 1 }
 stock s { init: 0 }
 aux result = SQRT(0 - 1)
@@ -56,7 +56,7 @@ aux result = SQRT(0 - 1)
 		expect(bad.diagnostics[0]?.code).toBe(SimDiagnosticCode.MATH_DOMAIN_ERROR);
 
 		const ok = simulate(`
-model m
+sfd m
 time { start: 0 end: 1 step: 1 }
 stock s { init: 0 }
 aux result = SQRT(0)
@@ -67,7 +67,7 @@ aux result = SQRT(0)
 
 	test('LOG10(0) halts', () => {
 		const result = simulate(`
-model m
+sfd m
 time { start: 0 end: 1 step: 1 }
 stock s { init: 0 }
 aux result = LOG10(0)
@@ -77,7 +77,7 @@ aux result = LOG10(0)
 
 	test('^ with negative base and integer exponent works (legal in ℝ)', () => {
 		const result = simulate(`
-model m
+sfd m
 time { start: 0 end: 0 step: 1 }
 stock s { init: 0 }
 aux result = (0 - 2) ^ 3
@@ -88,7 +88,7 @@ aux result = (0 - 2) ^ 3
 
 	test('^ with negative base and non-integer exponent halts', () => {
 		const result = simulate(`
-model m
+sfd m
 time { start: 0 end: 1 step: 1 }
 stock s { init: 0 }
 aux result = (0 - 2) ^ 0.5
@@ -101,7 +101,7 @@ aux result = (0 - 2) ^ 0.5
 describe('INIT requires a bare identifier', () => {
 	test('INIT(expression) halts with INIT_REQUIRES_IDENT', () => {
 		const result = simulate(`
-model m
+sfd m
 time { start: 0 end: 1 step: 1 }
 stock s { init: 0 }
 aux x = 5
@@ -112,7 +112,7 @@ aux result = INIT(x + 1)
 
 	test('INIT(bare_ident) works', () => {
 		const result = simulate(`
-model m
+sfd m
 time { start: 0 end: 0 step: 1 }
 stock s { init: 7 }
 aux result = INIT(s)

@@ -5,7 +5,7 @@ import { buildIR } from './helpers.js';
 describe('desugarIR — DELAY1 structural changes', () => {
   test('adds one hidden stock per DELAY1 call', () => {
     const ir = buildIR(`
-model m
+sfd m
 time { start: 0 end: 10 step: 1 }
 stock population { init: 100 }
 aux delayed = DELAY1(population, 3)
@@ -19,7 +19,7 @@ aux delayed = DELAY1(population, 3)
 
   test('adds one hidden flow per DELAY1 call', () => {
     const ir = buildIR(`
-model m
+sfd m
 time { start: 0 end: 10 step: 1 }
 stock population { init: 100 }
 aux delayed = DELAY1(population, 3)
@@ -30,7 +30,7 @@ aux delayed = DELAY1(population, 3)
 
   test('aux expression is replaced with BinOp (output = stock / delay_time)', () => {
     const ir = buildIR(`
-model m
+sfd m
 time { start: 0 end: 10 step: 1 }
 stock population { init: 100 }
 aux delayed = DELAY1(population, 3)
@@ -44,7 +44,7 @@ aux delayed = DELAY1(population, 3)
 describe('desugarIR — DELAY3 adds 3 hidden stocks', () => {
   test('three chained stages', () => {
     const ir = buildIR(`
-model m
+sfd m
 time { start: 0 end: 10 step: 1 }
 stock s { init: 10 }
 aux d = DELAY3(s, 3)
@@ -58,7 +58,7 @@ aux d = DELAY3(s, 3)
 describe('desugarIR — DELAYN diagnostics', () => {
   test('DELAYN with n < 1 emits INVALID_DELAY_ORDER', () => {
     const ir = buildIR(`
-model m
+sfd m
 time { start: 0 end: 10 step: 1 }
 stock s { init: 10 }
 aux d = DELAYN(s, 3, 0)
@@ -71,7 +71,7 @@ aux d = DELAYN(s, 3, 0)
 describe('desugarIR — SMTH1 structural changes', () => {
   test('adds one hidden stock per SMTH1', () => {
     const ir = buildIR(`
-model m
+sfd m
 time { start: 0 end: 10 step: 1 }
 stock s { init: 100 }
 aux smoothed = SMTH1(s, 4)
@@ -84,7 +84,7 @@ aux smoothed = SMTH1(s, 4)
 
   test('SMTH1 output is a Ref to the hidden stock', () => {
     const ir = buildIR(`
-model m
+sfd m
 time { start: 0 end: 10 step: 1 }
 stock s { init: 100 }
 aux smoothed = SMTH1(s, 4)
@@ -98,7 +98,7 @@ aux smoothed = SMTH1(s, 4)
 describe('desugarIR — non-stateful models pass through unchanged', () => {
   test('model with no delay/smooth is returned unmodified structurally', () => {
     const ir = buildIR(`
-model m
+sfd m
 time { start: 0 end: 5 step: 1 }
 stock pop { init: 100 }
 aux growthRate = 0.02

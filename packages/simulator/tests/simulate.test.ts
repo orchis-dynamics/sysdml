@@ -9,7 +9,7 @@ const _simulator = new EulerSimulator();
 function evalAux(exprSrc: string, extraAux: Record<string, string> = {}): number {
   const auxLines = Object.entries(extraAux).map(([id, e]) => `aux ${id} = ${e}`).join('\n');
   const src = `
-model m
+sfd m
 time { start: 0 end: 0 step: 1 }
 stock s { init: 0 }
 ${auxLines}

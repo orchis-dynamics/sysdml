@@ -10,7 +10,7 @@ import { runModel } from "./helpers.js";
 // a regression check that the deterministic subset stays stable.
 
 const FIXTURE_MODEL = `
-model determinism_pin
+sfd determinism_pin
 time { start: 0 end: 10 step: 1 }
 stock population { init: 100 }
 aux birth_rate = 0.1

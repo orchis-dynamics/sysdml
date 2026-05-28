@@ -22,7 +22,7 @@ describe('basic expression evaluation via EulerSimulator', () => {
 describe('exponential growth: P(t) = P0 * e^(r*t)', () => {
   function growthModel(start: number, end: number, step: number): string {
     return `
-model m
+sfd m
 time { start: ${start} end: ${end} step: ${step} }
 stock population { init: 100 }
 aux birth_rate = 0.1
@@ -55,7 +55,7 @@ flow births { from: null to: population rate: population * birth_rate }
 describe('exponential decay: convergence to analytical solution as dt shrinks', () => {
   function decayModel(step: number): string {
     return `
-model m
+sfd m
 time { start: 0 end: 5 step: ${step} }
 stock x { init: 100 }
 aux decay_rate = 0.5
@@ -76,7 +76,7 @@ flow drain { from: x to: null rate: x * decay_rate }
 describe('aux evaluation order is topologically correct', () => {
   test('b = 2*a, c = a+b in wrong declaration order produces correct c', () => {
     const rows = runModel(`
-model m
+sfd m
 time { start: 0 end: 0 step: 1 }
 stock s { init: 0 }
 aux c = a + b
@@ -94,7 +94,7 @@ aux a = 5
 describe('TIME and DT in expressions', () => {
   test('TIME returns current t at each step', () => {
     const rows = runModel(`
-model m
+sfd m
 time { start: 0 end: 3 step: 1 }
 stock s { init: 0 }
 aux current_time = TIME
@@ -107,7 +107,7 @@ aux current_time = TIME
 
   test('STARTTIME and STOPTIME return model bounds', () => {
     const rows = runModel(`
-model m
+sfd m
 time { start: 2 end: 8 step: 1 }
 stock s { init: 0 }
 aux t_start = STARTTIME
@@ -123,7 +123,7 @@ aux t_stop  = STOPTIME
 describe('STEP function', () => {
   test('0 before start_time, height at and after', () => {
     const rows = runModel(`
-model m
+sfd m
 time { start: 0 end: 5 step: 1 }
 stock s { init: 0 }
 aux signal = STEP(10, 3)
@@ -138,7 +138,7 @@ aux signal = STEP(10, 3)
 describe('RAMP function', () => {
   test('0 before start_time, slope*elapsed after', () => {
     const rows = runModel(`
-model m
+sfd m
 time { start: 0 end: 5 step: 1 }
 stock s { init: 0 }
 aux signal = RAMP(2, 2)
@@ -156,7 +156,7 @@ aux signal = RAMP(2, 2)
 describe('graphical function evaluation via EulerSimulator', () => {
   test('named GF: linear interpolation evaluated correctly', () => {
     const rows = runModel(`
-model m
+sfd m
 time { start: 0 end: 0 step: 1 }
 stock s { init: 0 }
 gf effect { xscale: [0, 10] ypts: [0, 5, 10] }
@@ -168,7 +168,7 @@ aux result = effect(x)
 
   test('lookup() inline graphical function', () => {
     const rows = runModel(`
-model m
+sfd m
 time { start: 0 end: 0 step: 1 }
 stock s { init: 0 }
 aux x = 0.5
@@ -185,7 +185,7 @@ aux result = lookup(x, 0, 10, 20)
 describe('INIT function', () => {
   test('INIT(population) returns value at STARTTIME regardless of current t', () => {
     const rows = runModel(`
-model m
+sfd m
 time { start: 0 end: 3 step: 1 }
 stock population { init: 100 }
 aux birth_rate = 0.1
@@ -201,7 +201,7 @@ aux initial_pop = INIT(population)
 describe('PREVIOUS function', () => {
   test('PREVIOUS returns init value at t=STARTTIME', () => {
     const rows = runModel(`
-model m
+sfd m
 time { start: 0 end: 3 step: 1 }
 stock s { init: 0 }
 aux x = TIME
@@ -212,7 +212,7 @@ aux prev_x = PREVIOUS(x, 999)
 
   test('PREVIOUS returns value from prior step', () => {
     const rows = runModel(`
-model m
+sfd m
 time { start: 0 end: 3 step: 1 }
 stock s { init: 0 }
 aux x = TIME
@@ -229,7 +229,7 @@ aux prev_x = PREVIOUS(x, 999)
 describe('DELAY1 simulation output', () => {
   test('DELAY1 output converges to input after delay_time passes', () => {
     const rows = runModel(`
-model m
+sfd m
 time { start: 0 end: 20 step: 0.1 }
 stock s { init: 0 }
 aux input_val = 5
@@ -245,7 +245,7 @@ aux delayed = DELAY1(input_val, 2)
 describe('SMTH1 simulation output', () => {
   test('SMTH1 output approaches step input exponentially', () => {
     const rows = runModel(`
-model m
+sfd m
 time { start: 0 end: 50 step: 0.1 }
 stock s { init: 0 }
 aux input_val = 10
@@ -272,7 +272,7 @@ describe('division by zero: IEEE 754 propagation (decision pending)', () => {
 describe('deferred v0.2 functions halt with FUNCTION_NOT_IN_V1 diagnostic', () => {
   test('RANDOM emits FUNCTION_NOT_IN_V1 mentioning v0.2', () => {
     const ir = buildIR(`
-model m
+sfd m
 time { start: 0 end: 0 step: 1 }
 stock s { init: 0 }
 aux result = RANDOM(0, 1)
@@ -295,7 +295,7 @@ describe('runExpr helper', () => {
 
   test('buildIR is exported and functional', () => {
     const ir = buildIR(`
-model m
+sfd m
 time { start: 0 end: 0 step: 1 }
 stock s { init: 42 }
     `.trim());
