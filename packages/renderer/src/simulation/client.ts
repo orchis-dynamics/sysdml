@@ -3,7 +3,7 @@
 import type { IR } from "@sysdml/ir";
 import type { SimulationResult } from "@sysdml/simulator";
 import type { WorkerRequest, WorkerResponse } from "./types.js";
-import SimulatorWorker from "./worker.ts?worker&inline";
+import SimulatorWorker from "./worker.ts?worker";
 
 export type WorkerFactory = () => Worker;
 

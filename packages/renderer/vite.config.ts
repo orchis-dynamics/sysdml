@@ -4,6 +4,7 @@ import tailwindcss from "@tailwindcss/vite";
 import { sysdmlDev } from "./plugins/sysdml-dev.js";
 
 export default defineConfig({
+  base: "./",
   plugins: [
     vue(),
     tailwindcss(),
