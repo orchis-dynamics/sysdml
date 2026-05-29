@@ -16,8 +16,9 @@ function expectParseError(src: string) {
 
 // Declaration keywords per `dsl.md` "Lexical rules" — these are lexer tokens,
 // so any attempt to use them as an identifier fails at parse time.
-// Note: `model` was removed as a reserved keyword in the hard cutover to sfd/cld.
 const DECLARATION_KEYWORDS = [
+	"sfd",
+	"cld",
 	"time",
 	"stock",
 	"aux",
