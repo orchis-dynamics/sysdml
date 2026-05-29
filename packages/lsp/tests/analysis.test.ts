@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { analyzeDocument } from "../src/analysis.js";
 import { DiagnosticSeverity } from "vscode-languageserver/node.js";
 
-const VALID_SOURCE = `model test
+const VALID_SOURCE = `sfd test
 time {
   start: 0
   end: 10
@@ -28,7 +28,7 @@ describe("analyzeDocument", () => {
   });
 
   it("returns parse error diagnostic for invalid source", () => {
-    const result = analyzeDocument("model test\nstock {");
+    const result = analyzeDocument("sfd test\nstock {");
     expect(result.diagnostics.length).toBeGreaterThan(0);
     expect(result.diagnostics[0].severity).toBe(DiagnosticSeverity.Error);
     expect(result.ast).toBeNull();
@@ -36,7 +36,7 @@ describe("analyzeDocument", () => {
   });
 
   it("returns semantic diagnostic for undefined identifier", () => {
-    const source = `model test
+    const source = `sfd test
 time {
   start: 0
   end: 10
@@ -57,7 +57,7 @@ stock s { init: ghost }
     //         1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22 23
     // 'ghost' is at 1-based cols 17-21 (end-inclusive).
     // LSP expects 0-based line/char and end-exclusive: line 6, chars 16..21.
-    const source = `model test
+    const source = `sfd test
 time {
   start: 0
   end: 10

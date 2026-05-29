@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { runPipeline } from "../src/pipeline.js";
 
-const minimalModel = `model Test
+const minimalModel = `sfd Test
 
 time {
 	start: 0
@@ -38,7 +38,7 @@ describe("runPipeline", () => {
 	});
 
 	it("stops at compile stage when source has semantic errors", () => {
-		const result = runPipeline(`model Test
+		const result = runPipeline(`sfd Test
 
 time {
 	start: 0

@@ -3,7 +3,7 @@ import { describe, it, expect } from "vitest";
 
 import { getDefinitionLocation } from "../../src/features/definition.js";
 
-const SOURCE = `model test
+const SOURCE = `sfd test
 time {
   start: 0
   end: 10

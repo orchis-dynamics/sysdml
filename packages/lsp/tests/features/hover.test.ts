@@ -4,7 +4,7 @@ import { getHoverContent } from "../../src/features/hover.js";
 import { parseSource } from "@sysdml/parser";
 import { compileAST } from "@sysdml/ir";
 
-const SOURCE = `model test
+const SOURCE = `sfd test
 time {
   start: 0
   end: 10
@@ -53,7 +53,7 @@ describe("getHoverContent", () => {
 });
 
 const POSITION_SOURCE = [
-  "model m",
+  "sfd m",
   "time { start: 0",
   "  end: 10",
   "  step: 1",
@@ -98,7 +98,7 @@ describe("getHoverContent — layout", () => {
 
   it("includes position in aux hover when present", () => {
     const src = [
-      "model m",
+      "sfd m",
       "time { start: 0",
       "  end: 10",
       "  step: 1",

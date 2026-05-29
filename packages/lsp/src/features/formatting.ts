@@ -21,7 +21,7 @@ export function formatSource(source: string): string | null {
 }
 
 function printFile(file: FileNode): string {
-  const parts: string[] = [`model ${file.model.id}`];
+  const parts: string[] = [`${file.model.kind} ${file.model.id}`];
   for (const decl of file.decls) {
     parts.push("");
     parts.push(printDecl(decl));

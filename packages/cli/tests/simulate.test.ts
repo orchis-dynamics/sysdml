@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { runSimulateCommand } from "../src/simulate.js";
 
-const minimalModel = `model Test
+const minimalModel = `sfd Test
 
 time {
 	start: 0
@@ -34,7 +34,7 @@ describe("runSimulateCommand", () => {
 	});
 
 	it("exits 1 with stderr diagnostics and no stdout on compile errors", () => {
-		const broken = `model Test
+		const broken = `sfd Test
 
 time {
 	start: 0
@@ -52,7 +52,7 @@ aux a = nonexistent
 	});
 
 	it("emits partial output on stdout and diagnostics on stderr when a sim function is unimplemented", () => {
-		const usesDeferredFunction = `model Test
+		const usesDeferredFunction = `sfd Test
 
 time {
 	start: 0

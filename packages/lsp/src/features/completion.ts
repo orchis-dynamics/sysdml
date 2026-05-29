@@ -7,7 +7,7 @@ import type { IR } from "@sysdml/ir";
 import { BUILTIN_FUNCTIONS } from "@sysdml/ir";
 import type { Position } from "vscode-languageserver/node.js";
 
-const TOP_LEVEL_KEYWORDS = ["model", "stock", "aux", "flow", "time", "gf"];
+const TOP_LEVEL_KEYWORDS = ["sfd", "cld", "stock", "aux", "flow", "time", "gf"];
 const GF_KIND_VALUES = ["linear", "extra", "step"];
 const LAYOUT_KEYWORDS = ["position", "via", "angle"];
 

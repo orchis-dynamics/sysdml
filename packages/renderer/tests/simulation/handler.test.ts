@@ -15,7 +15,7 @@ function buildIR(source: string) {
 }
 
 const MINIMAL_MODEL = `
-model Test
+sfd Test
 time { start: 0 end: 5 step: 1 }
 stock population { init: 100 }
 aux growth_rate = 0.1
@@ -47,7 +47,7 @@ describe("handleSimulationRequest", () => {
     // (The originally-specified `init = nonexistent_identifier` does not halt —
     // the evaluator silently returns 0 for unknown identifiers.)
     const haltingModel = `
-model Halt
+sfd Halt
 time { start: 0 end: 5 step: 1 }
 stock level { init: 1 }
 aux bad_value = LN(0)

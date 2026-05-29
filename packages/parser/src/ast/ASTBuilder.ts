@@ -161,10 +161,17 @@ export class ASTBuilder {
 	}
 
 	private modelDecl(ctx: ModelDeclContext): ModelDeclarationNode {
+		if (!ctx.CLD() && !ctx.SFD()) {
+			throw new Error(
+				"Grammar invariant violated: modelDecl matched neither CLD nor SFD",
+			);
+		}
+		const kind: "cld" | "sfd" = ctx.CLD() ? "cld" : "sfd";
 		return {
 			type: "ModelDeclaration",
 			id: ctx.IDENT().getText(),
 			idSpan: tokenSpan(ctx.IDENT()),
+			kind,
 			span: spanOf(ctx),
 		};
 	}

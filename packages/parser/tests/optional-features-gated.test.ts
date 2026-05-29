@@ -15,30 +15,30 @@ describe("optional XMILE features are grammar-gated (B5)", () => {
 	// Arrays (XMILE §2.2.1 `<uses_arrays>`).
 
 	test("array subscript in an expression is a parse error", () => {
-		expectParseError(`model m\n${TIME_BLOCK}\n${ONE_STOCK}\naux y = s[1]`);
+		expectParseError(`sfd m\n${TIME_BLOCK}\n${ONE_STOCK}\naux y = s[1]`);
 	});
 
 	test("subscripted stock declaration is a parse error", () => {
-		expectParseError(`model m\n${TIME_BLOCK}\nstock s[1] { init: 0 }`);
+		expectParseError(`sfd m\n${TIME_BLOCK}\nstock s[1] { init: 0 }`);
 	});
 
 	test("dimensioned variable syntax is a parse error", () => {
-		expectParseError(`model m\n${TIME_BLOCK}\n${ONE_STOCK}\naux x[i] = 1`);
+		expectParseError(`sfd m\n${TIME_BLOCK}\n${ONE_STOCK}\naux x[i] = 1`);
 	});
 
 	// Conveyors / queues (XMILE §2.2.1 `<uses_conveyor>`, `<uses_queue>`).
 
 	test("'conveyor' is not a top-level declaration keyword", () => {
-		expectParseError(`model m\n${TIME_BLOCK}\n${ONE_STOCK}\nconveyor c { init: 0 }`);
+		expectParseError(`sfd m\n${TIME_BLOCK}\n${ONE_STOCK}\nconveyor c { init: 0 }`);
 	});
 
 	test("'queue' is not a top-level declaration keyword", () => {
-		expectParseError(`model m\n${TIME_BLOCK}\n${ONE_STOCK}\nqueue q { init: 0 }`);
+		expectParseError(`sfd m\n${TIME_BLOCK}\n${ONE_STOCK}\nqueue q { init: 0 }`);
 	});
 
 	// Macros (XMILE §2.2.1 `<uses_macros>`).
 
 	test("'macro' is not a top-level declaration keyword", () => {
-		expectParseError(`model m\n${TIME_BLOCK}\n${ONE_STOCK}\nmacro foo() = 1`);
+		expectParseError(`sfd m\n${TIME_BLOCK}\n${ONE_STOCK}\nmacro foo() = 1`);
 	});
 });

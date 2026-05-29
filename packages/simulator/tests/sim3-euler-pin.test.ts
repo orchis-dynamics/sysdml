@@ -13,7 +13,7 @@ describe("[SIM3] Euler integration pin — P(t) = P0 · e^(rt)", () => {
 
 	function growthModel(start: number, end: number, step: number): string {
 		return `
-model m
+sfd m
 time { start: ${start} end: ${end} step: ${step} }
 stock population { init: ${P0} }
 aux birth_rate = ${r}

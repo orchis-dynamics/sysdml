@@ -19,7 +19,7 @@ function parseOk(src: string) {
 }
 
 function wrap(body: string) {
-	return `model m\ntime { start: 0 end: 1 step: 1 }\nstock s { init: 0 }\n${body}`;
+	return `sfd m\ntime { start: 0 end: 1 step: 1 }\nstock s { init: 0 }\n${body}`;
 }
 
 function parseGraphicalFunctionDeclaration(src: string): GraphicalFunctionDeclarationNode {
@@ -191,7 +191,7 @@ describe("named gf referenced in aux expression", () => {
 describe("aux with inline gf via named decl", () => {
 	test("aux references a named gf with linear kind (default)", () => {
 		const { ast, diagnostics } = parseSource(
-			"model m\ngf food_curve { xscale: [0, 1] ypts: [0, 0.5, 1] }\naux food_effect = food_curve(s)",
+			"sfd m\ngf food_curve { xscale: [0, 1] ypts: [0, 0.5, 1] }\naux food_effect = food_curve(s)",
 		);
 		expect(diagnostics).toHaveLength(0);
 		if (ast === null) throw new Error("expected ast");
@@ -202,7 +202,7 @@ describe("aux with inline gf via named decl", () => {
 
 	test("aux references a named gf with kind: step", () => {
 		const { ast, diagnostics } = parseSource(
-			"model m\ngf effect_curve { kind: step xscale: [0, 1] ypts: [0, 1, 1] }\naux effect = effect_curve(s)",
+			"sfd m\ngf effect_curve { kind: step xscale: [0, 1] ypts: [0, 1, 1] }\naux effect = effect_curve(s)",
 		);
 		expect(diagnostics).toHaveLength(0);
 		if (ast === null) throw new Error("expected ast");
@@ -215,7 +215,7 @@ describe("aux with inline gf via named decl", () => {
 
 	test("aux references a named gf with yscale", () => {
 		const { ast, diagnostics } = parseSource(
-			"model m\ngf effect_curve { xscale: [0, 1] ypts: [0, 1] yscale: [0, 1] }\naux effect = effect_curve(s)",
+			"sfd m\ngf effect_curve { xscale: [0, 1] ypts: [0, 1] yscale: [0, 1] }\naux effect = effect_curve(s)",
 		);
 		expect(diagnostics).toHaveLength(0);
 		if (ast === null) throw new Error("expected ast");
@@ -227,7 +227,7 @@ describe("aux with inline gf via named decl", () => {
 
 	test("aux references a named gf with xpts form", () => {
 		const { ast, diagnostics } = parseSource(
-			"model m\ngf effect_curve { xpts: [0, 0.5, 1] ypts: [0, 0.5, 1] }\naux effect = effect_curve(s)",
+			"sfd m\ngf effect_curve { xpts: [0, 0.5, 1] ypts: [0, 0.5, 1] }\naux effect = effect_curve(s)",
 		);
 		expect(diagnostics).toHaveLength(0);
 		if (ast === null) throw new Error("expected ast");
@@ -278,7 +278,7 @@ describe("lookup() inline function", () => {
 	});
 	test("lookup in flow rate", () => {
 		const ast = parseOk(
-			"model m\ntime { start: 0 end: 1 step: 1 }\nstock pop { init: 100 }\nflow growth {\n  from: null\n  to: pop\n  rate: lookup(pop, 0, 0.5, 1)\n}",
+			"sfd m\ntime { start: 0 end: 1 step: 1 }\nstock pop { init: 100 }\nflow growth {\n  from: null\n  to: pop\n  rate: lookup(pop, 0, 0.5, 1)\n}",
 		);
 		expect(
 			ast.decls.some((declaration) => declaration.type === "FlowDeclaration"),

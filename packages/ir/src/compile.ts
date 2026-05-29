@@ -206,18 +206,22 @@ export function compileAST(ast: FileNode): CompileResult {
 
 	// ── Structural validation ─────────────────────────────────────────────────
 
-	if (timeDecls.length === 0)
+	const isSimulatable = ast.model.kind === "sfd";
+
+	if (isSimulatable && timeDecls.length === 0)
 		errors.push({
 			code: DiagnosticCode.MISSING_TIME_BLOCK,
 			message: "Missing required time block",
 		});
+	// Two time blocks are invalid for both kinds — even a CLD that never
+	// simulates cannot meaningfully declare time twice.
 	if (timeDecls.length > 1)
 		errors.push({
 			code: DiagnosticCode.DUPLICATE_TIME_BLOCK,
 			message: "Only one time block is allowed",
 			span: timeDecls[1].span,
 		});
-	if (stockDecls.length === 0)
+	if (isSimulatable && stockDecls.length === 0)
 		errors.push({
 			code: DiagnosticCode.MISSING_STOCK,
 			message: "At least one stock is required",

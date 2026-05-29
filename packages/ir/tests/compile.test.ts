@@ -12,7 +12,7 @@ function parse(src: string) {
 }
 
 const POPULATION_GROWTH = `
-model population_growth
+sfd population_growth
 
 time {
   start: 0
@@ -94,7 +94,7 @@ describe("population_growth compiles", () => {
 describe("expression compilation", () => {
 	test("unary minus", () => {
 		const ast = parse(
-			`model m\nstock s { init: 0 }\naux x = -1\ntime { start:0 end:1 step:1 }`,
+			`sfd m\nstock s { init: 0 }\naux x = -1\ntime { start:0 end:1 step:1 }`,
 		);
 		const { ir } = compileAST(ast);
 		expect(ir!.auxiliaries[0].expr).toEqual({
@@ -105,7 +105,7 @@ describe("expression compilation", () => {
 
 	test("grouped expr is collapsed", () => {
 		const ast = parse(
-			`model m\nstock s { init: 0 }\naux x = (2 + 3)\ntime { start:0 end:1 step:1 }`,
+			`sfd m\nstock s { init: 0 }\naux x = (2 + 3)\ntime { start:0 end:1 step:1 }`,
 		);
 		const { ir } = compileAST(ast);
 		expect(ir!.auxiliaries[0].expr).toEqual({
@@ -118,7 +118,7 @@ describe("expression compilation", () => {
 
 	test("nested binary expr precedence preserved", () => {
 		const ast = parse(
-			`model m\nstock s { init: 0 }\naux x = 1 + 2 * 3\ntime { start:0 end:1 step:1 }`,
+			`sfd m\nstock s { init: 0 }\naux x = 1 + 2 * 3\ntime { start:0 end:1 step:1 }`,
 		);
 		const { ir } = compileAST(ast);
 		// Parser handles precedence: 1 + (2 * 3)
@@ -140,7 +140,7 @@ describe("expression compilation", () => {
 
 describe("validation", () => {
 	test("missing time block", () => {
-		const ast = parse(`model m\nstock s { init: 0 }`);
+		const ast = parse(`sfd m\nstock s { init: 0 }`);
 		const { ir, diagnostics } = compileAST(ast);
 		expect(ir).toBeNull();
 		expect(
@@ -151,7 +151,7 @@ describe("validation", () => {
 	});
 
 	test("missing stock", () => {
-		const ast = parse(`model m\ntime { start:0 end:1 step:1 }`);
+		const ast = parse(`sfd m\ntime { start:0 end:1 step:1 }`);
 		const { ir, diagnostics } = compileAST(ast);
 		expect(ir).toBeNull();
 		expect(
@@ -161,7 +161,7 @@ describe("validation", () => {
 
 	test("duplicate id", () => {
 		const ast = parse(
-			`model m\ntime { start:0 end:1 step:1 }\nstock s { init: 0 }\naux s = 1`,
+			`sfd m\ntime { start:0 end:1 step:1 }\nstock s { init: 0 }\naux s = 1`,
 		);
 		const { ir, diagnostics } = compileAST(ast);
 		expect(ir).toBeNull();
@@ -174,7 +174,7 @@ describe("validation", () => {
 
 	test("undefined identifier in expr", () => {
 		const ast = parse(
-			`model m\ntime { start:0 end:1 step:1 }\nstock s { init: 0 }\naux x = ghost`,
+			`sfd m\ntime { start:0 end:1 step:1 }\nstock s { init: 0 }\naux x = ghost`,
 		);
 		const { ir, diagnostics } = compileAST(ast);
 		expect(ir).toBeNull();
@@ -187,7 +187,7 @@ describe("validation", () => {
 
 	test("flow references unknown stock", () => {
 		const ast = parse(
-			`model m\ntime { start:0 end:1 step:1 }\nstock s { init: 0 }\nflow f { from: ghost to: s rate: 1 }`,
+			`sfd m\ntime { start:0 end:1 step:1 }\nstock s { init: 0 }\nflow f { from: ghost to: s rate: 1 }`,
 		);
 		const { ir, diagnostics } = compileAST(ast);
 		expect(ir).toBeNull();
@@ -200,7 +200,7 @@ describe("validation", () => {
 
 	test("time.step <= 0", () => {
 		const ast = parse(
-			`model m\ntime { start:0 end:1 step:0 }\nstock s { init: 0 }`,
+			`sfd m\ntime { start:0 end:1 step:0 }\nstock s { init: 0 }`,
 		);
 		const { ir, diagnostics } = compileAST(ast);
 		expect(ir).toBeNull();
@@ -213,7 +213,7 @@ describe("validation", () => {
 
 	test("time.end < time.start", () => {
 		const ast = parse(
-			`model m\ntime { start:10 end:0 step:1 }\nstock s { init: 0 }`,
+			`sfd m\ntime { start:10 end:0 step:1 }\nstock s { init: 0 }`,
 		);
 		const { ir, diagnostics } = compileAST(ast);
 		expect(ir).toBeNull();
@@ -228,7 +228,7 @@ describe("validation", () => {
 describe("CLD connections", () => {
 	test("connection polarity preserved", () => {
 		const ast = parse(
-			`model m\ntime { start:0 end:1 step:1 }\nstock s { init: 0 }\nA ->+ B\nB ->- C`,
+			`sfd m\ntime { start:0 end:1 step:1 }\nstock s { init: 0 }\nA ->+ B\nB ->- C`,
 		);
 		const { ir } = compileAST(ast);
 		expect(ir!.connections).toHaveLength(2);
@@ -242,7 +242,7 @@ describe("CLD connections", () => {
 describe("IRDiagnostic spans", () => {
 	it("DUPLICATE_TIME_BLOCK points at the second time block", () => {
 		const { ast } = parseSource(
-			"model m\ntime { start: 0\n end: 10\n step: 1\n}\ntime { start: 0\n end: 10\n step: 1\n}\nstock s { init: 0 }",
+			"sfd m\ntime { start: 0\n end: 10\n step: 1\n}\ntime { start: 0\n end: 10\n step: 1\n}\nstock s { init: 0 }",
 		);
 		const { diagnostics } = compileAST(ast!);
 		const diag = diagnostics.find(
@@ -254,7 +254,7 @@ describe("IRDiagnostic spans", () => {
 
 	it("INVALID_FLOW_ENDPOINT points at the flow declaration", () => {
 		const { ast } = parseSource(
-			"model m\ntime { start: 0\n end: 10\n step: 1\n}\nstock s { init: 0 }\nflow f {\n  from: ghost\n  to: s\n  rate: 1\n}",
+			"sfd m\ntime { start: 0\n end: 10\n step: 1\n}\nstock s { init: 0 }\nflow f {\n  from: ghost\n  to: s\n  rate: 1\n}",
 		);
 		const { diagnostics } = compileAST(ast!);
 		const diag = diagnostics.find(
@@ -266,7 +266,7 @@ describe("IRDiagnostic spans", () => {
 
 	it("DUPLICATE_GF points at the second gf declaration", () => {
 		const { ast } = parseSource(
-			"model m\ntime { start: 0\n end: 10\n step: 1\n}\nstock s { init: 0 }\ngf lookup { kind: linear\n xscale: [0, 10]\n ypts: [0, 1]\n}\ngf lookup { kind: linear\n xscale: [0, 10]\n ypts: [0, 1]\n}",
+			"sfd m\ntime { start: 0\n end: 10\n step: 1\n}\nstock s { init: 0 }\ngf lookup { kind: linear\n xscale: [0, 10]\n ypts: [0, 1]\n}\ngf lookup { kind: linear\n xscale: [0, 10]\n ypts: [0, 1]\n}",
 		);
 		const { diagnostics } = compileAST(ast!);
 		const diag = diagnostics.find(
@@ -277,7 +277,7 @@ describe("IRDiagnostic spans", () => {
 
 	it("UNDEFINED_IDENTIFIER points at the IdentifierReference token", () => {
 		const { ast } = parseSource(
-			"model m\ntime { start: 0\n end: 10\n step: 1\n}\nstock s { init: ghost }",
+			"sfd m\ntime { start: 0\n end: 10\n step: 1\n}\nstock s { init: ghost }",
 		);
 		const { diagnostics } = compileAST(ast!);
 		const diag = diagnostics.find(
@@ -289,7 +289,7 @@ describe("IRDiagnostic spans", () => {
 
 	it("WRONG_ARITY points at the function name", () => {
 		const { ast } = parseSource(
-			"model m\ntime { start: 0\n end: 10\n step: 1\n}\nstock s { init: 0 }\naux x = ABS(1, 2)",
+			"sfd m\ntime { start: 0\n end: 10\n step: 1\n}\nstock s { init: 0 }\naux x = ABS(1, 2)",
 		);
 		const { diagnostics } = compileAST(ast!);
 		const diag = diagnostics.find(
@@ -300,12 +300,42 @@ describe("IRDiagnostic spans", () => {
 
 	it("UNKNOWN_FUNCTION points at the function name", () => {
 		const { ast } = parseSource(
-			"model m\ntime { start: 0\n end: 10\n step: 1\n}\nstock s { init: 0 }\naux x = ghost_fn(1)",
+			"sfd m\ntime { start: 0\n end: 10\n step: 1\n}\nstock s { init: 0 }\naux x = ghost_fn(1)",
 		);
 		const { diagnostics } = compileAST(ast!);
 		const diag = diagnostics.find(
 			(d) => d.code === DiagnosticCode.UNKNOWN_FUNCTION,
 		);
 		expect(diag?.span).toBeDefined();
+	});
+});
+
+// ── CLD kind skips simulatable-only diagnostics ───────────────────────────────
+
+describe("CLD kind skips simulatable-only diagnostics", () => {
+	test("cld file with no time and no stock produces no MISSING_TIME_BLOCK or MISSING_STOCK", () => {
+		const ast = parse(`cld m\nA ->+ B\nB ->- A`);
+		const { ir, diagnostics } = compileAST(ast);
+		const codes = diagnostics.map((d) => d.code);
+		expect(codes).not.toContain("MISSING_TIME_BLOCK");
+		expect(codes).not.toContain("MISSING_STOCK");
+		expect(ir).not.toBeNull();
+		expect(ir!.connections).toHaveLength(2);
+		expect(ir!.stocks).toHaveLength(0);
+		expect(ir!.flows).toHaveLength(0);
+	});
+
+	test("sfd file with no time block still emits MISSING_TIME_BLOCK", () => {
+		const ast = parse(`sfd m\nstock s { init: 0 }`);
+		const { diagnostics } = compileAST(ast);
+		const codes = diagnostics.map((d) => d.code);
+		expect(codes).toContain("MISSING_TIME_BLOCK");
+	});
+
+	test("sfd file with no stock still emits MISSING_STOCK", () => {
+		const ast = parse(`sfd m\ntime { start: 0 end: 10 step: 1 }`);
+		const { diagnostics } = compileAST(ast);
+		const codes = diagnostics.map((d) => d.code);
+		expect(codes).toContain("MISSING_STOCK");
 	});
 });

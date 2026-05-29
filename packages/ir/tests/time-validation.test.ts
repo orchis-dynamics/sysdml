@@ -15,7 +15,7 @@ function compile(src: string) {
 describe("time block validation — XMILE §2.3 mappings (B6.4)", () => {
 	test("missing time block → MISSING_TIME_BLOCK", () => {
 		const { ast, parseDiagnostics } = compile(
-			`model m\n${ONE_STOCK}`,
+			`sfd m\n${ONE_STOCK}`,
 		);
 		expect(parseDiagnostics).toHaveLength(0);
 		expect(ast).not.toBeNull();
@@ -28,7 +28,7 @@ describe("time block validation — XMILE §2.3 mappings (B6.4)", () => {
 
 	test("two time blocks → DUPLICATE_TIME_BLOCK on the second", () => {
 		const { ast, parseDiagnostics } = compile(
-			`model m\ntime { start: 0 end: 10 step: 1 }\ntime { start: 0 end: 10 step: 1 }\n${ONE_STOCK}`,
+			`sfd m\ntime { start: 0 end: 10 step: 1 }\ntime { start: 0 end: 10 step: 1 }\n${ONE_STOCK}`,
 		);
 		expect(parseDiagnostics).toHaveLength(0);
 		expect(ast).not.toBeNull();
@@ -45,7 +45,7 @@ describe("time block validation — XMILE §2.3 mappings (B6.4)", () => {
 
 	test("step = 0 → INVALID_TIME_STEP", () => {
 		const { ast } = compile(
-			`model m\ntime { start: 0 end: 10 step: 0 }\n${ONE_STOCK}`,
+			`sfd m\ntime { start: 0 end: 10 step: 0 }\n${ONE_STOCK}`,
 		);
 		const { ir, diagnostics } = compileAST(ast!);
 		expect(ir).toBeNull();
@@ -59,7 +59,7 @@ describe("time block validation — XMILE §2.3 mappings (B6.4)", () => {
 		// unary minus in the number grammar at this position. So `step: -1` is
 		// caught at parse time, not via INVALID_TIME_STEP.
 		const { ast, parseDiagnostics } = compile(
-			`model m\ntime { start: 0 end: 10 step: -1 }\n${ONE_STOCK}`,
+			`sfd m\ntime { start: 0 end: 10 step: -1 }\n${ONE_STOCK}`,
 		);
 		expect(ast).toBeNull();
 		expect(parseDiagnostics.length).toBeGreaterThan(0);
@@ -67,7 +67,7 @@ describe("time block validation — XMILE §2.3 mappings (B6.4)", () => {
 
 	test("end < start → INVALID_TIME_RANGE", () => {
 		const { ast } = compile(
-			`model m\ntime { start: 10 end: 0 step: 1 }\n${ONE_STOCK}`,
+			`sfd m\ntime { start: 10 end: 0 step: 1 }\n${ONE_STOCK}`,
 		);
 		const { ir, diagnostics } = compileAST(ast!);
 		expect(ir).toBeNull();
@@ -78,7 +78,7 @@ describe("time block validation — XMILE §2.3 mappings (B6.4)", () => {
 
 	test("end == start is accepted (zero-step run)", () => {
 		const { ast } = compile(
-			`model m\ntime { start: 5 end: 5 step: 1 }\n${ONE_STOCK}`,
+			`sfd m\ntime { start: 5 end: 5 step: 1 }\n${ONE_STOCK}`,
 		);
 		const { ir, diagnostics } = compileAST(ast!);
 		expect(ir).not.toBeNull();
@@ -89,7 +89,7 @@ describe("time block validation — XMILE §2.3 mappings (B6.4)", () => {
 
 	test("non-numeric start is a parse error", () => {
 		const { ast, parseDiagnostics } = compile(
-			`model m\ntime { start: foo end: 10 step: 1 }\n${ONE_STOCK}`,
+			`sfd m\ntime { start: foo end: 10 step: 1 }\n${ONE_STOCK}`,
 		);
 		expect(ast).toBeNull();
 		expect(parseDiagnostics.length).toBeGreaterThan(0);
@@ -97,7 +97,7 @@ describe("time block validation — XMILE §2.3 mappings (B6.4)", () => {
 
 	test("non-numeric end is a parse error", () => {
 		const { ast, parseDiagnostics } = compile(
-			`model m\ntime { start: 0 end: bar step: 1 }\n${ONE_STOCK}`,
+			`sfd m\ntime { start: 0 end: bar step: 1 }\n${ONE_STOCK}`,
 		);
 		expect(ast).toBeNull();
 		expect(parseDiagnostics.length).toBeGreaterThan(0);
@@ -105,7 +105,7 @@ describe("time block validation — XMILE §2.3 mappings (B6.4)", () => {
 
 	test("non-numeric step is a parse error", () => {
 		const { ast, parseDiagnostics } = compile(
-			`model m\ntime { start: 0 end: 10 step: baz }\n${ONE_STOCK}`,
+			`sfd m\ntime { start: 0 end: 10 step: baz }\n${ONE_STOCK}`,
 		);
 		expect(ast).toBeNull();
 		expect(parseDiagnostics.length).toBeGreaterThan(0);
@@ -113,7 +113,7 @@ describe("time block validation — XMILE §2.3 mappings (B6.4)", () => {
 
 	test("missing time property (no step) is a parse error", () => {
 		const { ast, parseDiagnostics } = compile(
-			`model m\ntime { start: 0 end: 10 }\n${ONE_STOCK}`,
+			`sfd m\ntime { start: 0 end: 10 }\n${ONE_STOCK}`,
 		);
 		// Grammar requires at least one prop; current parser accepts a `time {}`
 		// with any subset of props and the IR validates required-ness. So this

@@ -135,6 +135,7 @@ export interface ModelDeclarationNode {
 	type: "ModelDeclaration";
 	id: string;
 	idSpan: Span;
+	kind: "cld" | "sfd";
 	span: Span;
 }
 

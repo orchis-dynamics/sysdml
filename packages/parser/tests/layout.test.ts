@@ -9,7 +9,7 @@ import type {
 } from "../src/index.js";
 
 function stock(src: string): StockDeclarationNode {
-	const { ast, diagnostics } = parseSource(`model m\n${src}`);
+	const { ast, diagnostics } = parseSource(`sfd m\n${src}`);
 	if (!ast) throw new Error(`Parse failed: ${diagnostics[0]?.message}`);
 	const decl = ast.decls.find((d) => d.type === "StockDeclaration");
 	if (!decl || decl.type !== "StockDeclaration") throw new Error("No StockDeclaration found");
@@ -17,7 +17,7 @@ function stock(src: string): StockDeclarationNode {
 }
 
 function flow(src: string): FlowDeclarationNode {
-	const { ast, diagnostics } = parseSource(`model m\n${src}`);
+	const { ast, diagnostics } = parseSource(`sfd m\n${src}`);
 	if (!ast) throw new Error(`Parse failed: ${diagnostics[0]?.message}`);
 	const decl = ast.decls.find((d) => d.type === "FlowDeclaration");
 	if (!decl || decl.type !== "FlowDeclaration") throw new Error("No FlowDeclaration found");
@@ -25,7 +25,7 @@ function flow(src: string): FlowDeclarationNode {
 }
 
 function aux(src: string): AuxiliaryDeclarationNode {
-	const { ast, diagnostics } = parseSource(`model m\n${src}`);
+	const { ast, diagnostics } = parseSource(`sfd m\n${src}`);
 	if (!ast) throw new Error(`Parse failed: ${diagnostics[0]?.message}`);
 	const decl = ast.decls.find((d) => d.type === "AuxiliaryDeclaration");
 	if (!decl || decl.type !== "AuxiliaryDeclaration") throw new Error("No AuxiliaryDeclaration found");
@@ -33,7 +33,7 @@ function aux(src: string): AuxiliaryDeclarationNode {
 }
 
 function connection(src: string): ConnectionDeclarationNode {
-	const { ast, diagnostics } = parseSource(`model m\n${src}`);
+	const { ast, diagnostics } = parseSource(`sfd m\n${src}`);
 	if (!ast) throw new Error(`Parse failed: ${diagnostics[0]?.message}`);
 	const decl = ast.decls.find((d) => d.type === "ConnectionDeclaration");
 	if (!decl || decl.type !== "ConnectionDeclaration") throw new Error("No ConnectionDeclaration found");

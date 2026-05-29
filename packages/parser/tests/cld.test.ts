@@ -59,7 +59,7 @@ describe("CLD arrow syntax", () => {
 	});
 
 	test("inline positive causal", () => {
-		const { ast, diagnostics } = parseSource(`model m\nA ->+ B`);
+		const { ast, diagnostics } = parseSource(`sfd m\nA ->+ B`);
 		expect(diagnostics).toHaveLength(0);
 		const decl = ast!.decls[0];
 		if (decl === undefined) throw new Error("expected a declaration");
@@ -72,7 +72,7 @@ describe("CLD arrow syntax", () => {
 	});
 
 	test("inline negative causal", () => {
-		const { ast, diagnostics } = parseSource(`model m\nA ->- B`);
+		const { ast, diagnostics } = parseSource(`sfd m\nA ->- B`);
 		expect(diagnostics).toHaveLength(0);
 		const decl = ast!.decls[0];
 		if (decl === undefined) throw new Error("expected a declaration");
@@ -80,7 +80,7 @@ describe("CLD arrow syntax", () => {
 	});
 
 	test("inline flow connection", () => {
-		const { ast, diagnostics } = parseSource(`model m\nX => Y`);
+		const { ast, diagnostics } = parseSource(`sfd m\nX => Y`);
 		expect(diagnostics).toHaveLength(0);
 		const decl = ast!.decls[0];
 		if (decl === undefined) throw new Error("expected a declaration");
@@ -89,7 +89,7 @@ describe("CLD arrow syntax", () => {
 
 	test("all three polarity types in one model", () => {
 		const { ast, diagnostics } = parseSource(
-			`model m\nA ->+ B\nB ->- C\nC => D`,
+			`sfd m\nA ->+ B\nB ->- C\nC => D`,
 		);
 		expect(diagnostics).toHaveLength(0);
 		expect(ast!.decls).toHaveLength(3);
@@ -100,5 +100,37 @@ describe("CLD arrow syntax", () => {
 			"-",
 			"=>",
 		]);
+	});
+});
+
+describe("model declaration keywords", () => {
+	test("accepts `sfd` keyword", () => {
+		const { ast, diagnostics } = parseSource(`sfd m\nA ->+ B`);
+		expect(diagnostics).toHaveLength(0);
+		expect(ast).not.toBeNull();
+		expect(ast!.model.id).toBe("m");
+	});
+
+	test("accepts `cld` keyword", () => {
+		const { ast, diagnostics } = parseSource(`cld m\nA ->+ B`);
+		expect(diagnostics).toHaveLength(0);
+		expect(ast).not.toBeNull();
+		expect(ast!.model.id).toBe("m");
+	});
+
+	test("ModelDeclarationNode carries kind = 'cld' for cld keyword", () => {
+		const { ast } = parseSource(`cld m\nA ->+ B`);
+		expect(ast!.model.kind).toBe("cld");
+	});
+
+	test("ModelDeclarationNode carries kind = 'sfd' for sfd keyword", () => {
+		const { ast } = parseSource(`sfd m\nA ->+ B`);
+		expect(ast!.model.kind).toBe("sfd");
+	});
+
+	test("`model` keyword is no longer accepted", () => {
+		const { ast, diagnostics } = parseSource(`model m\nA ->+ B`);
+		expect(diagnostics.length).toBeGreaterThan(0);
+		expect(ast).toBeNull();
 	});
 });

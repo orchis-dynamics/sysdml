@@ -1,4 +1,4 @@
-model simple_cld
+cld simple_cld
 
 population ->+ births
 births ->- population

@@ -5,7 +5,7 @@ import { runPipeline } from "../src/pipeline.js";
 
 describe("formatCsv", () => {
 	it("emits a header row of time + variables in IR order, then one data row per step", () => {
-		const source = `model Test
+		const source = `sfd Test
 
 time {
 	start: 0
@@ -24,7 +24,7 @@ stock population {
 	});
 
 	it("orders columns: stocks first, then aux, then flows, all in declaration order", () => {
-		const source = `model Test
+		const source = `sfd Test
 
 time {
 	start: 0

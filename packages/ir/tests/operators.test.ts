@@ -15,7 +15,7 @@ function parse(src: string) {
 
 function compileExpressionSource(expressionSource: string) {
 	const src = `
-model m
+sfd m
 time { start: 0 end: 1 step: 1 }
 stock s { init: 0 }
 aux a = 1
