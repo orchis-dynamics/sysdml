@@ -71,6 +71,22 @@ aux birth_rate = 0.02
     expect(result).not.toBeNull();
     expect(result).toContain("s ->+ x");
   });
+
+  it("preserves sfd keyword on the first line", () => {
+    const result = formatSource(
+      "sfd m\ntime{start:0\nend:10\nstep:1}\nstock s{init:0}",
+    );
+    expect(result).not.toBeNull();
+    expect(result!.split("\n")[0]).toBe("sfd m");
+  });
+
+  it("preserves cld keyword on the first line and round-trips connections", () => {
+    const result = formatSource("cld burnout\nworkload->+fatigue\nfatigue->-energy");
+    expect(result).not.toBeNull();
+    expect(result!.split("\n")[0]).toBe("cld burnout");
+    expect(result).toContain("workload ->+ fatigue");
+    expect(result).toContain("fatigue ->- energy");
+  });
 });
 
 describe("layout formatting", () => {
