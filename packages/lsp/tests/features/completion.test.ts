@@ -35,9 +35,12 @@ describe("getCompletionItems", () => {
       character: 0,
     });
     const labels = items.map((i) => i.label);
+    expect(labels).toContain("sfd");
+    expect(labels).toContain("cld");
     expect(labels).toContain("stock");
     expect(labels).toContain("aux");
     expect(labels).toContain("flow");
+    expect(labels).not.toContain("model");
   });
 
   it("offers stock identifiers and null after 'from:'", () => {
