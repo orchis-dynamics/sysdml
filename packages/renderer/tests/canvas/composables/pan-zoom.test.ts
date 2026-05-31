@@ -102,4 +102,22 @@ describe("usePanZoom", () => {
 		}
 		expect(panZoom.scale.value).toBe(0.1);
 	});
+
+	test("middle-button down also starts a pan", () => {
+		const panZoom = usePanZoom(nullContainer());
+		panZoom.onPointerDown(pointerDown(1, 100, 100));
+		panZoom.onPointerMove(pointerMove(130, 160));
+		expect(panZoom.translateX.value).toBe(30);
+		expect(panZoom.translateY.value).toBe(60);
+	});
+
+	test("a move after pointer up does not continue panning", () => {
+		const panZoom = usePanZoom(nullContainer());
+		panZoom.onPointerDown(pointerDown(0, 100, 100));
+		panZoom.onPointerMove(pointerMove(130, 160));
+		panZoom.onPointerUp(new PointerEvent("pointerup", { pointerId: 1 }));
+		panZoom.onPointerMove(pointerMove(500, 500));
+		expect(panZoom.translateX.value).toBe(30);
+		expect(panZoom.translateY.value).toBe(60);
+	});
 });
