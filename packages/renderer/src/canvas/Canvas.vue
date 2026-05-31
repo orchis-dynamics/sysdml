@@ -9,20 +9,23 @@ import {
 	type Component,
 } from "vue";
 
+import { useSimulatorState } from "../state/simulator-state.js";
 import ArrowTip from "./ArrowTip.vue";
-import { computeLayout } from "./layout-engine.js";
 import {
 	clipToBox,
 	connectionControlPoint,
 	flowElbowCorner,
 	type Point,
 } from "./edge-geometry.js";
+import { computeLayout } from "./layout-engine.js";
 import type { LayoutNode, LayoutEdge, NodeKind } from "./layout-types.js";
 import AuxNode from "./nodes/AuxNode.vue";
 import FlowNode from "./nodes/FlowNode.vue";
 import StockNode from "./nodes/StockNode.vue";
 
 const props = defineProps<{ ir: IR | null }>();
+
+const { isVariableSelected, toggleVariable } = useSimulatorState();
 
 const layout = computed(() =>
 	props.ir ? computeLayout(props.ir) : { nodes: [], edges: [] },
@@ -39,7 +42,10 @@ enum VisualEdgeKindEnum {
 type VisualEdgeKind = `${VisualEdgeKindEnum}`;
 
 const colorTheme: {
-	edge: { stroke: Record<VisualEdgeKind, string>; fill: Record<VisualEdgeKind, string> };
+	edge: {
+		stroke: Record<VisualEdgeKind, string>;
+		fill: Record<VisualEdgeKind, string>;
+	};
 } = {
 	edge: {
 		stroke: {
@@ -143,11 +149,14 @@ function onWheel(event: WheelEvent) {
 	scale.value = nextScale;
 }
 
+const NODE_DRAG_CLICK_THRESHOLD_PX = 4;
+
 let draggingId: string | null = null;
 let dragBaseX = 0;
 let dragBaseY = 0;
 let dragPointerStartX = 0;
 let dragPointerStartY = 0;
+let didDragNode = false;
 
 function onNodePointerDown(event: PointerEvent, node: LayoutNode) {
 	event.stopPropagation();
@@ -155,6 +164,7 @@ function onNodePointerDown(event: PointerEvent, node: LayoutNode) {
 		event.currentTarget.setPointerCapture(event.pointerId);
 	}
 	draggingId = node.id;
+	didDragNode = false;
 	const existing = dragOffsets.value.get(node.id) ?? { x: 0, y: 0 };
 	dragBaseX = existing.x;
 	dragBaseY = existing.y;
@@ -164,6 +174,13 @@ function onNodePointerDown(event: PointerEvent, node: LayoutNode) {
 
 function onNodePointerMove(event: PointerEvent) {
 	if (draggingId === null) return;
+	const pointerTravel = Math.hypot(
+		event.clientX - dragPointerStartX,
+		event.clientY - dragPointerStartY,
+	);
+	if (pointerTravel > NODE_DRAG_CLICK_THRESHOLD_PX) {
+		didDragNode = true;
+	}
 	const dx = (event.clientX - dragPointerStartX) / scale.value;
 	const dy = (event.clientY - dragPointerStartY) / scale.value;
 	dragOffsets.value = new Map(dragOffsets.value).set(draggingId, {
@@ -174,6 +191,11 @@ function onNodePointerMove(event: PointerEvent) {
 
 function onNodePointerUp() {
 	draggingId = null;
+}
+
+function onNodeClick(node: LayoutNode) {
+	if (didDragNode) return;
+	toggleVariable(node.id);
 }
 
 const containerRef = ref<HTMLDivElement | null>(null);
@@ -263,7 +285,10 @@ const polarityLabels = computed<PolarityLabel[]>(() => {
 		let perpX = -tangent.y / length;
 		let perpY = tangent.x / length;
 		// Place label on the convex (control-point) side of the curve.
-		if (perpX * (controlPoint.x - point.x) + perpY * (controlPoint.y - point.y) < 0) {
+		if (
+			perpX * (controlPoint.x - point.x) + perpY * (controlPoint.y - point.y) <
+			0
+		) {
 			perpX = -perpX;
 			perpY = -perpY;
 		}
@@ -472,10 +497,14 @@ onUnmounted(() => {
 			<div
 				v-for="node in resolvedNodes"
 				:key="node.id"
-				class="absolute"
+				class="absolute rounded-md"
+				:class="{
+					'ring-2 ring-sky-500 ring-offset-2 ring-offset-stone-50':
+						isVariableSelected(node.id),
+				}"
 				:style="{ left: `${node.position.x}px`, top: `${node.position.y}px` }"
 				@pointerdown="onNodePointerDown($event, node)"
-				@click="() => console.log(node)"
+				@click="onNodeClick(node)"
 			>
 				<component :is="nodeComponentMap[node.kind]" :label="node.id" />
 			</div>

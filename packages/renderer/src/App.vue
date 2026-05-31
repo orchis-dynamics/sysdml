@@ -1,27 +1,26 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from "vue";
 import type { IR } from "@sysdml/ir";
-import type { SimulationResult } from "@sysdml/simulator";
 import Canvas from "./canvas/Canvas.vue";
 import { createTransport } from "./transport/index.js";
 import { createDefaultSimulatorClient } from "./simulation/client.js";
+import { useProvideSimulatorState } from "./state/simulator-state.js";
 
 const ir = ref<IR | null>(null);
-const simulation = ref<SimulationResult | null>(null);
 const errorMessage = ref<string | null>(null);
-const simulationError = ref<string | null>(null);
+
+const { simulationError, setSimulation, setSimulationError } =
+  useProvideSimulatorState();
 
 let simulator: ReturnType<typeof createDefaultSimulatorClient> | null = null;
 
 onMounted(() => {
   simulator = createDefaultSimulatorClient();
   simulator.onResult((result) => {
-    simulation.value = result;
-    simulationError.value = null;
+    setSimulation(result);
   });
   simulator.onError((message) => {
-    simulation.value = null;
-    simulationError.value = message;
+    setSimulationError(message);
   });
 
   const transport = createTransport();
