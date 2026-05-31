@@ -1,19 +1,20 @@
-import type { IRTransport } from "./types.js";
 import type { IR } from "@sysdml/ir";
 
+import type { IRTransport } from "./types.js";
+
 export class NullAdapter implements IRTransport {
-  private irCallbacks: Array<(ir: IR) => void> = [];
-  private errorCallbacks: Array<(message: string) => void> = [];
+	private irCallbacks: Array<(ir: IR) => void> = [];
+	private errorCallbacks: Array<(message: string) => void> = [];
 
-  start(): void {
-    // intentionally empty — no transport, canvas stays blank
-  }
+	start(): void {
+		// intentionally empty — no transport, canvas stays blank
+	}
 
-  onIR(cb: (ir: IR) => void): void {
-    this.irCallbacks.push(cb);
-  }
+	onIR(cb: (ir: IR) => void): void {
+		this.irCallbacks.push(cb);
+	}
 
-  onError(cb: (message: string) => void): void {
-    this.errorCallbacks.push(cb);
-  }
+	onError(cb: (message: string) => void): void {
+		this.errorCallbacks.push(cb);
+	}
 }

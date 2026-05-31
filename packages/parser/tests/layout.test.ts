@@ -1,4 +1,5 @@
 import { describe, test, expect } from "vitest";
+
 import { parseSource } from "../src/index.js";
 import type {
 	AuxiliaryDeclarationNode,
@@ -12,7 +13,8 @@ function stock(src: string): StockDeclarationNode {
 	const { ast, diagnostics } = parseSource(`sfd m\n${src}`);
 	if (!ast) throw new Error(`Parse failed: ${diagnostics[0]?.message}`);
 	const decl = ast.decls.find((d) => d.type === "StockDeclaration");
-	if (!decl || decl.type !== "StockDeclaration") throw new Error("No StockDeclaration found");
+	if (!decl || decl.type !== "StockDeclaration")
+		throw new Error("No StockDeclaration found");
 	return decl;
 }
 
@@ -20,7 +22,8 @@ function flow(src: string): FlowDeclarationNode {
 	const { ast, diagnostics } = parseSource(`sfd m\n${src}`);
 	if (!ast) throw new Error(`Parse failed: ${diagnostics[0]?.message}`);
 	const decl = ast.decls.find((d) => d.type === "FlowDeclaration");
-	if (!decl || decl.type !== "FlowDeclaration") throw new Error("No FlowDeclaration found");
+	if (!decl || decl.type !== "FlowDeclaration")
+		throw new Error("No FlowDeclaration found");
 	return decl;
 }
 
@@ -28,7 +31,8 @@ function aux(src: string): AuxiliaryDeclarationNode {
 	const { ast, diagnostics } = parseSource(`sfd m\n${src}`);
 	if (!ast) throw new Error(`Parse failed: ${diagnostics[0]?.message}`);
 	const decl = ast.decls.find((d) => d.type === "AuxiliaryDeclaration");
-	if (!decl || decl.type !== "AuxiliaryDeclaration") throw new Error("No AuxiliaryDeclaration found");
+	if (!decl || decl.type !== "AuxiliaryDeclaration")
+		throw new Error("No AuxiliaryDeclaration found");
 	return decl;
 }
 
@@ -36,7 +40,8 @@ function connection(src: string): ConnectionDeclarationNode {
 	const { ast, diagnostics } = parseSource(`sfd m\n${src}`);
 	if (!ast) throw new Error(`Parse failed: ${diagnostics[0]?.message}`);
 	const decl = ast.decls.find((d) => d.type === "ConnectionDeclaration");
-	if (!decl || decl.type !== "ConnectionDeclaration") throw new Error("No ConnectionDeclaration found");
+	if (!decl || decl.type !== "ConnectionDeclaration")
+		throw new Error("No ConnectionDeclaration found");
 	return decl;
 }
 
@@ -49,7 +54,9 @@ function posEq(pos: PositionNode | undefined, x: number, y: number): void {
 
 describe("layout — stock", () => {
 	test("stock with position parses correctly", () => {
-		const s = stock("stock population { init: 100\n position: { x: 400, y: 300 } }");
+		const s = stock(
+			"stock population { init: 100\n position: { x: 400, y: 300 } }",
+		);
 		posEq(s.position, 400, 300);
 	});
 
@@ -123,7 +130,9 @@ describe("layout — connection", () => {
 	});
 
 	test("connection with angle and via parses correctly", () => {
-		const c = connection("birth_rate ->+ population { angle: -30\n via: { x: 150, y: 80 } }");
+		const c = connection(
+			"birth_rate ->+ population { angle: -30\n via: { x: 150, y: 80 } }",
+		);
 		expect(c.angle).toBe(-30);
 		posEq(c.via, 150, 80);
 	});

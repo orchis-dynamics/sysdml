@@ -15,7 +15,8 @@ describe("error handling", () => {
 		const { diagnostics } = parseSource(src);
 		expect(diagnostics.length).toBeGreaterThan(0);
 		const firstDiagnostic = diagnostics[0];
-		if (firstDiagnostic === undefined) throw new Error("expected at least one diagnostic");
+		if (firstDiagnostic === undefined)
+			throw new Error("expected at least one diagnostic");
 		expect(typeof firstDiagnostic.span.start.line).toBe("number");
 		expect(typeof firstDiagnostic.span.start.col).toBe("number");
 	});
@@ -103,7 +104,8 @@ describe("builder diagnostics — position literal", () => {
 		expect(diagnostics).toHaveLength(0);
 		if (ast === null) throw new Error("expected non-null ast");
 		const stock = ast.decls[0];
-		if (stock?.type !== "StockDeclaration") throw new Error("expected StockDeclaration");
+		if (stock?.type !== "StockDeclaration")
+			throw new Error("expected StockDeclaration");
 		expect(stock.position).toEqual({
 			type: "Position",
 			x: 200,
@@ -118,7 +120,9 @@ describe("builder diagnostics — gf body", () => {
 		const src = `sfd m\ngf f { xscale: [0, 1] }`;
 		const { ast, diagnostics } = parseSource(src);
 		expect(ast).toBeNull();
-		const diag = diagnostics.find((d) => d.message.includes("missing required 'ypts'"));
+		const diag = diagnostics.find((d) =>
+			d.message.includes("missing required 'ypts'"),
+		);
 		expect(diag).toBeDefined();
 	});
 
@@ -126,7 +130,9 @@ describe("builder diagnostics — gf body", () => {
 		const src = `sfd m\ngf f { kind: foo\n xscale: [0, 1] ypts: [0, 1] }`;
 		const { ast, diagnostics } = parseSource(src);
 		expect(ast).toBeNull();
-		const diag = diagnostics.find((d) => d.message.includes("'kind' must be one of"));
+		const diag = diagnostics.find((d) =>
+			d.message.includes("'kind' must be one of"),
+		);
 		expect(diag).toBeDefined();
 		expect(diag?.message).toMatch(/got 'foo'/);
 	});
@@ -153,7 +159,9 @@ describe("builder diagnostics — gf body", () => {
 		const src = `sfd m\ngf f { ypts: [0, 1]\n ypts: [2, 3] }`;
 		const { ast, diagnostics } = parseSource(src);
 		expect(ast).toBeNull();
-		const diag = diagnostics.find((d) => d.message.includes("duplicate 'ypts'"));
+		const diag = diagnostics.find((d) =>
+			d.message.includes("duplicate 'ypts'"),
+		);
 		expect(diag).toBeDefined();
 		// Second ypts is on line 3 — span should point there, not at the first.
 		expect(diag?.span.start.line).toBe(3);
@@ -164,12 +172,17 @@ describe("builder diagnostics — gf body", () => {
 		const src = `sfd m\ngf f { kind: bogus\n kind: linear }`;
 		const { ast, diagnostics } = parseSource(src);
 		expect(ast).toBeNull();
-		expect(diagnostics.some((d) => d.message.includes("got 'bogus'"))).toBe(true);
-		expect(diagnostics.some((d) => d.message.includes("duplicate 'kind'"))).toBe(true);
-		expect(diagnostics.some((d) => d.message.includes("missing required 'ypts'"))).toBe(true);
+		expect(diagnostics.some((d) => d.message.includes("got 'bogus'"))).toBe(
+			true,
+		);
+		expect(
+			diagnostics.some((d) => d.message.includes("duplicate 'kind'")),
+		).toBe(true);
+		expect(
+			diagnostics.some((d) => d.message.includes("missing required 'ypts'")),
+		).toBe(true);
 		expect(diagnostics).toHaveLength(3);
 	});
-
 });
 
 describe("builder diagnostics — aux metadata block", () => {

@@ -6,7 +6,11 @@ import {
 	ZERO_ARG_BUILTINS,
 } from "./builtins.js";
 import { DiagnosticCode } from "./diagnostics.js";
-import type { IRDiagnostic, IRExpressionNode, IRGraphicalFunction } from "./types.js";
+import type {
+	IRDiagnostic,
+	IRExpressionNode,
+	IRGraphicalFunction,
+} from "./types.js";
 
 let _lookupCounter = 0;
 

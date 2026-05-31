@@ -1,4 +1,5 @@
 import { describe, test, expect } from "vitest";
+
 import { parseSource } from "../src/index.js";
 import type {
 	BinaryExpressionNode,
@@ -41,7 +42,10 @@ describe("spans — 1-based, end-inclusive", () => {
 		const { ast } = parseSource(`sfd m\naux x = SQRT(1)`);
 		if (ast === null) throw new Error("expected non-null ast");
 		const aux = ast.decls[0];
-		if (aux?.type !== "AuxiliaryDeclaration" || aux.expr?.type !== "FunctionCall") {
+		if (
+			aux?.type !== "AuxiliaryDeclaration" ||
+			aux.expr?.type !== "FunctionCall"
+		) {
 			throw new Error("expected AuxiliaryDeclaration with FunctionCall expr");
 		}
 		const call: FunctionCallNode = aux.expr;
@@ -72,7 +76,10 @@ describe("spans — 1-based, end-inclusive", () => {
 		const { ast } = parseSource(`sfd m\naux x = 10 + 20`);
 		if (ast === null) throw new Error("expected non-null ast");
 		const aux = ast.decls[0];
-		if (aux?.type !== "AuxiliaryDeclaration" || aux.expr?.type !== "BinaryExpression") {
+		if (
+			aux?.type !== "AuxiliaryDeclaration" ||
+			aux.expr?.type !== "BinaryExpression"
+		) {
 			throw new Error("expected AuxiliaryDeclaration with BinaryExpression");
 		}
 		const expr: BinaryExpressionNode = aux.expr;
@@ -103,7 +110,8 @@ describe("spans — 1-based, end-inclusive", () => {
 		if (ast === null) throw new Error("expected non-null ast");
 		expect(ast.model.span.start.line).toBe(1);
 		const aux = ast.decls[0];
-		if (aux?.type !== "AuxiliaryDeclaration") throw new Error("expected AuxiliaryDeclaration");
+		if (aux?.type !== "AuxiliaryDeclaration")
+			throw new Error("expected AuxiliaryDeclaration");
 		expect(aux.idSpan.start.line).toBe(3);
 		expect(aux.idSpan.start.col).toBe(5);
 		expect(aux.idSpan.end.col).toBe(5);
@@ -117,7 +125,8 @@ describe("spans — 1-based, end-inclusive", () => {
 		const { ast, diagnostics } = parseSource(`sfd m\naux x = @`);
 		expect(ast).toBeNull();
 		const lexErr = diagnostics.find((d) => d.message.includes("@"));
-		if (lexErr === undefined) throw new Error("expected lexer diagnostic for '@'");
+		if (lexErr === undefined)
+			throw new Error("expected lexer diagnostic for '@'");
 		expect(lexErr.span.start).toEqual({ line: 2, col: 9 });
 	});
 
@@ -128,7 +137,8 @@ describe("spans — 1-based, end-inclusive", () => {
 		expect(ast).toBeNull();
 		expect(diagnostics.length).toBeGreaterThan(0);
 		const first = diagnostics[0];
-		if (first === undefined) throw new Error("expected at least one diagnostic");
+		if (first === undefined)
+			throw new Error("expected at least one diagnostic");
 		expect(first.span.start.line).toBe(1);
 		// EOF sits at col 4 (1-based, just past the last 'd').
 		expect(first.span.start.col).toBe(4);
@@ -137,10 +147,13 @@ describe("spans — 1-based, end-inclusive", () => {
 	test("aux with metadata block — decl span covers the whole declaration", () => {
 		// line 2: a  u  x     x     =     1     {     p  o  s  i  t  i  o  n  :     {     x  :     1  ,     y  :     2     }     }
 		//         1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38
-		const { ast } = parseSource(`sfd m\naux x = 1 { position: { x: 1, y: 2 } }`);
+		const { ast } = parseSource(
+			`sfd m\naux x = 1 { position: { x: 1, y: 2 } }`,
+		);
 		if (ast === null) throw new Error("expected non-null ast");
 		const aux = ast.decls[0];
-		if (aux?.type !== "AuxiliaryDeclaration") throw new Error("expected AuxiliaryDeclaration");
+		if (aux?.type !== "AuxiliaryDeclaration")
+			throw new Error("expected AuxiliaryDeclaration");
 		expect(aux.span.start.line).toBe(2);
 		expect(aux.span.start.col).toBe(1);
 		expect(aux.span.end.line).toBe(2);

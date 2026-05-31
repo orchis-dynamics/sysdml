@@ -1,73 +1,75 @@
+import type { SimulationResult } from "@sysdml/simulator";
 import { createInjectionState } from "@vueuse/core";
 import { ref } from "vue";
-import type { SimulationResult } from "@sysdml/simulator";
 
 function createVariableSelection() {
-  const selectedVariableIds = ref<Set<string>>(new Set<string>());
+	const selectedVariableIds = ref<Set<string>>(new Set<string>());
 
-  function isVariableSelected(variableId: string): boolean {
-    return selectedVariableIds.value.has(variableId);
-  }
+	function isVariableSelected(variableId: string): boolean {
+		return selectedVariableIds.value.has(variableId);
+	}
 
-  function selectVariable(variableId: string): void {
-    selectedVariableIds.value.add(variableId);
-  }
+	function selectVariable(variableId: string): void {
+		selectedVariableIds.value.add(variableId);
+	}
 
-  function deselectVariable(variableId: string): void {
-    selectedVariableIds.value.delete(variableId);
-  }
+	function deselectVariable(variableId: string): void {
+		selectedVariableIds.value.delete(variableId);
+	}
 
-  function toggleVariable(variableId: string): void {
-    if (isVariableSelected(variableId)) {
-      deselectVariable(variableId);
-    } else {
-      selectVariable(variableId);
-    }
-  }
+	function toggleVariable(variableId: string): void {
+		if (isVariableSelected(variableId)) {
+			deselectVariable(variableId);
+		} else {
+			selectVariable(variableId);
+		}
+	}
 
-  function clearSelection(): void {
-    selectedVariableIds.value.clear();
-  }
+	function clearSelection(): void {
+		selectedVariableIds.value.clear();
+	}
 
-  return {
-    selectedVariableIds,
-    isVariableSelected,
-    selectVariable,
-    deselectVariable,
-    toggleVariable,
-    clearSelection,
-  };
+	return {
+		selectedVariableIds,
+		isVariableSelected,
+		selectVariable,
+		deselectVariable,
+		toggleVariable,
+		clearSelection,
+	};
 }
 
 function createSimulationOutcome() {
-  const simulation = ref<SimulationResult | null>(null);
-  const simulationError = ref<string | null>(null);
+	const simulation = ref<SimulationResult | null>(null);
+	const simulationError = ref<string | null>(null);
 
-  function setSimulation(result: SimulationResult): void {
-    simulation.value = result;
-    simulationError.value = null;
-  }
+	function setSimulation(result: SimulationResult): void {
+		simulation.value = result;
+		simulationError.value = null;
+	}
 
-  function setSimulationError(message: string): void {
-    simulation.value = null;
-    simulationError.value = message;
-  }
+	function setSimulationError(message: string): void {
+		simulation.value = null;
+		simulationError.value = message;
+	}
 
-  return { simulation, simulationError, setSimulation, setSimulationError };
+	return { simulation, simulationError, setSimulation, setSimulationError };
 }
 
-const [useProvideSimulatorState, useInjectedSimulatorState] = createInjectionState(
-  () => ({ ...createVariableSelection(), ...createSimulationOutcome() }),
-);
+const [useProvideSimulatorState, useInjectedSimulatorState] =
+	createInjectionState(() => ({
+		...createVariableSelection(),
+		...createSimulationOutcome(),
+	}));
 
 export { useProvideSimulatorState };
 
 export function useSimulatorState() {
-  const state = useInjectedSimulatorState();
-  if (!state) {
-    throw new Error(
-      "useSimulatorState() was called without a provider. Call useProvideSimulatorState() in an ancestor component.",
-    );
-  }
-  return state;
+	const state = useInjectedSimulatorState();
+	if (!state) {
+		throw new Error(
+			"useSimulatorState() was called without a provider. Call useProvideSimulatorState() in an ancestor component.",
+		);
+	}
+	return state;
 }

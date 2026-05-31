@@ -292,9 +292,7 @@ describe("IRDiagnostic spans", () => {
 			"sfd m\ntime { start: 0\n end: 10\n step: 1\n}\nstock s { init: 0 }\naux x = ABS(1, 2)",
 		);
 		const { diagnostics } = compileAST(ast!);
-		const diag = diagnostics.find(
-			(d) => d.code === DiagnosticCode.WRONG_ARITY,
-		);
+		const diag = diagnostics.find((d) => d.code === DiagnosticCode.WRONG_ARITY);
 		expect(diag?.span).toBeDefined();
 	});
 

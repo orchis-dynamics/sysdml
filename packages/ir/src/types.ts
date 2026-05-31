@@ -1,4 +1,5 @@
 import type { Span } from "@sysdml/parser";
+
 import type { DiagnosticCode } from "./diagnostics.js";
 
 // IR expression nodes — no spans, no parse artifacts.
@@ -23,7 +24,12 @@ export type IRBinaryOperator =
 export type IRExpressionNode =
 	| { type: "Number"; value: number }
 	| { type: "Reference"; id: string }
-	| { type: "BinaryOperation"; op: IRBinaryOperator; left: IRExpressionNode; right: IRExpressionNode }
+	| {
+			type: "BinaryOperation";
+			op: IRBinaryOperator;
+			left: IRExpressionNode;
+			right: IRExpressionNode;
+	  }
 	| { type: "UnaryMinus"; operand: IRExpressionNode }
 	| { type: "Not"; operand: IRExpressionNode }
 	| {

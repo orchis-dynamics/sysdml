@@ -1,5 +1,6 @@
 import { parseSource } from "@sysdml/parser";
 import { describe, test, expect } from "vitest";
+
 import { compileAST } from "../src/index.js";
 import type { IR } from "../src/index.js";
 
@@ -24,7 +25,9 @@ time { start: 0\n end: 10\n step: 1 }
 
 describe("IR layout — stock", () => {
 	test("stock position threads to IR", () => {
-		const ir = compile(`${BASE}\nstock s { init: 100\n position: { x: 400, y: 300 } }`);
+		const ir = compile(
+			`${BASE}\nstock s { init: 100\n position: { x: 400, y: 300 } }`,
+		);
 		expect(ir.stocks[0].position).toEqual({ x: 400, y: 300 });
 	});
 
@@ -36,7 +39,9 @@ describe("IR layout — stock", () => {
 
 describe("IR layout — aux", () => {
 	test("aux with metadata block position threads to IR", () => {
-		const ir = compile(`${BASE}\nstock s { init: 0 }\naux birth_rate = 0.02 { position: { x: 200, y: 300 } }`);
+		const ir = compile(
+			`${BASE}\nstock s { init: 0 }\naux birth_rate = 0.02 { position: { x: 200, y: 300 } }`,
+		);
 		expect(ir.auxiliaries[0].position).toEqual({ x: 200, y: 300 });
 	});
 
@@ -75,19 +80,25 @@ describe("IR layout — flow", () => {
 
 describe("IR layout — connection", () => {
 	test("connection angle threads to IR", () => {
-		const ir = compile(`${BASE}\nstock s { init: 0 }\naux a = 1\naux b = 2\na ->+ b { angle: 45 }`);
+		const ir = compile(
+			`${BASE}\nstock s { init: 0 }\naux a = 1\naux b = 2\na ->+ b { angle: 45 }`,
+		);
 		expect(ir.connections[0].angle).toBe(45);
 		expect(ir.connections[0].via).toBeUndefined();
 	});
 
 	test("connection via threads to IR", () => {
-		const ir = compile(`${BASE}\nstock s { init: 0 }\naux a = 1\naux b = 2\na ->+ b { angle: 30\n via: { x: 150, y: 80 } }`);
+		const ir = compile(
+			`${BASE}\nstock s { init: 0 }\naux a = 1\naux b = 2\na ->+ b { angle: 30\n via: { x: 150, y: 80 } }`,
+		);
 		expect(ir.connections[0].angle).toBe(30);
 		expect(ir.connections[0].via).toEqual({ x: 150, y: 80 });
 	});
 
 	test("connection without block has no angle or via in IR", () => {
-		const ir = compile(`${BASE}\nstock s { init: 0 }\naux a = 1\naux b = 2\na ->+ b`);
+		const ir = compile(
+			`${BASE}\nstock s { init: 0 }\naux a = 1\naux b = 2\na ->+ b`,
+		);
 		expect(ir.connections[0].angle).toBeUndefined();
 		expect(ir.connections[0].via).toBeUndefined();
 	});

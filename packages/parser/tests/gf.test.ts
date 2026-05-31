@@ -22,7 +22,9 @@ function wrap(body: string) {
 	return `sfd m\ntime { start: 0 end: 1 step: 1 }\nstock s { init: 0 }\n${body}`;
 }
 
-function parseGraphicalFunctionDeclaration(src: string): GraphicalFunctionDeclarationNode {
+function parseGraphicalFunctionDeclaration(
+	src: string,
+): GraphicalFunctionDeclarationNode {
 	const ast = parseOk(wrap(src));
 	const declaration = ast.decls.find(
 		(decl) => decl.type === "GraphicalFunctionDeclaration",
@@ -196,7 +198,8 @@ describe("aux with inline gf via named decl", () => {
 		expect(diagnostics).toHaveLength(0);
 		if (ast === null) throw new Error("expected ast");
 		const aux = ast.decls.find((d) => d.type === "AuxiliaryDeclaration");
-		if (aux?.type !== "AuxiliaryDeclaration") throw new Error("expected AuxiliaryDeclaration");
+		if (aux?.type !== "AuxiliaryDeclaration")
+			throw new Error("expected AuxiliaryDeclaration");
 		expect(aux.expr.type).toBe("FunctionCall");
 	});
 
@@ -207,7 +210,8 @@ describe("aux with inline gf via named decl", () => {
 		expect(diagnostics).toHaveLength(0);
 		if (ast === null) throw new Error("expected ast");
 		const gf = ast.decls.find((d) => d.type === "GraphicalFunctionDeclaration");
-		if (gf?.type !== "GraphicalFunctionDeclaration") throw new Error("expected GraphicalFunctionDeclaration");
+		if (gf?.type !== "GraphicalFunctionDeclaration")
+			throw new Error("expected GraphicalFunctionDeclaration");
 		const kindProp = gf.body.props.find((p) => p.key === "kind");
 		expect(kindProp).toBeDefined();
 		if (kindProp?.key === "kind") expect(kindProp.value).toBe("step");
@@ -220,7 +224,8 @@ describe("aux with inline gf via named decl", () => {
 		expect(diagnostics).toHaveLength(0);
 		if (ast === null) throw new Error("expected ast");
 		const gf = ast.decls.find((d) => d.type === "GraphicalFunctionDeclaration");
-		if (gf?.type !== "GraphicalFunctionDeclaration") throw new Error("expected GraphicalFunctionDeclaration");
+		if (gf?.type !== "GraphicalFunctionDeclaration")
+			throw new Error("expected GraphicalFunctionDeclaration");
 		const yscaleProp = gf.body.props.find((p) => p.key === "yscale");
 		expect(yscaleProp).toBeDefined();
 	});
@@ -232,7 +237,8 @@ describe("aux with inline gf via named decl", () => {
 		expect(diagnostics).toHaveLength(0);
 		if (ast === null) throw new Error("expected ast");
 		const gf = ast.decls.find((d) => d.type === "GraphicalFunctionDeclaration");
-		if (gf?.type !== "GraphicalFunctionDeclaration") throw new Error("expected GraphicalFunctionDeclaration");
+		if (gf?.type !== "GraphicalFunctionDeclaration")
+			throw new Error("expected GraphicalFunctionDeclaration");
 		const xptsProp = gf.body.props.find((p) => p.key === "xpts");
 		expect(xptsProp).toBeDefined();
 	});
@@ -274,7 +280,8 @@ describe("lookup() inline function", () => {
 		const aux = ast.decls.find(
 			(declaration) => declaration.type === "AuxiliaryDeclaration",
 		) as AuxiliaryDeclarationNode;
-		if (aux.expr.type === "FunctionCall") expect(aux.expr.args).toHaveLength(12);
+		if (aux.expr.type === "FunctionCall")
+			expect(aux.expr.args).toHaveLength(12);
 	});
 	test("lookup in flow rate", () => {
 		const ast = parseOk(

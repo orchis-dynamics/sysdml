@@ -141,8 +141,8 @@ interface IRConnection {
 	from: string;
 	polarity: "+" | "-" | "=>";
 	to: string;
-	angle?: number;       // degrees, for curved-arrow rendering
-	via?: IRPosition;     // optional single waypoint
+	angle?: number; // degrees, for curved-arrow rendering
+	via?: IRPosition; // optional single waypoint
 }
 ```
 
@@ -187,7 +187,12 @@ type IRBinaryOperator =
 type IRExpressionNode =
 	| { type: "Number"; value: number }
 	| { type: "Reference"; id: string }
-	| { type: "BinaryOperation"; op: IRBinaryOperator; left: IRExpressionNode; right: IRExpressionNode }
+	| {
+			type: "BinaryOperation";
+			op: IRBinaryOperator;
+			left: IRExpressionNode;
+			right: IRExpressionNode;
+	  }
 	| { type: "UnaryMinus"; operand: IRExpressionNode }
 	| { type: "Not"; operand: IRExpressionNode }
 	| {
@@ -215,41 +220,41 @@ type IRExpressionNode =
 | Test inputs       | `STEP(height, start)` `RAMP(slope, start)` `PULSE(magnitude, start[, interval])`                                                     |
 | Statistical       | `RANDOM(min, max[, seed])` `NORMAL(mean, std[, seed])` `LOGNORMAL(mean, std[, seed])` `EXPRND(mean[, seed])` `POISSON(mean[, seed])` |
 | Conditional       | `IF_THEN_ELSE(cond, then, else)` — lowered to `IfThenElse` IR node                                                                   |
-| Inline lookup     | `LOOKUP(input, y0, y1, …)` — lowered to a synthetic `GraphicalFunctionCall`                                                                         |
+| Inline lookup     | `LOOKUP(input, y0, y1, …)` — lowered to a synthetic `GraphicalFunctionCall`                                                          |
 
 ---
 
 ## Diagnostic codes
 
-| Code                       | Meaning                                                        |
-| -------------------------- | -------------------------------------------------------------- |
-| `MULTI_MODEL_NOT_SUPPORTED`| Extra `model` declaration beyond the entry model (non-fatal)   |
-| `MISSING_TIME_BLOCK`       | No `time` block found                                          |
-| `DUPLICATE_TIME_BLOCK`     | More than one `time` block                                     |
-| `MISSING_STOCK`            | No stocks declared                                             |
-| `MISSING_STOCK_INIT`       | Stock is missing its `init` property                           |
-| `DUPLICATE_IDENTIFIER`     | Same name used for two stocks, aux, or flows                   |
-| `IDENTIFIER_SHADOWS_BUILTIN` | Variable identifier collides with a built-in function name   |
-| `MISSING_FLOW_PROPERTY`    | Flow missing `from`, `to`, or `rate`                           |
-| `INVALID_FLOW_ENDPOINT`    | `from` or `to` references an undeclared stock                  |
-| `UNDEFINED_IDENTIFIER`     | Expression references an unknown variable                      |
-| `INVALID_TIME_STEP`        | `time.step` is ≤ 0                                             |
-| `INVALID_TIME_RANGE`       | `time.end` < `time.start`                                      |
-| `UNKNOWN_FUNCTION`         | Function name not in built-in set and not a graphical function |
-| `WRONG_ARITY`              | Built-in called with wrong number of arguments                 |
-| `INVALID_GF_KIND`          | `kind` is not `linear`, `extra`, or `step`                     |
-| `MISSING_YPTS`             | Graphical function has no `ypts`                               |
-| `MISSING_X_DEFINITION`     | Graphical function has neither `xscale` nor `xpts`             |
-| `CONFLICTING_X_DEFINITION` | Graphical function has both `xscale` and `xpts`                |
-| `XSCALE_WRONG_COUNT`       | `xscale` does not have exactly 2 values                        |
-| `XPTS_YPTS_COUNT_MISMATCH` | `xpts` and `ypts` have different lengths                       |
-| `XPTS_NOT_ASCENDING`       | `xpts` values are not strictly ascending                       |
-| `STEP_LAST_YPTS_MISMATCH`  | `kind: step` requires the last two y-values to be equal        |
-| `DUPLICATE_GF`             | Two graphical functions share the same name                    |
-| `GF_NAME_CONFLICT`         | Graphical function name clashes with a stock, aux, or flow     |
-| `GF_WRONG_ARITY`           | Graphical function called with other than 1 argument           |
-| `LOOKUP_TOO_FEW_YPTS`      | `LOOKUP` called with fewer than 2 y-point arguments            |
-| `LOOKUP_NON_LITERAL_YPTS`  | `LOOKUP` y-point arguments must be numeric literals            |
+| Code                         | Meaning                                                        |
+| ---------------------------- | -------------------------------------------------------------- |
+| `MULTI_MODEL_NOT_SUPPORTED`  | Extra `model` declaration beyond the entry model (non-fatal)   |
+| `MISSING_TIME_BLOCK`         | No `time` block found                                          |
+| `DUPLICATE_TIME_BLOCK`       | More than one `time` block                                     |
+| `MISSING_STOCK`              | No stocks declared                                             |
+| `MISSING_STOCK_INIT`         | Stock is missing its `init` property                           |
+| `DUPLICATE_IDENTIFIER`       | Same name used for two stocks, aux, or flows                   |
+| `IDENTIFIER_SHADOWS_BUILTIN` | Variable identifier collides with a built-in function name     |
+| `MISSING_FLOW_PROPERTY`      | Flow missing `from`, `to`, or `rate`                           |
+| `INVALID_FLOW_ENDPOINT`      | `from` or `to` references an undeclared stock                  |
+| `UNDEFINED_IDENTIFIER`       | Expression references an unknown variable                      |
+| `INVALID_TIME_STEP`          | `time.step` is ≤ 0                                             |
+| `INVALID_TIME_RANGE`         | `time.end` < `time.start`                                      |
+| `UNKNOWN_FUNCTION`           | Function name not in built-in set and not a graphical function |
+| `WRONG_ARITY`                | Built-in called with wrong number of arguments                 |
+| `INVALID_GF_KIND`            | `kind` is not `linear`, `extra`, or `step`                     |
+| `MISSING_YPTS`               | Graphical function has no `ypts`                               |
+| `MISSING_X_DEFINITION`       | Graphical function has neither `xscale` nor `xpts`             |
+| `CONFLICTING_X_DEFINITION`   | Graphical function has both `xscale` and `xpts`                |
+| `XSCALE_WRONG_COUNT`         | `xscale` does not have exactly 2 values                        |
+| `XPTS_YPTS_COUNT_MISMATCH`   | `xpts` and `ypts` have different lengths                       |
+| `XPTS_NOT_ASCENDING`         | `xpts` values are not strictly ascending                       |
+| `STEP_LAST_YPTS_MISMATCH`    | `kind: step` requires the last two y-values to be equal        |
+| `DUPLICATE_GF`               | Two graphical functions share the same name                    |
+| `GF_NAME_CONFLICT`           | Graphical function name clashes with a stock, aux, or flow     |
+| `GF_WRONG_ARITY`             | Graphical function called with other than 1 argument           |
+| `LOOKUP_TOO_FEW_YPTS`        | `LOOKUP` called with fewer than 2 y-point arguments            |
+| `LOOKUP_NON_LITERAL_YPTS`    | `LOOKUP` y-point arguments must be numeric literals            |
 
 ---
 

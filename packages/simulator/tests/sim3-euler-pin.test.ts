@@ -33,8 +33,12 @@ flow births { from: null to: population rate: population * birth_rate }
 		const rowsCoarse = runModel(growthModel(0, 10, 1));
 		const rowsFine = runModel(growthModel(0, 10, 0.1));
 		const analytical = P0 * Math.exp(r * 10);
-		const errCoarse = Math.abs(rowsCoarse[rowsCoarse.length - 1].population - analytical) / analytical;
-		const errFine = Math.abs(rowsFine[rowsFine.length - 1].population - analytical) / analytical;
+		const errCoarse =
+			Math.abs(rowsCoarse[rowsCoarse.length - 1].population - analytical) /
+			analytical;
+		const errFine =
+			Math.abs(rowsFine[rowsFine.length - 1].population - analytical) /
+			analytical;
 		expect(errFine).toBeLessThan(0.006);
 		// Convergence: halving dt should shrink the error.
 		expect(errFine).toBeLessThan(errCoarse);

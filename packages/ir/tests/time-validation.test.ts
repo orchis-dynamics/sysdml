@@ -1,6 +1,5 @@
-import { describe, test, expect } from "vitest";
-
 import { parseSource } from "@sysdml/parser";
+import { describe, test, expect } from "vitest";
 
 import { compileAST } from "../src/compile.js";
 import { DiagnosticCode } from "../src/diagnostics.js";
@@ -14,9 +13,7 @@ function compile(src: string) {
 
 describe("time block validation — XMILE §2.3 mappings (B6.4)", () => {
 	test("missing time block → MISSING_TIME_BLOCK", () => {
-		const { ast, parseDiagnostics } = compile(
-			`sfd m\n${ONE_STOCK}`,
-		);
+		const { ast, parseDiagnostics } = compile(`sfd m\n${ONE_STOCK}`);
 		expect(parseDiagnostics).toHaveLength(0);
 		expect(ast).not.toBeNull();
 		const { ir, diagnostics } = compileAST(ast!);
