@@ -34,13 +34,23 @@
     "commands": [
       {
         "command": "sysdml.openDiagram",
-        "title": "SysDML: Open Diagram"
+        "title": "SysDML: Open Diagram",
+        "icon": "$(graph)"
       },
       {
         "command": "sysdml.refreshDiagram",
         "title": "SysDML: Refresh Diagram"
       }
-    ]
+    ],
+    "menus": {
+      "editor/title": [
+        {
+          "command": "sysdml.openDiagram",
+          "when": "resourceLangId == sysdml",
+          "group": "navigation"
+        }
+      ]
+    }
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
