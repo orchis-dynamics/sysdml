@@ -1,64 +1,83 @@
 {
-  "name": "sysdml-vscode",
-  "displayName": "SysDML",
-  "description": "Language support for SysDML system dynamics models",
-  "version": "0.1.0",
-  "publisher": "orchis-dynamics",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/orchis-dynamics/sysdml"
-  },
-  "engines": {
-    "vscode": "^1.85.0"
-  },
-  "categories": ["Programming Languages"],
-  "activationEvents": ["onLanguage:sysdml"],
-  "icon": "assets/images/sysdml-logo.png",
-  "main": "./dist/extension.js",
-  "contributes": {
-    "languages": [
-      {
-        "id": "sysdml",
-        "aliases": ["SysDML", "sysdml"],
-        "extensions": [".sysdml"],
-        "configuration": "./language-configuration.json"
-      }
-    ],
-    "grammars": [
-      {
-        "language": "sysdml",
-        "scopeName": "source.sysdml",
-        "path": "./syntaxes/sysdml.tmLanguage.json"
-      }
-    ],
-    "commands": [
-      {
-        "command": "sysdml.openDiagram",
-        "title": "SysDML: Open Diagram"
-      },
-      {
-        "command": "sysdml.refreshDiagram",
-        "title": "SysDML: Refresh Diagram"
-      }
-    ]
-  },
-  "scripts": {
-    "typecheck": "tsc --noEmit",
-    "build": "pnpm run build:renderer && pnpm run build:extension",
-    "build:extension": "pnpm run typecheck && node esbuild.js --production",
-    "build:dev": "node esbuild.js",
-    "watch": "node esbuild.js --watch",
-    "package": "pnpm run build && vsce package --no-dependencies",
-    "build:renderer": "cd ../renderer && npm run build:vscode && rm -rf ../vscode-extension/renderer-dist && cp -r dist/ ../vscode-extension/renderer-dist/"
-  },
-  "devDependencies": {
-    "@sysdml/ir": "workspace:*",
-    "@sysdml/lsp-server": "workspace:*",
-    "@types/vscode": "^1.85.0",
-    "@types/node": "^24.12.4",
-    "@vscode/vsce": "^3.9.1",
-    "esbuild": "^0.24.0",
-    "typescript": "^5.4.5",
-    "vscode-languageclient": "^9.0.0"
-  }
+	"name": "sysdml-vscode",
+	"displayName": "SysDML",
+	"version": "0.1.0",
+	"description": "Language support for SysDML system dynamics models",
+	"categories": [
+		"Programming Languages"
+	],
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/orchis-dynamics/sysdml"
+	},
+	"publisher": "orchis-dynamics",
+	"main": "./dist/extension.js",
+	"scripts": {
+		"typecheck": "tsc --noEmit",
+		"build": "pnpm run build:renderer && pnpm run build:extension",
+		"build:extension": "pnpm run typecheck && node esbuild.js --production",
+		"build:dev": "node esbuild.js",
+		"watch": "node esbuild.js --watch",
+		"package": "pnpm run build && vsce package --no-dependencies",
+		"build:renderer": "cd ../renderer && npm run build:vscode && rm -rf ../vscode-extension/renderer-dist && cp -r dist/ ../vscode-extension/renderer-dist/"
+	},
+	"devDependencies": {
+		"@sysdml/ir": "workspace:*",
+		"@sysdml/lsp-server": "workspace:*",
+		"@types/node": "^24.12.4",
+		"@types/vscode": "^1.85.0",
+		"@vscode/vsce": "^3.9.1",
+		"esbuild": "^0.24.0",
+		"typescript": "^5.4.5",
+		"vscode-languageclient": "^9.0.0"
+	},
+	"contributes": {
+		"languages": [
+			{
+				"id": "sysdml",
+				"aliases": [
+					"SysDML",
+					"sysdml"
+				],
+				"extensions": [
+					".sysdml"
+				],
+				"configuration": "./language-configuration.json"
+			}
+		],
+		"grammars": [
+			{
+				"language": "sysdml",
+				"scopeName": "source.sysdml",
+				"path": "./syntaxes/sysdml.tmLanguage.json"
+			}
+		],
+		"commands": [
+			{
+				"command": "sysdml.openDiagram",
+				"title": "SysDML: Open Diagram",
+				"icon": "assets/images/sysdml-logo.svg"
+			},
+			{
+				"command": "sysdml.refreshDiagram",
+				"title": "SysDML: Refresh Diagram"
+			}
+		],
+		"menus": {
+			"editor/title": [
+				{
+					"command": "sysdml.openDiagram",
+					"when": "resourceLangId == sysdml",
+					"group": "navigation"
+				}
+			]
+		}
+	},
+	"activationEvents": [
+		"onLanguage:sysdml"
+	],
+	"icon": "assets/images/sysdml-logo.png",
+	"engines": {
+		"vscode": "^1.85.0"
+	}
 }
