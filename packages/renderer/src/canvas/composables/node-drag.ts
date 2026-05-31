@@ -72,7 +72,6 @@ export function useNodeDrag({ scale }: { scale: Ref<number> }) {
 	}
 
 	return {
-		dragOffsets,
 		hasMovedPastClickThreshold,
 		resolveNode,
 		onNodePointerDown,
