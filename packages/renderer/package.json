@@ -15,6 +15,7 @@
     "@sysdml/ir": "workspace:*",
     "@sysdml/parser": "workspace:*",
     "@sysdml/simulator": "workspace:*",
+    "@vueuse/core": "^14.3.0",
     "vue": "^3.5.0"
   },
   "devDependencies": {
