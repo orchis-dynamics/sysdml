@@ -12,7 +12,11 @@ class FakeWorker {
 	static instances: FakeWorker[] = [];
 	postedMessages: WorkerRequest[] = [];
 	terminated = false;
-	private listeners: Array<(event: MessageEvent<WorkerResponse>) => void> = [];
+	private messageListeners: Array<
+		(event: MessageEvent<WorkerResponse>) => void
+	> = [];
+	private errorListeners: Array<(event: ErrorEvent) => void> = [];
+	private messageErrorListeners: Array<(event: MessageEvent) => void> = [];
 
 	constructor() {
 		FakeWorker.instances.push(this);
@@ -23,10 +27,24 @@ class FakeWorker {
 	}
 
 	addEventListener(
-		event: "message",
+		type: "message",
 		cb: (event: MessageEvent<WorkerResponse>) => void,
-	): void {
-		if (event === "message") this.listeners.push(cb);
+	): void;
+	addEventListener(type: "error", cb: (event: ErrorEvent) => void): void;
+	addEventListener(
+		type: "messageerror",
+		cb: (event: MessageEvent) => void,
+	): void;
+	addEventListener(type: string, cb: (event: never) => void): void {
+		if (type === "message") {
+			this.messageListeners.push(
+				cb as (event: MessageEvent<WorkerResponse>) => void,
+			);
+		} else if (type === "error") {
+			this.errorListeners.push(cb as (event: ErrorEvent) => void);
+		} else if (type === "messageerror") {
+			this.messageErrorListeners.push(cb as (event: MessageEvent) => void);
+		}
 	}
 
 	terminate(): void {
@@ -35,7 +53,17 @@ class FakeWorker {
 
 	fire(response: WorkerResponse): void {
 		const event = { data: response } as MessageEvent<WorkerResponse>;
-		for (const cb of this.listeners) cb(event);
+		for (const cb of this.messageListeners) cb(event);
+	}
+
+	fireError(message: string): void {
+		const event = { message } as ErrorEvent;
+		for (const cb of this.errorListeners) cb(event);
+	}
+
+	fireMessageError(): void {
+		const event = {} as MessageEvent;
+		for (const cb of this.messageErrorListeners) cb(event);
 	}
 }
 
@@ -125,6 +153,43 @@ describe("SimulatorClient", () => {
 			message: "stale",
 			diagnostic: null,
 		});
+		expect(onError).not.toHaveBeenCalled();
+	});
+
+	test("surfaces a worker error event through onError", () => {
+		const client = new SimulatorClient(
+			() => new FakeWorker() as unknown as Worker,
+		);
+		const onError = vi.fn();
+		client.onError(onError);
+		const worker = FakeWorker.instances[0]!;
+		worker.fireError("ReferenceError: process is not defined");
+		expect(onError).toHaveBeenCalledTimes(1);
+		expect(onError.mock.calls[0]![0]).toContain(
+			"ReferenceError: process is not defined",
+		);
+	});
+
+	test("surfaces a worker messageerror through onError", () => {
+		const client = new SimulatorClient(
+			() => new FakeWorker() as unknown as Worker,
+		);
+		const onError = vi.fn();
+		client.onError(onError);
+		const worker = FakeWorker.instances[0]!;
+		worker.fireMessageError();
+		expect(onError).toHaveBeenCalledTimes(1);
+	});
+
+	test("ignores worker error events after dispose", () => {
+		const client = new SimulatorClient(
+			() => new FakeWorker() as unknown as Worker,
+		);
+		const onError = vi.fn();
+		client.onError(onError);
+		client.dispose();
+		const worker = FakeWorker.instances[0]!;
+		worker.fireError("too late");
 		expect(onError).not.toHaveBeenCalled();
 	});
 

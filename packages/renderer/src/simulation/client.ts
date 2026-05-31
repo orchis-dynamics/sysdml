@@ -41,6 +41,29 @@ export class SimulatorClient {
 				}
 			},
 		);
+		this.worker.addEventListener("error", (event: ErrorEvent) => {
+			if (this.disposed) return;
+			this.reportError(this.describeWorkerError(event));
+		});
+		this.worker.addEventListener("messageerror", () => {
+			if (this.disposed) return;
+			this.reportError(
+				"Simulation worker sent a message that could not be deserialized",
+			);
+		});
+	}
+
+	private describeWorkerError(event: ErrorEvent): string {
+		const detail = event.message || "unknown error";
+		const location =
+			event.filename && event.lineno
+				? ` (${event.filename}:${event.lineno})`
+				: "";
+		return `Simulation worker failed: ${detail}${location}`;
+	}
+
+	private reportError(message: string): void {
+		for (const cb of this.errorListeners) cb(message);
 	}
 
 	simulate(ir: IR): void {
