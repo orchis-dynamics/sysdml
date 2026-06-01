@@ -169,5 +169,3 @@ rain_rate ->+ rain
 
 evaporation_rate ->+ evaporation
 ```
-
-More examples live in [`models/examples/`](models/examples/).
