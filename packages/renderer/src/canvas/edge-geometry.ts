@@ -34,7 +34,7 @@ export function connectionControlPoint(source: Point, target: Point): Point {
 	const dy = target.y - source.y;
 	const bulgeScale = CONNECTION_BULGE / (Math.hypot(dx, dy) || 1);
 	return {
-		x: (source.x + target.x) / 2 + dy * bulgeScale,
-		y: (source.y + target.y) / 2 - dx * bulgeScale,
+		x: (source.x + target.x) / 2 - dy * bulgeScale,
+		y: (source.y + target.y) / 2 + dx * bulgeScale,
 	};
 }

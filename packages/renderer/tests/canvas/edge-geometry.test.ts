@@ -1,6 +1,9 @@
 import { describe, expect, test } from "vitest";
 
-import { flowElbowCorner } from "../../src/canvas/edge-geometry.js";
+import {
+	connectionControlPoint,
+	flowElbowCorner,
+} from "../../src/canvas/edge-geometry.js";
 
 describe("flowElbowCorner", () => {
 	test("returns null when source and target share Y", () => {
@@ -40,5 +43,19 @@ describe("flowElbowCorner", () => {
 			x: 50,
 			y: 10,
 		});
+	});
+});
+
+describe("connectionControlPoint", () => {
+	test("bulges a left-to-right link to the lower (clockwise) side", () => {
+		const control = connectionControlPoint({ x: 0, y: 0 }, { x: 100, y: 0 });
+		expect(control.x).toBeCloseTo(50);
+		expect(control.y).toBeCloseTo(60);
+	});
+
+	test("bulges a top-to-bottom link to the right (clockwise) side", () => {
+		const control = connectionControlPoint({ x: 0, y: 0 }, { x: 0, y: 100 });
+		expect(control.x).toBeCloseTo(-60);
+		expect(control.y).toBeCloseTo(50);
 	});
 });
