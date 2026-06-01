@@ -1,10 +1,10 @@
-import type { IR, IRStock, IRFlow, IRPosition } from "@sysdml/ir";
+import type { IR, IRStock, IRFlow, IRPosition, IRConnection } from "@sysdml/ir";
 
 import { constructAuxiliaryLayoutNodes } from "./layout-auxiliaries";
 import { constructLayoutEdges } from "./layout-edges";
 import { THEME } from "./layout-theme";
 import {
-	LayoutEdge,
+	LayoutInputNode,
 	LayoutNode,
 	LayoutResult,
 	NodeKind,
@@ -12,8 +12,12 @@ import {
 	NodeSize,
 } from "./layout-types";
 
+export function isCausalLoopDiagram(ir: IR): boolean {
+	return ir.model.kind === "cld";
+}
+
 export function computeLayout(ir: IR): LayoutResult {
-	return ir.stocks.length > 0 ? buildSFDLayout(ir) : layoutCLD(ir);
+	return isCausalLoopDiagram(ir) ? layoutCLD(ir) : buildSFDLayout(ir);
 }
 
 const NODE_SIZE_CALC: Record<NodeKind, (idLength: number) => NodeSize> = {
@@ -162,48 +166,31 @@ function buildSFDLayout(ir: IR): LayoutResult {
 	return { nodes: [...nodes.values()], edges: [...edges.values()] };
 }
 
-function layoutCLD(ir: IR): LayoutResult {
-	const NODE_SIZE: Record<NodeKind, { width: number; height: number }> = {
-		stock: { width: 120, height: 48 },
-		aux: { width: 80, height: 32 },
-		flow: { width: 20, height: 20 },
-	};
-
-	const nodes: LayoutNode[] = [];
-	const edges: LayoutEdge[] = [];
-
-	const allNodes = [...ir.auxiliaries, ...ir.stocks];
-	const n = allNodes.length;
-	const radius = Math.max(120, n * 35);
-	const cx = radius + THEME.SPACING + NODE_SIZE.aux.width / 2;
-	const cy = radius + THEME.SPACING + NODE_SIZE.aux.height / 2;
-
-	allNodes.forEach((node, i) => {
-		const angle = (2 * Math.PI * i) / n - Math.PI / 2;
-		const isStock = ir.stocks.some((s) => s.id === node.id);
-		const kind: NodeKind = isStock ? "stock" : "aux";
-		const algorithmX =
-			cx + radius * Math.cos(angle) - NODE_SIZE[kind].width / 2;
-		const algorithmY =
-			cy + radius * Math.sin(angle) - NODE_SIZE[kind].height / 2;
-		nodes.push(
-			constructLayoutNode(node.id, kind, {
-				x: node.position?.x ?? algorithmX,
-				y: node.position?.y ?? algorithmY,
-			}),
-		);
+function collectConnectionEndpoints(connections: IRConnection[]): string[] {
+	const endpoints = new Set<string>();
+	connections.forEach((connection) => {
+		endpoints.add(connection.from);
+		endpoints.add(connection.to);
 	});
+	return [...endpoints];
+}
 
-	for (const c of ir.connections) {
-		edges.push({
-			id: `conn-${c.from}-${c.to}`,
-			kind: "connection",
-			source: c.from,
-			target: c.to,
-			polarity: c.polarity,
-			points: [],
-		});
-	}
+function layoutCLD(ir: IR): LayoutResult {
+	const endpointNodes: LayoutInputNode[] = collectConnectionEndpoints(
+		ir.connections,
+	).map((id) => ({ id }));
 
-	return { nodes, edges };
+	const emptySkeleton = new Map<string, LayoutNode>();
+	const auxiliaryNodes = constructAuxiliaryLayoutNodes(
+		endpointNodes,
+		ir.connections,
+		emptySkeleton,
+	);
+
+	const edges = constructLayoutEdges(ir.flows, ir.connections);
+
+	return {
+		nodes: [...auxiliaryNodes.values()],
+		edges: [...edges.values()],
+	};
 }

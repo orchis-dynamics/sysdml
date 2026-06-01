@@ -95,7 +95,7 @@ export interface IRGraphicalFunction {
 
 export interface IR {
 	ir_version: "0.1";
-	model: { id: string };
+	model: { id: string; kind: "cld" | "sfd" };
 	time: IRTime;
 	stocks: IRStock[];
 	auxiliaries: IRAuxiliary[];
