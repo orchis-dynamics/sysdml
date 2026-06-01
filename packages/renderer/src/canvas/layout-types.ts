@@ -8,6 +8,11 @@ export enum NodeKindEnum {
 export type NodeKind = `${NodeKindEnum}`;
 export type NodeSize = { width: number; height: number };
 
+export interface LayoutInputNode {
+	id: string;
+	position?: IRPosition;
+}
+
 export interface LayoutNode {
 	id: string;
 	kind: NodeKind;
