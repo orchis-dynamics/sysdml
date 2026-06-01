@@ -3,6 +3,8 @@ import type { IR } from "@sysdml/ir";
 import { ref, onMounted, onUnmounted } from "vue";
 
 import Canvas from "./canvas/Canvas.vue";
+import GraphPanel from "./graph/GraphPanel.vue";
+import TimeseriesLineChart from "./graph/TimeseriesLineChart.vue";
 import { createDefaultSimulatorClient } from "./simulation/client.js";
 import { useProvideSimulatorState } from "./state/simulator-state.js";
 import { createTransport } from "./transport/index.js";
@@ -59,6 +61,11 @@ onUnmounted(() => {
 		>
 			Simulation: {{ simulationError }}
 		</div>
-		<Canvas :ir="ir" class="flex-1" />
+		<Canvas :ir="ir" class="flex-1 min-h-0" />
+		<GraphPanel class="h-64 shrink-0">
+			<template #default="{ rows, variableIds }">
+				<TimeseriesLineChart :rows="rows" :variable-ids="variableIds" />
+			</template>
+		</GraphPanel>
 	</div>
 </template>
