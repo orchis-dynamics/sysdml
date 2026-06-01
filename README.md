@@ -86,6 +86,8 @@ code --install-extension packages/vscode-extension/sysdml-vscode-0.1.0.vsix
 
 Create a file and **save it with the `.sysdml` extension** (the extension only activates on `.sysdml` files), for example `population_growth.sysdml`, then paste the model below. With the file open, click **SysDML: Open Diagram** in the editor title bar to render it.
 
+> **Note:** this model is only here to exercise the toolchain — it parses, renders, and simulates successfully, but it is not a meaningful or realistic system-dynamics model.
+
 ```
 sfd population_growth
 
