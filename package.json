@@ -19,7 +19,7 @@
 		"oxlint-tsgolint": "^0.22.1"
 	},
 	"engines": {
-		"node": ">=20",
+		"node": ">=24",
 		"pnpm": ">=9"
 	},
 	"packageManager": "pnpm@9.6.0"

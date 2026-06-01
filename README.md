@@ -28,8 +28,8 @@ See `AGENT_CONTEXT.md` for architectural constraints and `docs/spec/` for langua
 
 ## Requirements
 
-- Node.js `>= 20`
-- pnpm `>= 9`
+- Node.js `>= 24` (current LTS; the workspace types against `@types/node` v24)
+- pnpm `>= 9` (the repo pins `pnpm@9.6.0` via Corepack — run `corepack enable` to match it automatically)
 
 ## Install from Git
 
@@ -85,6 +85,8 @@ code --install-extension packages/vscode-extension/sysdml-vscode-0.1.0.vsix
 ## A model to test with
 
 Create a file and **save it with the `.sysdml` extension** (the extension only activates on `.sysdml` files), for example `population_growth.sysdml`, then paste the model below. With the file open, click **SysDML: Open Diagram** in the editor title bar to render it.
+
+> **Note:** this model is only here to exercise the toolchain — it parses, renders, and simulates successfully, but it is not a meaningful or realistic system-dynamics model.
 
 ```
 sfd population_growth
