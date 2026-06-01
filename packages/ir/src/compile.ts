@@ -499,7 +499,7 @@ export function compileAST(ast: FileNode): CompileResult {
 
 	const ir: IR = {
 		ir_version: "0.1",
-		model: { id: ast.model.id },
+		model: { id: ast.model.id, kind: ast.model.kind },
 		time,
 		stocks,
 		auxiliaries,

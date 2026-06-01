@@ -12,8 +12,12 @@ import {
 	NodeSize,
 } from "./layout-types";
 
+export function isCausalLoopDiagram(ir: IR): boolean {
+	return ir.model.kind === "cld";
+}
+
 export function computeLayout(ir: IR): LayoutResult {
-	return ir.stocks.length > 0 ? buildSFDLayout(ir) : layoutCLD(ir);
+	return isCausalLoopDiagram(ir) ? layoutCLD(ir) : buildSFDLayout(ir);
 }
 
 const NODE_SIZE_CALC: Record<NodeKind, (idLength: number) => NodeSize> = {

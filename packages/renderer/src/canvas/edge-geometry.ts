@@ -29,12 +29,16 @@ export function clipToBox(p0: Point, p1: Point, box: Box): Point {
 	return { x: p0.x + t * dx, y: p0.y + t * dy };
 }
 
-export function connectionControlPoint(source: Point, target: Point): Point {
+export function connectionControlPoint(
+	source: Point,
+	target: Point,
+	bulgeSign: number = 1,
+): Point {
 	const dx = target.x - source.x;
 	const dy = target.y - source.y;
 	const bulgeScale = CONNECTION_BULGE / (Math.hypot(dx, dy) || 1);
 	return {
-		x: (source.x + target.x) / 2 - dy * bulgeScale,
-		y: (source.y + target.y) / 2 + dx * bulgeScale,
+		x: (source.x + target.x) / 2 + bulgeSign * dy * bulgeScale,
+		y: (source.y + target.y) / 2 - bulgeSign * dx * bulgeScale,
 	};
 }

@@ -74,6 +74,7 @@ describe("computeLayout — CLD", () => {
 	test("renders a node for each unique connection endpoint", () => {
 		const result = computeLayout(
 			ir({
+				model: { id: "test", kind: "cld" },
 				connections: [
 					connection("a", "b", "+"),
 					connection("b", "c", "-"),
@@ -93,6 +94,7 @@ describe("computeLayout — CLD", () => {
 	test("gives each CLD node a distinct position", () => {
 		const result = computeLayout(
 			ir({
+				model: { id: "test", kind: "cld" },
 				connections: [
 					connection("a", "b"),
 					connection("b", "c"),
@@ -111,6 +113,7 @@ describe("computeLayout — CLD", () => {
 	test("emits a connection edge with polarity for each CLD link", () => {
 		const result = computeLayout(
 			ir({
+				model: { id: "test", kind: "cld" },
 				connections: [connection("a", "b", "-")],
 			}),
 		);

@@ -43,7 +43,7 @@ export function connection(
 export function ir(parts: Partial<IR> = {}): IR {
 	return {
 		ir_version: "0.1",
-		model: { id: "test" },
+		model: { id: "test", kind: "sfd" },
 		time: { start: 0, end: 1, step: 1 },
 		stocks: [],
 		auxiliaries: [],

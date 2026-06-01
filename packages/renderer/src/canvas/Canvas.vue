@@ -13,7 +13,7 @@ import {
 	flowElbowCorner,
 	type Point,
 } from "./edge-geometry.js";
-import { computeLayout } from "./layout-engine.js";
+import { computeLayout, isCausalLoopDiagram } from "./layout-engine.js";
 import type { LayoutNode, LayoutEdge, NodeKind } from "./layout-types.js";
 import AuxNode from "./nodes/AuxNode.vue";
 import FlowNode from "./nodes/FlowNode.vue";
@@ -25,6 +25,15 @@ const { isVariableSelected, toggleVariable } = useSimulatorState();
 
 const layout = computed(() =>
 	props.ir ? computeLayout(props.ir) : { nodes: [], edges: [] },
+);
+
+const SFD_CONNECTION_BULGE_SIGN = 1;
+const CLD_CONNECTION_BULGE_SIGN = -1;
+
+const connectionBulgeSign = computed(() =>
+	props.ir && isCausalLoopDiagram(props.ir)
+		? CLD_CONNECTION_BULGE_SIGN
+		: SFD_CONNECTION_BULGE_SIGN,
 );
 
 const containerRef = ref<HTMLDivElement | null>(null);
@@ -144,7 +153,11 @@ function edgeEndpoints(edge: LayoutEdge): {
 		const end = box ? clipToBox(segmentStart, targetCenter, box) : targetCenter;
 		return { source, controlPoint: null, corner, end };
 	}
-	const controlPoint = connectionControlPoint(source, targetCenter);
+	const controlPoint = connectionControlPoint(
+		source,
+		targetCenter,
+		connectionBulgeSign.value,
+	);
 	const end = box ? clipToBox(controlPoint, targetCenter, box) : targetCenter;
 	return { source, controlPoint, corner: null, end };
 }

@@ -47,15 +47,15 @@ describe("flowElbowCorner", () => {
 });
 
 describe("connectionControlPoint", () => {
-	test("bulges a left-to-right link to the lower (clockwise) side", () => {
+	test("default sign (SFD) bulges a left-to-right link upward", () => {
 		const control = connectionControlPoint({ x: 0, y: 0 }, { x: 100, y: 0 });
 		expect(control.x).toBeCloseTo(50);
-		expect(control.y).toBeCloseTo(60);
+		expect(control.y).toBeCloseTo(-60);
 	});
 
-	test("bulges a top-to-bottom link to the right (clockwise) side", () => {
-		const control = connectionControlPoint({ x: 0, y: 0 }, { x: 0, y: 100 });
-		expect(control.x).toBeCloseTo(-60);
-		expect(control.y).toBeCloseTo(50);
+	test("negative sign (CLD) bulges a left-to-right link to the opposite side", () => {
+		const control = connectionControlPoint({ x: 0, y: 0 }, { x: 100, y: 0 }, -1);
+		expect(control.x).toBeCloseTo(50);
+		expect(control.y).toBeCloseTo(60);
 	});
 });
