@@ -1,10 +1,10 @@
-import type { IRAuxiliary, IRConnection, IRPosition } from "@sysdml/ir";
+import type { IRConnection, IRPosition } from "@sysdml/ir";
 
 import { FR, THEME } from "./layout-theme";
-import { LayoutNode, NodeKindEnum } from "./layout-types";
+import { LayoutInputNode, LayoutNode, NodeKindEnum } from "./layout-types";
 
 export function seedAuxiliaryPositions(
-	auxiliaries: IRAuxiliary[],
+	auxiliaries: LayoutInputNode[],
 	connections: IRConnection[],
 	skeletonNodes: Map<string, LayoutNode>,
 ): Map<string, IRPosition> {
@@ -235,7 +235,7 @@ export function computeAttraction(
 }
 
 export function constructAuxiliaryLayoutNodes(
-	auxiliaries: IRAuxiliary[],
+	auxiliaries: LayoutInputNode[],
 	connections: IRConnection[],
 	skeletonNodes: Map<string, LayoutNode>,
 ): Map<string, LayoutNode> {
