@@ -4,6 +4,8 @@
 
 This repository is a [pnpm workspace](https://pnpm.io/workspaces) containing the language toolchain.
 
+![SysDML VS Code extension](assets/sysdml-vscode-extension.gif)
+
 ## Packages
 
 | Package                                                            | Name                 | Description                                                   |
@@ -97,16 +99,12 @@ time {
   step: 1
 }
 
-aux populationInit = 1000
-
 stock population {
-  init: populationInit
+  init: 1000
 }
 
-aux deadPeopleInit = 1000
-
 stock dead_people {
-  init: deadPeopleInit
+  init: 1000
 }
 
 aux immigration_rate = 0.025
