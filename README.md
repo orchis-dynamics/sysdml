@@ -4,6 +4,8 @@
 
 This repository is a [pnpm workspace](https://pnpm.io/workspaces) containing the language toolchain.
 
+![SysDML VS Code extension](assets/sysdml-vscode-extension.gif)
+
 ## Packages
 
 | Package                                                            | Name                 | Description                                                   |
