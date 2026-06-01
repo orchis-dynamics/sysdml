@@ -103,8 +103,6 @@ stock population {
   init: 1000
 }
 
-aux deadPeopleInit = 1000
-
 stock dead_people {
   init: 1000
 }
