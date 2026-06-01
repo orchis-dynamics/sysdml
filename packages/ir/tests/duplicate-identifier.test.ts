@@ -1,6 +1,5 @@
-import { describe, test, expect } from "vitest";
-
 import { parseSource } from "@sysdml/parser";
+import { describe, test, expect } from "vitest";
 
 import { compileAST } from "../src/compile.js";
 import { DiagnosticCode } from "../src/diagnostics.js";
@@ -9,14 +8,20 @@ const TIME_BLOCK = `time { start: 0 end: 10 step: 1 }`;
 
 function expectDuplicate(src: string, id: string) {
 	const { ast, diagnostics: parseDiagnostics } = parseSource(src);
-	expect(parseDiagnostics, `parser unexpectedly failed for src: ${src}`).toHaveLength(0);
+	expect(
+		parseDiagnostics,
+		`parser unexpectedly failed for src: ${src}`,
+	).toHaveLength(0);
 	expect(ast).not.toBeNull();
 	const { ir, diagnostics } = compileAST(ast!);
 	expect(ir, `expected null IR for duplicate-id src: ${src}`).toBeNull();
 	const duplicates = diagnostics.filter(
 		(d) => d.code === DiagnosticCode.DUPLICATE_IDENTIFIER,
 	);
-	expect(duplicates.length, `expected DUPLICATE_IDENTIFIER for '${id}'`).toBeGreaterThan(0);
+	expect(
+		duplicates.length,
+		`expected DUPLICATE_IDENTIFIER for '${id}'`,
+	).toBeGreaterThan(0);
 	expect(duplicates[0].message).toContain(`'${id}'`);
 	expect(duplicates[0].span).toBeDefined();
 }
@@ -108,9 +113,7 @@ describe("variable identifier required (B11)", () => {
 	});
 
 	test("aux without identifier is a parse error", () => {
-		const { ast, diagnostics } = parseSource(
-			`sfd m\n${TIME_BLOCK}\naux = 1`,
-		);
+		const { ast, diagnostics } = parseSource(`sfd m\n${TIME_BLOCK}\naux = 1`);
 		expect(ast).toBeNull();
 		expect(diagnostics.length).toBeGreaterThan(0);
 	});
@@ -144,9 +147,7 @@ describe("variable equation required (B11)", () => {
 	});
 
 	test("aux without expression is a parse error", () => {
-		const { ast, diagnostics } = parseSource(
-			`sfd m\n${TIME_BLOCK}\naux x =`,
-		);
+		const { ast, diagnostics } = parseSource(`sfd m\n${TIME_BLOCK}\naux x =`);
 		expect(ast).toBeNull();
 		expect(diagnostics.length).toBeGreaterThan(0);
 	});
@@ -154,14 +155,20 @@ describe("variable equation required (B11)", () => {
 
 function expectShadowsBuiltin(src: string, id: string) {
 	const { ast, diagnostics: parseDiagnostics } = parseSource(src);
-	expect(parseDiagnostics, `parser unexpectedly failed for src: ${src}`).toHaveLength(0);
+	expect(
+		parseDiagnostics,
+		`parser unexpectedly failed for src: ${src}`,
+	).toHaveLength(0);
 	expect(ast).not.toBeNull();
 	const { ir, diagnostics } = compileAST(ast!);
 	expect(ir, `expected null IR for shadow-builtin src: ${src}`).toBeNull();
 	const shadows = diagnostics.filter(
 		(d) => d.code === DiagnosticCode.IDENTIFIER_SHADOWS_BUILTIN,
 	);
-	expect(shadows.length, `expected IDENTIFIER_SHADOWS_BUILTIN for '${id}'`).toBeGreaterThan(0);
+	expect(
+		shadows.length,
+		`expected IDENTIFIER_SHADOWS_BUILTIN for '${id}'`,
+	).toBeGreaterThan(0);
 	expect(shadows[0].message).toContain(`'${id}'`);
 	expect(shadows[0].message).toContain(id.toUpperCase());
 	expect(shadows[0].span).toBeDefined();
@@ -169,10 +176,7 @@ function expectShadowsBuiltin(src: string, id: string) {
 
 describe("IDENTIFIER_SHADOWS_BUILTIN (B4.1)", () => {
 	test("stock id matching a builtin function name (uppercase) is rejected", () => {
-		expectShadowsBuiltin(
-			`sfd m\n${TIME_BLOCK}\nstock MIN { init: 0 }`,
-			"MIN",
-		);
+		expectShadowsBuiltin(`sfd m\n${TIME_BLOCK}\nstock MIN { init: 0 }`, "MIN");
 	});
 
 	test("aux id matching a builtin function name (lowercase) is rejected — comparison is case-insensitive", () => {
@@ -190,10 +194,7 @@ describe("IDENTIFIER_SHADOWS_BUILTIN (B4.1)", () => {
 	});
 
 	test("a zero-arg builtin name (e.g. TIME, DT) is also shadowed", () => {
-		expectShadowsBuiltin(
-			`sfd m\n${TIME_BLOCK}\nstock DT { init: 0 }`,
-			"DT",
-		);
+		expectShadowsBuiltin(`sfd m\n${TIME_BLOCK}\nstock DT { init: 0 }`, "DT");
 	});
 
 	test("non-builtin identifiers are accepted (sanity)", () => {
@@ -204,7 +205,9 @@ describe("IDENTIFIER_SHADOWS_BUILTIN (B4.1)", () => {
 		const { ir, diagnostics } = compileAST(ast!);
 		expect(ir).not.toBeNull();
 		expect(
-			diagnostics.find((d) => d.code === DiagnosticCode.IDENTIFIER_SHADOWS_BUILTIN),
+			diagnostics.find(
+				(d) => d.code === DiagnosticCode.IDENTIFIER_SHADOWS_BUILTIN,
+			),
 		).toBeUndefined();
 	});
 });

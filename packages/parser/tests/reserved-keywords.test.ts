@@ -41,9 +41,7 @@ const EXPRESSION_KEYWORDS = ["IF", "THEN", "ELSE", "AND", "OR", "NOT"];
 describe("declaration keywords cannot be used as variable identifiers (B4.3c, B10.6)", () => {
 	for (const keyword of DECLARATION_KEYWORDS) {
 		test(`'${keyword}' rejected as stock id`, () => {
-			expectParseError(
-				`sfd m\n${TIME_BLOCK}\nstock ${keyword} { init: 0 }`,
-			);
+			expectParseError(`sfd m\n${TIME_BLOCK}\nstock ${keyword} { init: 0 }`);
 		});
 	}
 });

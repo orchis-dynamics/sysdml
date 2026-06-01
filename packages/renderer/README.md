@@ -8,11 +8,11 @@ Vue 3 + Vite renderer for SysDML stock-and-flow diagrams. Consumes a compiled `@
 
 The renderer is a self-contained Vite app that takes an `IR` from a transport and draws the diagram. Three transports ship today:
 
-| Mode | Transport | How IR arrives |
-| --- | --- | --- |
-| VS Code webview | `PostMessageAdapter` | Extension fetches IR from the LSP server and `postMessage`s `{type:"update", ir}` |
-| `pnpm dev` browser | `WebSocketAdapter` | Vite plugin `sysdml-dev` watches `SYSDML_FILE`, parses + compiles in Node, broadcasts over a WebSocket |
-| Headless / no transport | `NullAdapter` | Empty canvas |
+| Mode                    | Transport            | How IR arrives                                                                                         |
+| ----------------------- | -------------------- | ------------------------------------------------------------------------------------------------------ |
+| VS Code webview         | `PostMessageAdapter` | Extension fetches IR from the LSP server and `postMessage`s `{type:"update", ir}`                      |
+| `pnpm dev` browser      | `WebSocketAdapter`   | Vite plugin `sysdml-dev` watches `SYSDML_FILE`, parses + compiles in Node, broadcasts over a WebSocket |
+| Headless / no transport | `NullAdapter`        | Empty canvas                                                                                           |
 
 Selection is automatic — `createTransport()` in `src/transport/index.ts` picks the right adapter based on the host environment.
 
@@ -20,10 +20,10 @@ Selection is automatic — `createTransport()` in `src/transport/index.ts` picks
 
 The renderer runs `@sysdml/simulator` in a dedicated Web Worker (`src/simulation/worker.ts`). The worker bundle form is chosen at build time:
 
-| Build mode | Command | Worker form | Why |
-|---|---|---|---|
-| **Default (web)** | `pnpm build` | `?worker` — separate hashed same-origin asset, loaded via `new Worker("/assets/worker-<hash>.js")` | Hosted Monaco demo and any single-origin deployment; smaller main bundle; safe under strict `require-trusted-types-for 'script'` CSP. |
-| **VS Code** | `pnpm build:vscode` | `?worker&inline` — worker code embedded in main bundle as a `data:` URL, constructed at runtime | The VS Code webview iframe origin (`vscode-webview://[guid]`) differs from where extension resources are served (`https://file+.vscode-cdn.net/...`). Worker constructors enforce same-origin, so the only working pattern is an inline URL that inherits the iframe origin. |
+| Build mode        | Command             | Worker form                                                                                        | Why                                                                                                                                                                                                                                                                          |
+| ----------------- | ------------------- | -------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Default (web)** | `pnpm build`        | `?worker` — separate hashed same-origin asset, loaded via `new Worker("/assets/worker-<hash>.js")` | Hosted Monaco demo and any single-origin deployment; smaller main bundle; safe under strict `require-trusted-types-for 'script'` CSP.                                                                                                                                        |
+| **VS Code**       | `pnpm build:vscode` | `?worker&inline` — worker code embedded in main bundle as a `data:` URL, constructed at runtime    | The VS Code webview iframe origin (`vscode-webview://[guid]`) differs from where extension resources are served (`https://file+.vscode-cdn.net/...`). Worker constructors enforce same-origin, so the only working pattern is an inline URL that inherits the iframe origin. |
 
 The selection is performed by a small `workerInline` Vite plugin (see `vite.config.ts`) that rewrites the `?worker` import to `?worker&inline` when `--mode vscode` is passed. Each build embeds only the variant it actually uses — no dead inline base64 leaks into the web bundle, and no unused worker chunk ships in the extension's renderer-dist.
 
@@ -48,8 +48,12 @@ The simulator client is decoupled from the transport, so the module is structure
 import { createDefaultSimulatorClient } from "./src/simulation/client.js";
 
 const simulator = createDefaultSimulatorClient();
-simulator.onResult((result) => { /* ... */ });
-simulator.onError((message) => { /* ... */ });
+simulator.onResult((result) => {
+	/* ... */
+});
+simulator.onError((message) => {
+	/* ... */
+});
 simulator.simulate(ir);
 // later:
 simulator.dispose();

@@ -59,12 +59,12 @@ sysdml simulate model.sysdml --csv > result.csv
 
 ## CSV format
 
-| Column order | Source                                  |
-| ------------ | --------------------------------------- |
-| `time`       | Simulation step                         |
-| stocks       | `ir.stocks` in declaration order        |
-| aux          | `ir.auxiliaries` in declaration order   |
-| flows        | `ir.flows` in declaration order         |
+| Column order | Source                                |
+| ------------ | ------------------------------------- |
+| `time`       | Simulation step                       |
+| stocks       | `ir.stocks` in declaration order      |
+| aux          | `ir.auxiliaries` in declaration order |
+| flows        | `ir.flows` in declaration order       |
 
 One row per integration step (no `saveper` separation in v0.1). Numbers are stringified at full JS precision.
 
@@ -76,7 +76,7 @@ The parse → compile → simulate pipeline is exported as a subpath so other No
 import { runPipeline } from "@sysdml/cli/pipeline";
 
 const { ast, parseDiagnostics, ir, compileDiagnostics, simulation } =
-  runPipeline(source);
+	runPipeline(source);
 ```
 
 `runPipeline` short-circuits: it returns early with `ir: null` if parsing fails and `simulation: null` if compilation fails. All diagnostics are typed and structured (`Diagnostic` from `@sysdml/parser`, `IRDiagnostic` from `@sysdml/ir`, `SimDiagnostic` from `@sysdml/simulator`).

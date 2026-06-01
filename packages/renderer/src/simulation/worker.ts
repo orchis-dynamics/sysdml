@@ -5,7 +5,10 @@ import type { WorkerRequest } from "./types.js";
 
 const workerScope = self as unknown as DedicatedWorkerGlobalScope;
 
-workerScope.addEventListener("message", (event: MessageEvent<WorkerRequest>) => {
-  const response = handleSimulationRequest(event.data);
-  workerScope.postMessage(response);
-});
+workerScope.addEventListener(
+	"message",
+	(event: MessageEvent<WorkerRequest>) => {
+		const response = handleSimulationRequest(event.data);
+		workerScope.postMessage(response);
+	},
+);

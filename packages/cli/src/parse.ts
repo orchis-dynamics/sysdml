@@ -1,4 +1,7 @@
-import { formatDiagnosticBlock, formatParserDiagnostic } from "./diagnostics.js";
+import {
+	formatDiagnosticBlock,
+	formatParserDiagnostic,
+} from "./diagnostics.js";
 import { runPipeline } from "./pipeline.js";
 import type { CommandResult } from "./types.js";
 

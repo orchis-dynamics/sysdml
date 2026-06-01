@@ -109,11 +109,36 @@ export interface NumberListNode {
 export type GraphicalFunctionKind = "linear" | "extra" | "step";
 
 export type GraphicalFunctionPropertyNode =
-	| { type: "GraphicalFunctionProperty"; key: "kind"; value: string; span: Span }
-	| { type: "GraphicalFunctionProperty"; key: "xscale"; value: NumberListNode; span: Span }
-	| { type: "GraphicalFunctionProperty"; key: "xpts"; value: NumberListNode; span: Span }
-	| { type: "GraphicalFunctionProperty"; key: "ypts"; value: NumberListNode; span: Span }
-	| { type: "GraphicalFunctionProperty"; key: "yscale"; value: NumberListNode; span: Span };
+	| {
+			type: "GraphicalFunctionProperty";
+			key: "kind";
+			value: string;
+			span: Span;
+	  }
+	| {
+			type: "GraphicalFunctionProperty";
+			key: "xscale";
+			value: NumberListNode;
+			span: Span;
+	  }
+	| {
+			type: "GraphicalFunctionProperty";
+			key: "xpts";
+			value: NumberListNode;
+			span: Span;
+	  }
+	| {
+			type: "GraphicalFunctionProperty";
+			key: "ypts";
+			value: NumberListNode;
+			span: Span;
+	  }
+	| {
+			type: "GraphicalFunctionProperty";
+			key: "yscale";
+			value: NumberListNode;
+			span: Span;
+	  };
 
 export interface GraphicalFunctionBodyNode {
 	type: "GraphicalFunctionBody";
@@ -176,7 +201,12 @@ export interface EndpointNode {
 // FlowPropertyNode is a discriminated union on `key` so that `value`'s type
 // narrows correctly when you branch on `prop.key`.
 export type FlowPropertyNode =
-	| { type: "FlowProperty"; key: "from" | "to"; value: EndpointNode; span: Span }
+	| {
+			type: "FlowProperty";
+			key: "from" | "to";
+			value: EndpointNode;
+			span: Span;
+	  }
 	| { type: "FlowProperty"; key: "rate"; value: ExpressionNode; span: Span };
 
 export interface FlowDeclarationNode {

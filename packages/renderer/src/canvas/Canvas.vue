@@ -1,22 +1,19 @@
 <script setup lang="ts">
 import type { IR } from "@sysdml/ir";
-import {
-	ref,
-	computed,
-	onMounted,
-	onUnmounted,
-	watch,
-	type Component,
-} from "vue";
+import { useResizeObserver } from "@vueuse/core";
+import { ref, computed, watch, type Component } from "vue";
 
+import { useSimulatorState } from "../state/simulator-state.js";
 import ArrowTip from "./ArrowTip.vue";
-import { computeLayout } from "./layout-engine.js";
+import { useNodeDrag } from "./composables/node-drag.js";
+import { usePanZoom } from "./composables/pan-zoom.js";
 import {
 	clipToBox,
 	connectionControlPoint,
 	flowElbowCorner,
 	type Point,
 } from "./edge-geometry.js";
+import { computeLayout } from "./layout-engine.js";
 import type { LayoutNode, LayoutEdge, NodeKind } from "./layout-types.js";
 import AuxNode from "./nodes/AuxNode.vue";
 import FlowNode from "./nodes/FlowNode.vue";
@@ -24,11 +21,25 @@ import StockNode from "./nodes/StockNode.vue";
 
 const props = defineProps<{ ir: IR | null }>();
 
+const { isVariableSelected, toggleVariable } = useSimulatorState();
+
 const layout = computed(() =>
 	props.ir ? computeLayout(props.ir) : { nodes: [], edges: [] },
 );
 
-const dragOffsets = ref(new Map<string, { x: number; y: number }>());
+const containerRef = ref<HTMLDivElement | null>(null);
+
+const { transform, scale, onPointerDown, onPointerMove, onPointerUp, onWheel } =
+	usePanZoom(containerRef);
+
+const {
+	hasMovedPastClickThreshold,
+	resolveNode,
+	onNodePointerDown,
+	onNodePointerMove,
+	onNodePointerUp,
+	reset: resetDragOffsets,
+} = useNodeDrag({ scale });
 
 enum VisualEdgeKindEnum {
 	Default = "default",
@@ -39,7 +50,10 @@ enum VisualEdgeKindEnum {
 type VisualEdgeKind = `${VisualEdgeKindEnum}`;
 
 const colorTheme: {
-	edge: { stroke: Record<VisualEdgeKind, string>; fill: Record<VisualEdgeKind, string> };
+	edge: {
+		stroke: Record<VisualEdgeKind, string>;
+		fill: Record<VisualEdgeKind, string>;
+	};
 } = {
 	edge: {
 		stroke: {
@@ -68,115 +82,19 @@ const nodeComponentMap: Record<NodeKind, Component> = {
 	stock: StockNode,
 };
 
-function resolvedNode(node: LayoutNode): LayoutNode {
-	const override = dragOffsets.value.get(node.id);
-	return override
-		? {
-				...node,
-				position: {
-					x: node.position.x + override.x,
-					y: node.position.y + override.y,
-				},
-			}
-		: node;
-}
-
-const resolvedNodes = computed(() => layout.value.nodes.map(resolvedNode));
+const resolvedNodes = computed(() => layout.value.nodes.map(resolveNode));
 
 watch(
 	() => props.ir,
 	() => {
-		dragOffsets.value = new Map();
+		resetDragOffsets();
 	},
 );
 
-const translateX = ref(0);
-const translateY = ref(0);
-const scale = ref(1);
-
-const transform = computed(
-	() =>
-		`translate(${translateX.value}px, ${translateY.value}px) scale(${scale.value})`,
-);
-
-let isPanning = false;
-let panStartX = 0;
-let panStartY = 0;
-
-function onPointerDown(event: PointerEvent) {
-	if (event.button === 0 || event.button === 1) {
-		event.preventDefault();
-		isPanning = true;
-		panStartX = event.clientX - translateX.value;
-		panStartY = event.clientY - translateY.value;
-		containerRef.value?.setPointerCapture(event.pointerId);
-	}
+function onNodeClick(node: LayoutNode) {
+	if (hasMovedPastClickThreshold.value) return;
+	toggleVariable(node.id);
 }
-
-function onPointerMove(event: PointerEvent) {
-	if (!isPanning) return;
-	translateX.value = event.clientX - panStartX;
-	translateY.value = event.clientY - panStartY;
-}
-
-function onPointerUp(event: PointerEvent) {
-	isPanning = false;
-	containerRef.value?.releasePointerCapture(event.pointerId);
-}
-
-function onWheel(event: WheelEvent) {
-	event.preventDefault();
-	const container = containerRef.value;
-	if (!container) return;
-	const rect = container.getBoundingClientRect();
-	const cursorX = event.clientX - rect.left;
-	const cursorY = event.clientY - rect.top;
-
-	const delta = event.deltaY > 0 ? 0.9 : 1.1;
-	const nextScale = Math.min(10, Math.max(0.1, scale.value * delta));
-
-	// zoom around cursor position
-	translateX.value =
-		cursorX - (cursorX - translateX.value) * (nextScale / scale.value);
-	translateY.value =
-		cursorY - (cursorY - translateY.value) * (nextScale / scale.value);
-	scale.value = nextScale;
-}
-
-let draggingId: string | null = null;
-let dragBaseX = 0;
-let dragBaseY = 0;
-let dragPointerStartX = 0;
-let dragPointerStartY = 0;
-
-function onNodePointerDown(event: PointerEvent, node: LayoutNode) {
-	event.stopPropagation();
-	if (event.currentTarget instanceof HTMLElement) {
-		event.currentTarget.setPointerCapture(event.pointerId);
-	}
-	draggingId = node.id;
-	const existing = dragOffsets.value.get(node.id) ?? { x: 0, y: 0 };
-	dragBaseX = existing.x;
-	dragBaseY = existing.y;
-	dragPointerStartX = event.clientX;
-	dragPointerStartY = event.clientY;
-}
-
-function onNodePointerMove(event: PointerEvent) {
-	if (draggingId === null) return;
-	const dx = (event.clientX - dragPointerStartX) / scale.value;
-	const dy = (event.clientY - dragPointerStartY) / scale.value;
-	dragOffsets.value = new Map(dragOffsets.value).set(draggingId, {
-		x: dragBaseX + dx,
-		y: dragBaseY + dy,
-	});
-}
-
-function onNodePointerUp() {
-	draggingId = null;
-}
-
-const containerRef = ref<HTMLDivElement | null>(null);
 
 const LABEL_OFFSET = 12;
 const LABEL_PARAM = 0.85;
@@ -263,7 +181,10 @@ const polarityLabels = computed<PolarityLabel[]>(() => {
 		let perpX = -tangent.y / length;
 		let perpY = tangent.x / length;
 		// Place label on the convex (control-point) side of the curve.
-		if (perpX * (controlPoint.x - point.x) + perpY * (controlPoint.y - point.y) < 0) {
+		if (
+			perpX * (controlPoint.x - point.x) + perpY * (controlPoint.y - point.y) <
+			0
+		) {
 			perpX = -perpX;
 			perpY = -perpY;
 		}
@@ -385,19 +306,9 @@ function getEdgeArrowTipId(edge: LayoutEdge): string {
 const svgWidth = ref(800);
 const svgHeight = ref(600);
 
-let resizeObserver: ResizeObserver | null = null;
-
-onMounted(() => {
-	if (!containerRef.value) return;
-	resizeObserver = new ResizeObserver(([entry]) => {
-		svgWidth.value = entry.contentRect.width;
-		svgHeight.value = entry.contentRect.height;
-	});
-	resizeObserver.observe(containerRef.value);
-});
-
-onUnmounted(() => {
-	resizeObserver?.disconnect();
+useResizeObserver(containerRef, ([entry]) => {
+	svgWidth.value = entry.contentRect.width;
+	svgHeight.value = entry.contentRect.height;
 });
 </script>
 
@@ -472,10 +383,14 @@ onUnmounted(() => {
 			<div
 				v-for="node in resolvedNodes"
 				:key="node.id"
-				class="absolute"
+				class="absolute rounded-md"
+				:class="{
+					'ring-2 ring-sky-500 ring-offset-2 ring-offset-stone-50':
+						isVariableSelected(node.id),
+				}"
 				:style="{ left: `${node.position.x}px`, top: `${node.position.y}px` }"
 				@pointerdown="onNodePointerDown($event, node)"
-				@click="() => console.log(node)"
+				@click="onNodeClick(node)"
 			>
 				<component :is="nodeComponentMap[node.kind]" :label="node.id" />
 			</div>

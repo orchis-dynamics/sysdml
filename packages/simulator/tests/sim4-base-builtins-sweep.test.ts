@@ -29,9 +29,12 @@ describe("§3.5.5 Time accessors (4 functions) — all ✅", () => {
 	// Default helpers use `time { start: 0 end: 0 step: 1 }`, so TIME=0, DT=1,
 	// STARTTIME=0, STOPTIME=0. Each builtin is callable with or without parens.
 	test("TIME at t=0 returns 0", () => expect(evalAux("TIME")).toBe(0));
-	test("DT returns the time-block step (default 1)", () => expect(evalAux("DT")).toBe(1));
-	test("STARTTIME returns the time-block start", () => expect(evalAux("STARTTIME")).toBe(0));
-	test("STOPTIME returns the time-block end", () => expect(evalAux("STOPTIME")).toBe(0));
+	test("DT returns the time-block step (default 1)", () =>
+		expect(evalAux("DT")).toBe(1));
+	test("STARTTIME returns the time-block start", () =>
+		expect(evalAux("STARTTIME")).toBe(0));
+	test("STOPTIME returns the time-block end", () =>
+		expect(evalAux("STOPTIME")).toBe(0));
 });
 
 describe("§3.5.4 Test input (3 functions) — all ✅", () => {

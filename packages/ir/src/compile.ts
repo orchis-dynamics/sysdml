@@ -33,16 +33,22 @@ function isTimeDeclaration(n: DeclarationNode): n is TimeDeclarationNode {
 function isStockDeclaration(n: DeclarationNode): n is StockDeclarationNode {
 	return n.type === "StockDeclaration";
 }
-function isAuxiliaryDeclaration(n: DeclarationNode): n is AuxiliaryDeclarationNode {
+function isAuxiliaryDeclaration(
+	n: DeclarationNode,
+): n is AuxiliaryDeclarationNode {
 	return n.type === "AuxiliaryDeclaration";
 }
 function isFlowDeclaration(n: DeclarationNode): n is FlowDeclarationNode {
 	return n.type === "FlowDeclaration";
 }
-function isConnectionDeclaration(n: DeclarationNode): n is ConnectionDeclarationNode {
+function isConnectionDeclaration(
+	n: DeclarationNode,
+): n is ConnectionDeclarationNode {
 	return n.type === "ConnectionDeclaration";
 }
-function isGraphicalFunctionDeclaration(n: DeclarationNode): n is GraphicalFunctionDeclarationNode {
+function isGraphicalFunctionDeclaration(
+	n: DeclarationNode,
+): n is GraphicalFunctionDeclarationNode {
 	return n.type === "GraphicalFunctionDeclaration";
 }
 
@@ -189,7 +195,9 @@ export function compileAST(ast: FileNode): CompileResult {
 	const auxDecls = ast.decls.filter(isAuxiliaryDeclaration);
 	const flowDecls = ast.decls.filter(isFlowDeclaration);
 	const connectionDecls = ast.decls.filter(isConnectionDeclaration);
-	const graphicalFunctionDecls = ast.decls.filter(isGraphicalFunctionDeclaration);
+	const graphicalFunctionDecls = ast.decls.filter(
+		isGraphicalFunctionDeclaration,
+	);
 
 	// ── Multi-model rejection (B1) ────────────────────────────────────────────
 	// v0.1 supports a single model per file. The grammar accepts model_decl+
@@ -230,9 +238,15 @@ export function compileAST(ast: FileNode): CompileResult {
 	// ── Duplicate ID check ────────────────────────────────────────────────────
 
 	const allIdDecls: Array<{ id: string; span: Span }> = [
-		...stockDecls.map((stockDecl) => ({ id: stockDecl.id, span: stockDecl.idSpan })),
+		...stockDecls.map((stockDecl) => ({
+			id: stockDecl.id,
+			span: stockDecl.idSpan,
+		})),
 		...auxDecls.map((auxDecl) => ({ id: auxDecl.id, span: auxDecl.idSpan })),
-		...flowDecls.map((flowDecl) => ({ id: flowDecl.id, span: flowDecl.idSpan })),
+		...flowDecls.map((flowDecl) => ({
+			id: flowDecl.id,
+			span: flowDecl.idSpan,
+		})),
 	];
 	const seenIds = new Set<string>();
 	for (const { id, span } of allIdDecls) {
@@ -345,14 +359,20 @@ export function compileAST(ast: FileNode): CompileResult {
 	// ── Stocks ────────────────────────────────────────────────────────────────
 
 	const stocks: IRStock[] = stockDecls.map((stockDecl) => {
-		const initProp = stockDecl.props.find((prop) => prop.type === "StockProperty");
+		const initProp = stockDecl.props.find(
+			(prop) => prop.type === "StockProperty",
+		);
 		if (!initProp) {
 			errors.push({
 				code: DiagnosticCode.MISSING_STOCK_INIT,
 				message: `Stock '${stockDecl.id}' is missing init`,
 				span: stockDecl.span,
 			});
-			return { id: stockDecl.id, init: { type: "Number", value: 0 }, position: posToIR(stockDecl.position) };
+			return {
+				id: stockDecl.id,
+				init: { type: "Number", value: 0 },
+				position: posToIR(stockDecl.position),
+			};
 		}
 		return {
 			id: stockDecl.id,
@@ -466,7 +486,9 @@ export function compileAST(ast: FileNode): CompileResult {
 		polarity: connectionDecl.polarity,
 		to: connectionDecl.to,
 		angle: connectionDecl.angle,
-		via: connectionDecl.via ? { x: connectionDecl.via.x, y: connectionDecl.via.y } : undefined,
+		via: connectionDecl.via
+			? { x: connectionDecl.via.x, y: connectionDecl.via.y }
+			: undefined,
 	}));
 
 	// ── Emit ──────────────────────────────────────────────────────────────────

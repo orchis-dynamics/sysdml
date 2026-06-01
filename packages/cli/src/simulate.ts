@@ -31,9 +31,7 @@ export function runSimulateCommand(
 	if (ir === null) {
 		return {
 			stdout: "",
-			stderr: formatDiagnosticBlock(
-				compileDiagnostics.map(formatIRDiagnostic),
-			),
+			stderr: formatDiagnosticBlock(compileDiagnostics.map(formatIRDiagnostic)),
 			exitCode: 1,
 		};
 	}

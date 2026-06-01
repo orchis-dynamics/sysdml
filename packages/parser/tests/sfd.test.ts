@@ -27,7 +27,9 @@ function isTimeDeclaration(n: DeclarationNode): n is TimeDeclarationNode {
 function isStockDeclaration(n: DeclarationNode): n is StockDeclarationNode {
 	return n.type === "StockDeclaration";
 }
-function isAuxiliaryDeclaration(n: DeclarationNode): n is AuxiliaryDeclarationNode {
+function isAuxiliaryDeclaration(
+	n: DeclarationNode,
+): n is AuxiliaryDeclarationNode {
 	return n.type === "AuxiliaryDeclaration";
 }
 function isFlowDeclaration(n: DeclarationNode): n is FlowDeclarationNode {
@@ -54,7 +56,8 @@ describe("SFD parsing", () => {
 		const { ast } = parseSource(fixture("population_growth.sysdml"));
 		if (ast === null) throw new Error("expected non-null ast");
 		const time = ast.decls.find(isTimeDeclaration);
-		if (time === undefined) throw new Error("expected TimeDeclaration in decls");
+		if (time === undefined)
+			throw new Error("expected TimeDeclaration in decls");
 		const keys = time.props.map((property) => property.key);
 		expect(keys).toContain("start");
 		expect(keys).toContain("end");
@@ -68,7 +71,8 @@ describe("SFD parsing", () => {
 		const { ast } = parseSource(fixture("population_growth.sysdml"));
 		if (ast === null) throw new Error("expected non-null ast");
 		const stock = ast.decls.find(isStockDeclaration);
-		if (stock === undefined) throw new Error("expected StockDeclaration in decls");
+		if (stock === undefined)
+			throw new Error("expected StockDeclaration in decls");
 		expect(stock.id).toBe("population");
 		expect(stock.props).toHaveLength(1);
 		const firstProp = stock.props[0];
@@ -80,7 +84,8 @@ describe("SFD parsing", () => {
 		const { ast } = parseSource(fixture("population_growth.sysdml"));
 		if (ast === null) throw new Error("expected non-null ast");
 		const aux = ast.decls.find(isAuxiliaryDeclaration);
-		if (aux === undefined) throw new Error("expected AuxiliaryDeclaration in decls");
+		if (aux === undefined)
+			throw new Error("expected AuxiliaryDeclaration in decls");
 		expect(aux.id).toBe("birth_rate");
 		expect(aux.expr.type).toBe("NumberLiteral");
 	});
@@ -89,7 +94,8 @@ describe("SFD parsing", () => {
 		const { ast } = parseSource(fixture("population_growth.sysdml"));
 		if (ast === null) throw new Error("expected non-null ast");
 		const flow = ast.decls.find(isFlowDeclaration);
-		if (flow === undefined) throw new Error("expected FlowDeclaration in decls");
+		if (flow === undefined)
+			throw new Error("expected FlowDeclaration in decls");
 		expect(flow.id).toBe("births");
 
 		const fromProp = flow.props.find((property) => property.key === "from");
@@ -114,7 +120,8 @@ describe("SFD parsing", () => {
 		if (ast === null) throw new Error("expected non-null ast");
 		expect(ast.model.id).toBe("m");
 		const aux = ast.decls.find(isAuxiliaryDeclaration);
-		if (aux === undefined) throw new Error("expected AuxiliaryDeclaration in decls");
+		if (aux === undefined)
+			throw new Error("expected AuxiliaryDeclaration in decls");
 		expect(aux.type).toBe("AuxiliaryDeclaration");
 		expect(aux.id).toBe("x");
 	});
@@ -125,7 +132,8 @@ describe("SFD parsing", () => {
 		expect(diagnostics).toHaveLength(0);
 		if (ast === null) throw new Error("expected non-null ast");
 		const aux = ast.decls.find(isAuxiliaryDeclaration);
-		if (aux === undefined) throw new Error("expected AuxiliaryDeclaration in decls");
+		if (aux === undefined)
+			throw new Error("expected AuxiliaryDeclaration in decls");
 		expect(aux.expr.type).toBe("UnaryExpression");
 		expect(isUnaryExpression(aux.expr)).toBe(true);
 		if (isUnaryExpression(aux.expr)) {
@@ -140,7 +148,8 @@ describe("SFD parsing", () => {
 		expect(diagnostics).toHaveLength(0);
 		if (ast === null) throw new Error("expected non-null ast");
 		const aux = ast.decls.find(isAuxiliaryDeclaration);
-		if (aux === undefined) throw new Error("expected AuxiliaryDeclaration in decls");
+		if (aux === undefined)
+			throw new Error("expected AuxiliaryDeclaration in decls");
 		expect(aux.expr.type).toBe("BinaryExpression");
 	});
 

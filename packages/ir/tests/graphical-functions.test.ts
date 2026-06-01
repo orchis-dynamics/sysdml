@@ -306,7 +306,10 @@ describe("lookup() inline function", () => {
 	test("GFCall arg is compiled input expression", () => {
 		const ir = compileValid("aux result = lookup(s, 0, 0.5, 1)");
 		if (ir.auxiliaries[0].expr.type === "GraphicalFunctionCall") {
-			expect(ir.auxiliaries[0].expr.argument).toEqual({ type: "Reference", id: "s" });
+			expect(ir.auxiliaries[0].expr.argument).toEqual({
+				type: "Reference",
+				id: "s",
+			});
 		}
 	});
 

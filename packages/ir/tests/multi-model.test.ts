@@ -1,6 +1,5 @@
-import { describe, test, expect } from "vitest";
-
 import { parseSource } from "@sysdml/parser";
+import { describe, test, expect } from "vitest";
 
 import { compileAST } from "../src/compile.js";
 import { DiagnosticCode } from "../src/diagnostics.js";
@@ -13,7 +12,9 @@ describe("MULTI_MODEL_NOT_SUPPORTED (B1)", () => {
 		expect(ast).not.toBeNull();
 		const { diagnostics } = compileAST(ast!);
 		expect(
-			diagnostics.find((d) => d.code === DiagnosticCode.MULTI_MODEL_NOT_SUPPORTED),
+			diagnostics.find(
+				(d) => d.code === DiagnosticCode.MULTI_MODEL_NOT_SUPPORTED,
+			),
 		).toBeUndefined();
 	});
 

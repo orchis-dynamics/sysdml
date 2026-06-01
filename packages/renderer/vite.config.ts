@@ -1,6 +1,7 @@
-import { defineConfig, type Plugin } from "vite";
-import vue from "@vitejs/plugin-vue";
 import tailwindcss from "@tailwindcss/vite";
+import vue from "@vitejs/plugin-vue";
+import { defineConfig, type Plugin } from "vite";
+
 import { sysdmlDev } from "./plugins/sysdml-dev.js";
 
 // In VS Code webviews the iframe origin (`vscode-webview://[guid]`) is
@@ -13,35 +14,35 @@ import { sysdmlDev } from "./plugins/sysdml-dev.js";
 // time source rewrite (instead of a runtime branch or static `?` flag pair)
 // means each bundle embeds only the variant it actually uses.
 function workerInline(mode: string): Plugin {
-  const enabled = mode === "vscode";
-  return {
-    name: "sysdml-worker-inline-select",
-    enforce: "pre",
-    transform(code, id) {
-      if (!enabled) return null;
-      if (!id.endsWith("/simulation/client.ts")) return null;
-      const replaced = code.replace(
-        /(["'])\.\/worker\.ts\?worker\1/,
-        "$1./worker.ts?worker&inline$1",
-      );
-      if (replaced === code) return null;
-      return { code: replaced, map: null };
-    },
-  };
+	const enabled = mode === "vscode";
+	return {
+		name: "sysdml-worker-inline-select",
+		enforce: "pre",
+		transform(code, id) {
+			if (!enabled) return null;
+			if (!id.endsWith("/simulation/client.ts")) return null;
+			const replaced = code.replace(
+				/(["'])\.\/worker\.ts\?worker\1/,
+				"$1./worker.ts?worker&inline$1",
+			);
+			if (replaced === code) return null;
+			return { code: replaced, map: null };
+		},
+	};
 }
 
 export default defineConfig(({ mode }) => ({
-  plugins: [
-    vue(),
-    tailwindcss(),
-    workerInline(mode),
-    sysdmlDev({ file: process.env["SYSDML_FILE"] }),
-  ],
-  build: {
-    outDir: "dist",
-    target: "esnext",
-    rollupOptions: {
-      input: "index.html",
-    },
-  },
+	plugins: [
+		vue(),
+		tailwindcss(),
+		workerInline(mode),
+		sysdmlDev({ file: process.env["SYSDML_FILE"] }),
+	],
+	build: {
+		outDir: "dist",
+		target: "esnext",
+		rollupOptions: {
+			input: "index.html",
+		},
+	},
 }));

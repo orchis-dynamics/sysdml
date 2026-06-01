@@ -37,8 +37,14 @@ function getResultExpression(expressionSource: string): IRExpressionNode {
 	return ir!.auxiliaries[ir!.auxiliaries.length - 1].expr;
 }
 
-const createRefNode = (id: string): IRExpressionNode => ({ type: "Reference", id });
-const createNumNode = (value: number): IRExpressionNode => ({ type: "Number", value });
+const createRefNode = (id: string): IRExpressionNode => ({
+	type: "Reference",
+	id,
+});
+const createNumNode = (value: number): IRExpressionNode => ({
+	type: "Number",
+	value,
+});
 
 // ── Comparison operators ──────────────────────────────────────────────────────
 

@@ -237,7 +237,8 @@ export class ASTBuilder {
 		let position: PositionNode | undefined;
 		if (posProp) {
 			const posLit = posProp.posLiteral();
-			if (!posLit) throw new Error("stockDecl: POSITION prop has no posLiteral");
+			if (!posLit)
+				throw new Error("stockDecl: POSITION prop has no posLiteral");
 			position = this.buildPosLiteral(posLit) ?? undefined;
 		}
 
@@ -327,7 +328,10 @@ export class ASTBuilder {
 		for (const prop of ctx.auxMetaProp()) {
 			if (prop instanceof AuxMetaPosContext) {
 				if (seenKeys.has("position")) {
-					this.reportError("duplicate 'position' in aux metadata block", spanOf(prop));
+					this.reportError(
+						"duplicate 'position' in aux metadata block",
+						spanOf(prop),
+					);
 				} else {
 					seenKeys.add("position");
 					position = this.buildPosLiteral(prop.posLiteral()) ?? undefined;
@@ -355,7 +359,10 @@ export class ASTBuilder {
 		};
 	}
 
-	private buildGraphicalFunctionBody(props: GfPropContext[], bodySpan: Span): GraphicalFunctionBodyNode {
+	private buildGraphicalFunctionBody(
+		props: GfPropContext[],
+		bodySpan: Span,
+	): GraphicalFunctionBodyNode {
 		const validKinds = ["linear", "extra", "step"];
 		const seenKeys = new Set<string>();
 		const builtProps: GraphicalFunctionPropertyNode[] = [];
@@ -449,13 +456,17 @@ export class ASTBuilder {
 		};
 	}
 
-	private connProps(props: ConnPropContext[]): { angle?: number; via?: PositionNode } {
+	private connProps(props: ConnPropContext[]): {
+		angle?: number;
+		via?: PositionNode;
+	} {
 		let angle: number | undefined;
 		let via: PositionNode | undefined;
 		for (const prop of props) {
 			if (prop.ANGLE() !== null) {
 				const signedNum = prop.signedNumber();
-				if (!signedNum) throw new Error("connProp: ANGLE present but no signedNumber");
+				if (!signedNum)
+					throw new Error("connProp: ANGLE present but no signedNumber");
 				angle = signedNumberToFloat(signedNum);
 			} else {
 				const pos = prop.posLiteral();
@@ -466,7 +477,9 @@ export class ASTBuilder {
 		return { angle, via };
 	}
 
-	private positiveCausal(ctx: PositiveCausalContext): ConnectionDeclarationNode {
+	private positiveCausal(
+		ctx: PositiveCausalContext,
+	): ConnectionDeclarationNode {
 		const { angle, via } = this.connProps(ctx.connProp());
 		return {
 			type: "ConnectionDeclaration",
@@ -481,7 +494,9 @@ export class ASTBuilder {
 		};
 	}
 
-	private negativeCausal(ctx: NegativeCausalContext): ConnectionDeclarationNode {
+	private negativeCausal(
+		ctx: NegativeCausalContext,
+	): ConnectionDeclarationNode {
 		const { angle, via } = this.connProps(ctx.connProp());
 		return {
 			type: "ConnectionDeclaration",
@@ -496,7 +511,9 @@ export class ASTBuilder {
 		};
 	}
 
-	private flowConnection(ctx: FlowConnectionContext): ConnectionDeclarationNode {
+	private flowConnection(
+		ctx: FlowConnectionContext,
+	): ConnectionDeclarationNode {
 		const { angle, via } = this.connProps(ctx.connProp());
 		return {
 			type: "ConnectionDeclaration",
@@ -813,4 +830,3 @@ function signedNumberToFloat(ctx: SignedNumberContext): number {
 	const value = parseFloat(tok.getText());
 	return negative ? -value : value;
 }
-

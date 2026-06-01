@@ -201,7 +201,9 @@ describe("IF/THEN/ELSE", () => {
 		expect(isIfThenElse(e)).toBe(true);
 		if (isIfThenElse(e)) {
 			expect(isBinaryExpression(e.cond) && e.cond.op === "AND").toBe(true);
-			expect(isBinaryExpression(e.thenBranch) && e.thenBranch.op === "+").toBe(true);
+			expect(isBinaryExpression(e.thenBranch) && e.thenBranch.op === "+").toBe(
+				true,
+			);
 			expect(e.elseBranch.type).toBe("NumberLiteral");
 		}
 	});
@@ -279,9 +281,7 @@ describe("integration with other rules", () => {
 	});
 
 	test("stock { init: a > 0 } parses", () => {
-		const { ast, diagnostics } = parseSource(
-			`sfd m\nstock s { init: a > 0 }`,
-		);
+		const { ast, diagnostics } = parseSource(`sfd m\nstock s { init: a > 0 }`);
 		expect(diagnostics).toHaveLength(0);
 		expect(ast).not.toBeNull();
 	});

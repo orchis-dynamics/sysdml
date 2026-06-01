@@ -5,7 +5,10 @@ import { fileURLToPath } from "url";
 import { describe, test, expect, beforeAll } from "vitest";
 
 import { parseSource } from "../src/index.js";
-import type { ConnectionDeclarationNode, DeclarationNode } from "../src/index.js";
+import type {
+	ConnectionDeclarationNode,
+	DeclarationNode,
+} from "../src/index.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -33,7 +36,8 @@ describe("CLD arrow syntax", () => {
 
 	test("positive causal arrow ->+", () => {
 		const conn = cldDecls.find(
-			(d): d is ConnectionDeclarationNode => isConnection(d) && d.polarity === "+",
+			(d): d is ConnectionDeclarationNode =>
+				isConnection(d) && d.polarity === "+",
 		);
 		expect(conn).toBeDefined();
 		expect(conn!.from).toBe("population");
@@ -42,7 +46,8 @@ describe("CLD arrow syntax", () => {
 
 	test("negative causal arrow ->-", () => {
 		const conn = cldDecls.find(
-			(d): d is ConnectionDeclarationNode => isConnection(d) && d.polarity === "-",
+			(d): d is ConnectionDeclarationNode =>
+				isConnection(d) && d.polarity === "-",
 		);
 		expect(conn).toBeDefined();
 		expect(conn!.from).toBe("births");
@@ -51,7 +56,8 @@ describe("CLD arrow syntax", () => {
 
 	test("flow connection arrow =>", () => {
 		const conn = cldDecls.find(
-			(d): d is ConnectionDeclarationNode => isConnection(d) && d.polarity === "=>",
+			(d): d is ConnectionDeclarationNode =>
+				isConnection(d) && d.polarity === "=>",
 		);
 		expect(conn).toBeDefined();
 		expect(conn!.from).toBe("births");
@@ -88,9 +94,7 @@ describe("CLD arrow syntax", () => {
 	});
 
 	test("all three polarity types in one model", () => {
-		const { ast, diagnostics } = parseSource(
-			`sfd m\nA ->+ B\nB ->- C\nC => D`,
-		);
+		const { ast, diagnostics } = parseSource(`sfd m\nA ->+ B\nB ->- C\nC => D`);
 		expect(diagnostics).toHaveLength(0);
 		expect(ast!.decls).toHaveLength(3);
 		const connections = ast!.decls.filter(isConnection);

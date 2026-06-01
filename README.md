@@ -6,15 +6,15 @@ This repository is a [pnpm workspace](https://pnpm.io/workspaces) containing the
 
 ## Packages
 
-| Package                                                            | Name                  | Description                                                  |
-| ------------------------------------------------------------------ | --------------------- | ------------------------------------------------------------ |
-| [`packages/parser`](packages/parser/README.md)                     | `@sysdml/parser`      | ANTLR4 TypeScript parser: SysDML source → typed AST          |
-| [`packages/ir`](packages/ir/README.md)                             | `@sysdml/ir`          | AST → Intermediate Representation, with semantic diagnostics |
-| [`packages/simulator`](packages/simulator)                         | `@sysdml/simulator`   | Deterministic Euler simulator over IR                        |
-| [`packages/lsp`](packages/lsp)                                     | `@sysdml/lsp-server`  | Language Server Protocol implementation                      |
-| [`packages/renderer`](packages/renderer)                           | `@sysdml/renderer`    | Vue 3 + Vite diagram renderer                                |
-| [`packages/cli`](packages/cli/README.md)                           | `@sysdml/cli`         | `sysdml` command-line tool (`parse` + `simulate` subcommands) |
-| [`packages/vscode-extension`](packages/vscode-extension/README.md) | `sysdml-vscode`       | VS Code extension (language support + diagram view)          |
+| Package                                                            | Name                 | Description                                                   |
+| ------------------------------------------------------------------ | -------------------- | ------------------------------------------------------------- |
+| [`packages/parser`](packages/parser/README.md)                     | `@sysdml/parser`     | ANTLR4 TypeScript parser: SysDML source → typed AST           |
+| [`packages/ir`](packages/ir/README.md)                             | `@sysdml/ir`         | AST → Intermediate Representation, with semantic diagnostics  |
+| [`packages/simulator`](packages/simulator)                         | `@sysdml/simulator`  | Deterministic Euler simulator over IR                         |
+| [`packages/lsp`](packages/lsp)                                     | `@sysdml/lsp-server` | Language Server Protocol implementation                       |
+| [`packages/renderer`](packages/renderer)                           | `@sysdml/renderer`   | Vue 3 + Vite diagram renderer                                 |
+| [`packages/cli`](packages/cli/README.md)                           | `@sysdml/cli`        | `sysdml` command-line tool (`parse` + `simulate` subcommands) |
+| [`packages/vscode-extension`](packages/vscode-extension/README.md) | `sysdml-vscode`      | VS Code extension (language support + diagram view)           |
 
 ## Architecture
 
