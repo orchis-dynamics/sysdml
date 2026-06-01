@@ -28,10 +28,6 @@ const hasVariablesToPlot = computed(
 		>
 			Select variables on the canvas to plot their timeseries
 		</div>
-		<slot
-			v-else
-			:rows="plotData.rows"
-			:variable-ids="plotData.variableIds"
-		/>
+		<slot v-else :rows="plotData.rows" :variable-ids="plotData.variableIds" />
 	</div>
 </template>

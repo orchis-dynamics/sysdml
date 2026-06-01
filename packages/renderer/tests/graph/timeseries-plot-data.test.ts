@@ -14,7 +14,10 @@ describe("selectTimeseriesPlotData", () => {
 	});
 
 	test("returns empty plot data when the simulation has no rows", () => {
-		const plotData = selectTimeseriesPlotData(resultWith([]), new Set(["stock_a"]));
+		const plotData = selectTimeseriesPlotData(
+			resultWith([]),
+			new Set(["stock_a"]),
+		);
 		expect(plotData).toEqual({ rows: [], variableIds: [] });
 	});
 
