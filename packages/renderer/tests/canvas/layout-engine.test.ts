@@ -69,3 +69,60 @@ describe("computeLayout — SFD auxiliaries", () => {
 		expect(auxNode.position).toEqual({ x: 999, y: 888 });
 	});
 });
+
+describe("computeLayout — CLD", () => {
+	test("renders a node for each unique connection endpoint", () => {
+		const result = computeLayout(
+			ir({
+				connections: [
+					connection("a", "b", "+"),
+					connection("b", "c", "-"),
+					connection("c", "a", "+"),
+				],
+			}),
+		);
+
+		expect(result.nodes.map((node) => node.id).sort()).toEqual([
+			"a",
+			"b",
+			"c",
+		]);
+		expect(result.nodes.every((node) => node.kind === "aux")).toBe(true);
+	});
+
+	test("gives each CLD node a distinct position", () => {
+		const result = computeLayout(
+			ir({
+				connections: [
+					connection("a", "b"),
+					connection("b", "c"),
+					connection("c", "d"),
+					connection("d", "a"),
+				],
+			}),
+		);
+
+		const positionKeys = result.nodes.map(
+			(node) => `${Math.round(node.position.x)},${Math.round(node.position.y)}`,
+		);
+		expect(new Set(positionKeys).size).toBe(result.nodes.length);
+	});
+
+	test("emits a connection edge with polarity for each CLD link", () => {
+		const result = computeLayout(
+			ir({
+				connections: [connection("a", "b", "-")],
+			}),
+		);
+
+		const connectionEdges = result.edges.filter(
+			(edge) => edge.kind === "connection",
+		);
+		expect(connectionEdges).toHaveLength(1);
+		expect(connectionEdges[0]).toMatchObject({
+			source: "a",
+			target: "b",
+			polarity: "-",
+		});
+	});
+});
