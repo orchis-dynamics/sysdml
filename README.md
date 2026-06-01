@@ -28,8 +28,8 @@ See `AGENT_CONTEXT.md` for architectural constraints and `docs/spec/` for langua
 
 ## Requirements
 
-- Node.js `>= 20`
-- pnpm `>= 9`
+- Node.js `>= 24` (current LTS; the workspace types against `@types/node` v24)
+- pnpm `>= 9` (the repo pins `pnpm@9.6.0` via Corepack — run `corepack enable` to match it automatically)
 
 ## Install from Git
 
