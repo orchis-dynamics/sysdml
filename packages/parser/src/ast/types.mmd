@@ -1,0 +1,289 @@
+classDiagram
+  direction LR
+
+  %% ── Core ───────────────────────────────────────────────
+  class SpanCoordinates {
+    +line: number
+    +col: number
+  }
+  class Span {
+    <<interface>>
+    +start: SpanCoordinates
+    +end: SpanCoordinates
+  }
+  class Diagnostic {
+    <<interface>>
+    +message: string
+    +span: Span
+  }
+  Span *-- SpanCoordinates : start
+  Span *-- SpanCoordinates : end
+  Diagnostic *-- Span
+
+  %% ── Operators / enums ──────────────────────────────────
+  class BinaryOperator {
+    <<type>>
+    + | - | * | / | ^ | MOD
+    < | <= | > | >= | = | <>
+    AND | OR
+  }
+  class UnaryOperator {
+    <<type>>
+    - | + | NOT
+  }
+  class GraphicalFunctionKind {
+    <<type>>
+    linear | extra | step
+  }
+
+  %% ── Expression nodes ───────────────────────────────────
+  class ExpressionNode {
+    <<union>>
+  }
+  class NumberLiteralNode {
+    <<interface>>
+    +type: "NumberLiteral"
+    +value: string
+    +span: Span
+  }
+  class IdentifierReferenceNode {
+    <<interface>>
+    +type: "IdentifierReference"
+    +name: string
+    +span: Span
+  }
+  class GroupedExpressionNode {
+    <<interface>>
+    +type: "GroupedExpression"
+    +expr: ExpressionNode
+    +span: Span
+  }
+  class BinaryExpressionNode {
+    <<interface>>
+    +type: "BinaryExpression"
+    +op: BinaryOperator
+    +left: ExpressionNode
+    +right: ExpressionNode
+    +span: Span
+  }
+  class UnaryExpressionNode {
+    <<interface>>
+    +type: "UnaryExpression"
+    +op: UnaryOperator
+    +operand: ExpressionNode
+    +span: Span
+  }
+  class FunctionCallNode {
+    <<interface>>
+    +type: "FunctionCall"
+    +name: string
+    +nameSpan: Span
+    +args: ExpressionNode[]
+    +span: Span
+  }
+  class IfThenElseNode {
+    <<interface>>
+    +type: "IfThenElse"
+    +cond: ExpressionNode
+    +thenBranch: ExpressionNode
+    +elseBranch: ExpressionNode
+    +span: Span
+  }
+
+  ExpressionNode <|-- NumberLiteralNode
+  ExpressionNode <|-- IdentifierReferenceNode
+  ExpressionNode <|-- GroupedExpressionNode
+  ExpressionNode <|-- BinaryExpressionNode
+  ExpressionNode <|-- UnaryExpressionNode
+  ExpressionNode <|-- FunctionCallNode
+  ExpressionNode <|-- IfThenElseNode
+
+  GroupedExpressionNode *-- ExpressionNode : expr
+  BinaryExpressionNode *-- ExpressionNode : left, right
+  BinaryExpressionNode ..> BinaryOperator
+  UnaryExpressionNode *-- ExpressionNode : operand
+  UnaryExpressionNode ..> UnaryOperator
+  FunctionCallNode *-- ExpressionNode : args
+  IfThenElseNode *-- ExpressionNode : cond, then, else
+
+  %% ── Numbers / position ─────────────────────────────────
+  class SignedNumberNode {
+    <<interface>>
+    +type: "SignedNumber"
+    +negative: boolean
+    +lit: NumberLiteralNode
+    +span: Span
+  }
+  class PositionNode {
+    <<interface>>
+    +type: "Position"
+    +x: number
+    +y: number
+    +span: Span
+  }
+  class NumberListNode {
+    <<interface>>
+    +type: "NumberList"
+    +values: SignedNumberNode[]
+    +span: Span
+  }
+  SignedNumberNode *-- NumberLiteralNode : lit
+  NumberListNode *-- SignedNumberNode : values
+
+  %% ── Graphical function ─────────────────────────────────
+  class GraphicalFunctionPropertyNode {
+    <<union>>
+    +type: "GraphicalFunctionProperty"
+    +key: kind|xscale|xpts|ypts|yscale
+    +value: string | NumberListNode
+  }
+  class GraphicalFunctionBodyNode {
+    <<interface>>
+    +type: "GraphicalFunctionBody"
+    +props: GraphicalFunctionPropertyNode[]
+    +span: Span
+  }
+  class GraphicalFunctionDeclarationNode {
+    <<interface>>
+    +type: "GraphicalFunctionDeclaration"
+    +id: string
+    +idSpan: Span
+    +body: GraphicalFunctionBodyNode
+    +span: Span
+  }
+  GraphicalFunctionPropertyNode ..> NumberListNode : value
+  GraphicalFunctionBodyNode *-- GraphicalFunctionPropertyNode : props
+  GraphicalFunctionDeclarationNode *-- GraphicalFunctionBodyNode : body
+
+  %% ── Declaration nodes ──────────────────────────────────
+  class DeclarationNode {
+    <<union>>
+  }
+  class ModelDeclarationNode {
+    <<interface>>
+    +type: "ModelDeclaration"
+    +id: string
+    +idSpan: Span
+    +kind: "cld" | "sfd"
+    +span: Span
+  }
+  class TimePropertyNode {
+    <<interface>>
+    +type: "TimeProperty"
+    +key: "start" | "end" | "step"
+    +value: NumberLiteralNode
+    +span: Span
+  }
+  class TimeDeclarationNode {
+    <<interface>>
+    +type: "TimeDeclaration"
+    +props: TimePropertyNode[]
+    +span: Span
+  }
+  class StockPropertyNode {
+    <<interface>>
+    +type: "StockProperty"
+    +init: ExpressionNode
+    +span: Span
+  }
+  class StockDeclarationNode {
+    <<interface>>
+    +type: "StockDeclaration"
+    +id: string
+    +idSpan: Span
+    +props: StockPropertyNode[]
+    +position?: PositionNode
+    +span: Span
+  }
+  class EndpointNode {
+    <<interface>>
+    +type: "Endpoint"
+    +value: string | null
+    +span: Span
+  }
+  class FlowPropertyNode {
+    <<union>>
+    +type: "FlowProperty"
+    +key: from|to|rate
+    +value: EndpointNode | ExpressionNode
+  }
+  class FlowDeclarationNode {
+    <<interface>>
+    +type: "FlowDeclaration"
+    +id: string
+    +idSpan: Span
+    +props: FlowPropertyNode[]
+    +position?: PositionNode
+    +via?: PositionNode[]
+    +span: Span
+  }
+  class AuxiliaryDeclarationNode {
+    <<interface>>
+    +type: "AuxiliaryDeclaration"
+    +id: string
+    +idSpan: Span
+    +expr: ExpressionNode
+    +position?: PositionNode
+    +span: Span
+  }
+  class ConnectionDeclarationNode {
+    <<interface>>
+    +type: "ConnectionDeclaration"
+    +from: string
+    +fromSpan: Span
+    +polarity: "+" | "-" | "=>"
+    +to: string
+    +toSpan: Span
+    +angle?: number
+    +via?: PositionNode
+    +span: Span
+  }
+
+  DeclarationNode <|-- TimeDeclarationNode
+  DeclarationNode <|-- StockDeclarationNode
+  DeclarationNode <|-- FlowDeclarationNode
+  DeclarationNode <|-- AuxiliaryDeclarationNode
+  DeclarationNode <|-- ConnectionDeclarationNode
+  DeclarationNode <|-- GraphicalFunctionDeclarationNode
+
+  TimePropertyNode *-- NumberLiteralNode : value
+  TimeDeclarationNode *-- TimePropertyNode : props
+  StockPropertyNode *-- ExpressionNode : init
+  StockDeclarationNode *-- StockPropertyNode : props
+  StockDeclarationNode *-- PositionNode : position
+  FlowPropertyNode ..> EndpointNode : value
+  FlowPropertyNode ..> ExpressionNode : value
+  FlowDeclarationNode *-- FlowPropertyNode : props
+  FlowDeclarationNode *-- PositionNode : position, via
+  AuxiliaryDeclarationNode *-- ExpressionNode : expr
+  AuxiliaryDeclarationNode *-- PositionNode : position
+  ConnectionDeclarationNode *-- PositionNode : via
+
+  %% ── Root ───────────────────────────────────────────────
+  class FileNode {
+    <<interface>>
+    +type: "File"
+    +model: ModelDeclarationNode
+    +submodels: ModelDeclarationNode[]
+    +decls: DeclarationNode[]
+    +span: Span
+  }
+  class ASTNode {
+    <<union>>
+  }
+  FileNode *-- ModelDeclarationNode : model, submodels
+  FileNode *-- DeclarationNode : decls
+
+  ASTNode <|-- FileNode
+  ASTNode <|-- ModelDeclarationNode
+  ASTNode <|-- DeclarationNode
+  ASTNode <|-- ExpressionNode
+  ASTNode <|-- TimePropertyNode
+  ASTNode <|-- FlowPropertyNode
+  ASTNode <|-- StockPropertyNode
+  ASTNode <|-- EndpointNode
+  ASTNode <|-- GraphicalFunctionBodyNode
+  ASTNode <|-- GraphicalFunctionPropertyNode
+  ASTNode <|-- NumberListNode
+  ASTNode <|-- SignedNumberNode
+  ASTNode <|-- PositionNode

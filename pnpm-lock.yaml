@@ -101,6 +101,9 @@ importers:
 
   packages/parser:
     dependencies:
+      '@sysdml/contracts':
+        specifier: workspace:*
+        version: link:../contracts
       antlr4ng:
         specifier: ^3.0.4
         version: 3.0.16
