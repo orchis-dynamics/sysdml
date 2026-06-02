@@ -57,6 +57,9 @@ importers:
 
   packages/ir:
     dependencies:
+      '@sysdml/contracts':
+        specifier: workspace:*
+        version: link:../contracts
       '@sysdml/parser':
         specifier: workspace:*
         version: link:../parser
