@@ -1,0 +1,29 @@
+{
+	"name": "@sysdml/contracts",
+	"version": "0.1.0",
+	"license": "AGPL-3.0-only",
+	"type": "module",
+	"main": "./dist/src/index.js",
+	"types": "./dist/src/index.d.ts",
+	"exports": {
+		".": { "types": "./dist/src/index.d.ts", "default": "./dist/src/index.js" },
+		"./expression": { "types": "./dist/src/expression/index.d.ts", "default": "./dist/src/expression/index.js" },
+		"./syntax": { "types": "./dist/src/syntax/index.d.ts", "default": "./dist/src/syntax/index.js" },
+		"./diagnostics": { "types": "./dist/src/diagnostics/index.d.ts", "default": "./dist/src/diagnostics/index.js" },
+		"./model": { "types": "./dist/src/model/index.d.ts", "default": "./dist/src/model/index.js" },
+		"./simulation": { "types": "./dist/src/simulation/index.d.ts", "default": "./dist/src/simulation/index.js" },
+		"./protocol": { "types": "./dist/src/protocol/index.d.ts", "default": "./dist/src/protocol/index.js" }
+	},
+	"scripts": {
+		"clean": "rm -rf dist node_modules",
+		"build": "tsc",
+		"test": "vitest run",
+		"test:watch": "vitest"
+	},
+	"devDependencies": {
+		"@types/node": "^24.12.4",
+		"typedoc": "^0.28.0",
+		"typescript": "^5.4.5",
+		"vitest": "^4.1.5"
+	}
+}
