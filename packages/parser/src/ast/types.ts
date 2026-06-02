@@ -1,6 +1,10 @@
+interface SpanCoordinates {
+	line: number;
+	col: number;
+}
 export interface Span {
-	start: { line: number; col: number };
-	end: { line: number; col: number };
+	start: SpanCoordinates;
+	end: SpanCoordinates;
 }
 
 export interface Diagnostic {
