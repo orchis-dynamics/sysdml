@@ -11,6 +11,7 @@
 		"test:watch": "vitest"
 	},
 	"dependencies": {
+		"@simlin/engine": "workspace:*",
 		"@sysdml/ir": "workspace:*"
 	},
 	"devDependencies": {
