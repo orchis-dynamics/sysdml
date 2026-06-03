@@ -1,6 +1,6 @@
-import type { IR } from "@sysdml/ir";
-import { BUILTIN_FUNCTIONS } from "@sysdml/ir";
-import type { FileNode } from "@sysdml/parser";
+import type { IR } from "@sysdml/contracts";
+import { BUILTIN_FUNCTIONS } from "@sysdml/contracts";
+import type { FileNode } from "@sysdml/contracts";
 import {
 	CompletionItem,
 	CompletionItemKind,

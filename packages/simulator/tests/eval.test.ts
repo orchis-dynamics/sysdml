@@ -1,4 +1,4 @@
-import type { IRExpressionNode, IRGraphicalFunction } from "@sysdml/ir";
+import type { IRExpressionNode, IRGraphicalFunction } from "@sysdml/contracts";
 import { describe, test, expect } from "vitest";
 
 import { evalExpr } from "../src/eval.js";

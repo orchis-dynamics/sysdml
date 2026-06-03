@@ -1,4 +1,4 @@
-import type { IRBinaryOperator, IRExpressionNode } from "@sysdml/ir";
+import type { IRBinaryOperator, IRExpressionNode } from "@sysdml/contracts";
 
 import { evalBuiltin } from "./functions.js";
 import { gfLookup } from "./gf.js";

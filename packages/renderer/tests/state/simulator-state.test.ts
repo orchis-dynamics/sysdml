@@ -1,5 +1,5 @@
 // @vitest-environment happy-dom
-import type { SimulationResult } from "@sysdml/simulator";
+import type { SimulationResult } from "@sysdml/contracts";
 import { describe, expect, test } from "vitest";
 import { createApp, defineComponent, h } from "vue";
 

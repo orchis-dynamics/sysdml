@@ -1,5 +1,5 @@
 import { compileAST } from "@sysdml/ir";
-import type { IR } from "@sysdml/ir";
+import type { IR } from "@sysdml/contracts";
 import { parseSource } from "@sysdml/parser";
 
 import { EulerSimulator } from "../src/euler.js";

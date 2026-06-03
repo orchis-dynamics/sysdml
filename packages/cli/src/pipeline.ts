@@ -1,9 +1,7 @@
 import { compileAST } from "@sysdml/ir";
-import type { IR, IRDiagnostic } from "@sysdml/ir";
 import { parseSource } from "@sysdml/parser";
-import type { Diagnostic as ParseDiagnostic, FileNode } from "@sysdml/parser";
 import { EulerSimulator } from "@sysdml/simulator";
-import type { SimulationResult } from "@sysdml/simulator";
+import type { IR, IRDiagnostic, Diagnostic as ParseDiagnostic, FileNode, SimulationResult } from "@sysdml/contracts";
 
 export interface PipelineResult {
 	ast: FileNode | null;

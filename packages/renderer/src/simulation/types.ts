@@ -1,5 +1,4 @@
-import type { IR } from "@sysdml/ir";
-import type { SimulationResult, SimDiagnostic } from "@sysdml/simulator";
+import type { IR, SimulationResult, SimDiagnostic } from "@sysdml/contracts";
 
 export interface SimulateRequest {
 	type: "simulate";

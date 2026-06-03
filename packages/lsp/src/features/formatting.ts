@@ -12,7 +12,7 @@ import type {
 	GraphicalFunctionBodyNode,
 	NumberListNode,
 	PositionNode,
-} from "@sysdml/parser";
+} from "@sysdml/contracts";
 
 export function formatSource(source: string): string | null {
 	const { ast, diagnostics } = parseSource(source);

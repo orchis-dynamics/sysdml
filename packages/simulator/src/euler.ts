@@ -1,4 +1,4 @@
-import type { IR, IRGraphicalFunction } from "@sysdml/ir";
+import type { IR, IRGraphicalFunction } from "@sysdml/contracts";
 
 import { desugarIR } from "./desugar.js";
 import { evalExpr } from "./eval.js";

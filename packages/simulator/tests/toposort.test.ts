@@ -1,4 +1,4 @@
-import type { IRAuxiliary, IRExpressionNode } from "@sysdml/ir";
+import type { IRAuxiliary, IRExpressionNode } from "@sysdml/contracts";
 import { describe, test, expect } from "vitest";
 
 import { toposort } from "../src/toposort.js";

@@ -1,6 +1,6 @@
 import * as net from "node:net";
 
-import type { IR, IRDiagnostic } from "@sysdml/ir";
+import type { IR, IRDiagnostic } from "@sysdml/contracts";
 import {
 	SocketMessageReader,
 	SocketMessageWriter,

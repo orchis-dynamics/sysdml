@@ -1,4 +1,4 @@
-import type { IRGraphicalFunction } from "@sysdml/ir";
+import type { IRGraphicalFunction } from "@sysdml/contracts";
 import { describe, test, expect } from "vitest";
 
 import { gfLookup } from "../src/gf.js";

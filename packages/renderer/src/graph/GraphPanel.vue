@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { SimRow } from "@sysdml/simulator";
+import type { SimRow } from "@sysdml/contracts";
 import { computed } from "vue";
 
 import { useSimulatorState } from "../state/simulator-state.js";

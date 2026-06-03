@@ -1,4 +1,4 @@
-import type { IR } from "@sysdml/ir";
+import type { IR } from "@sysdml/contracts";
 
 import type { IRTransport, InboundMessage, OutboundMessage } from "./types.js";
 import { isInboundMessage } from "./types.js";

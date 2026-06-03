@@ -1,4 +1,4 @@
-import type { IRAuxiliary, IRExpressionNode, IRFlow } from "@sysdml/ir";
+import type { IRAuxiliary, IRExpressionNode, IRFlow } from "@sysdml/contracts";
 
 import type { SimDiagnostic } from "./types.js";
 import { SimDiagnosticCode } from "./types.js";

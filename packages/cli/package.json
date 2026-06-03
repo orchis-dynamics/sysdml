@@ -21,6 +21,7 @@
 		"test:watch": "vitest"
 	},
 	"dependencies": {
+		"@sysdml/contracts": "workspace:*",
 		"@sysdml/ir": "workspace:*",
 		"@sysdml/parser": "workspace:*",
 		"@sysdml/simulator": "workspace:*"

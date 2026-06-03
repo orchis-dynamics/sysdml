@@ -11,7 +11,7 @@ import type {
 	NumberListNode,
 	PositionNode,
 	Span,
-} from "@sysdml/parser";
+} from "@sysdml/contracts";
 
 import { BUILTIN_FUNCTIONS } from "./builtins.js";
 import { DiagnosticCode } from "./diagnostics.js";

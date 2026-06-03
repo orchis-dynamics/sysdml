@@ -1,7 +1,7 @@
 import { compileAST } from "@sysdml/ir";
-import type { IR, Span, IRDiagnostic } from "@sysdml/ir";
+import type { IR, Span, IRDiagnostic } from "@sysdml/contracts";
 import { parseSource } from "@sysdml/parser";
-import type { FileNode } from "@sysdml/parser";
+import type { FileNode } from "@sysdml/contracts";
 import {
 	Diagnostic,
 	DiagnosticSeverity,

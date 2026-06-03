@@ -4,7 +4,7 @@ import type {
 	IRExpressionNode,
 	IRFlow,
 	IRStock,
-} from "@sysdml/ir";
+} from "@sysdml/contracts";
 
 import type { SimDiagnostic } from "./types.js";
 import { SimDiagnosticCode } from "./types.js";

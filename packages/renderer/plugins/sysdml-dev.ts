@@ -2,7 +2,7 @@ import type { EventEmitter } from "node:events";
 import { readFileSync } from "node:fs";
 
 import { compileAST } from "@sysdml/ir";
-import type { IR } from "@sysdml/ir";
+import type { IR } from "@sysdml/contracts";
 import { parseSource } from "@sysdml/parser";
 import chokidar from "chokidar";
 import type { Plugin, ViteDevServer } from "vite";

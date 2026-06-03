@@ -14,7 +14,7 @@ import type {
 	IRExpressionNode,
 	IRFlow,
 	IRGraphicalFunction,
-} from "@sysdml/ir";
+} from "@sysdml/contracts";
 
 export type {
 	SimlinAuxiliary,

@@ -1,5 +1,4 @@
-import type { Span } from "@sysdml/ir";
-import type { FileNode, DeclarationNode, ExpressionNode } from "@sysdml/parser";
+import type { Span, FileNode, DeclarationNode, ExpressionNode } from "@sysdml/contracts";
 import type { Position } from "vscode-languageserver/node.js";
 
 export function isPositionInSpan(position: Position, span: Span): boolean {

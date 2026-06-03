@@ -1,4 +1,4 @@
-import type { SimulationResult } from "@sysdml/simulator";
+import type { SimulationResult } from "@sysdml/contracts";
 import { describe, expect, test } from "vitest";
 
 import { selectTimeseriesPlotData } from "../../src/graph/timeseries-plot-data.js";

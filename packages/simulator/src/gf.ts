@@ -1,4 +1,4 @@
-import type { IRGraphicalFunction } from "@sysdml/ir";
+import type { IRGraphicalFunction } from "@sysdml/contracts";
 
 export function gfLookup(gf: IRGraphicalFunction, input: number): number {
 	const xPoints = buildXPoints(gf);

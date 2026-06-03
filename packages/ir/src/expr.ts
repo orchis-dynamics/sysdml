@@ -1,4 +1,4 @@
-import type { ExpressionNode } from "@sysdml/parser";
+import type { ExpressionNode } from "@sysdml/contracts";
 
 import {
 	BUILTIN_ARITY,

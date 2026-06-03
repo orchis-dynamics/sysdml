@@ -20,6 +20,9 @@ importers:
 
   packages/cli:
     dependencies:
+      '@sysdml/contracts':
+        specifier: workspace:*
+        version: link:../contracts
       '@sysdml/ir':
         specifier: workspace:*
         version: link:../ir
@@ -76,6 +79,9 @@ importers:
 
   packages/lsp:
     dependencies:
+      '@sysdml/contracts':
+        specifier: workspace:*
+        version: link:../contracts
       '@sysdml/ir':
         specifier: workspace:*
         version: link:../ir

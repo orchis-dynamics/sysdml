@@ -1,4 +1,4 @@
-import type { IR, IRStock, IRFlow, IRPosition, IRConnection } from "@sysdml/ir";
+import type { IR, IRStock, IRFlow, IRPosition, IRConnection } from "@sysdml/contracts";
 
 import { constructAuxiliaryLayoutNodes } from "./layout-auxiliaries";
 import { constructLayoutEdges } from "./layout-edges";

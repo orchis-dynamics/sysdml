@@ -1,6 +1,6 @@
 import { compileAST } from "@sysdml/ir";
 import { parseSource } from "@sysdml/parser";
-import { SimDiagnosticCode } from "@sysdml/simulator";
+import { SimDiagnosticCode } from "@sysdml/contracts";
 import { describe, expect, test } from "vitest";
 
 import { handleSimulationRequest } from "../../src/simulation/handler.js";

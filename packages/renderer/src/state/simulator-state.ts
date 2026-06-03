@@ -1,4 +1,4 @@
-import type { SimulationResult } from "@sysdml/simulator";
+import type { SimulationResult } from "@sysdml/contracts";
 import { createInjectionState } from "@vueuse/core";
 import { ref } from "vue";
 

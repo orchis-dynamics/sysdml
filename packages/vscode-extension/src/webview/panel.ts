@@ -1,7 +1,7 @@
 import * as fs from "fs";
 import * as path from "path";
 
-import type { IR } from "@sysdml/ir";
+import type { IR } from "@sysdml/contracts";
 import * as vscode from "vscode";
 import { type LanguageClient, State } from "vscode-languageclient/node";
 

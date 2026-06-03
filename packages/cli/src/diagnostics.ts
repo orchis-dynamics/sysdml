@@ -1,5 +1,4 @@
-import type { IRDiagnostic } from "@sysdml/ir";
-import type { Diagnostic as ParserDiagnostic } from "@sysdml/parser";
+import type { IRDiagnostic, Diagnostic as ParserDiagnostic } from "@sysdml/contracts";
 
 export function formatDiagnosticBlock(lines: string[]): string {
 	return (
