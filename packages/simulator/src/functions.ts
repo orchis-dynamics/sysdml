@@ -1,5 +1,6 @@
+import { SimDiagnosticCode } from "@sysdml/contracts";
 import type { SimContext } from "./types.js";
-import { SimDiagnosticCode, SimulationHaltedError } from "./types.js";
+import { SimulationHaltedError } from "./types.js";
 
 // oxlint-disable-next-line complexity max-lines-per-function
 export function evalBuiltin(

@@ -1,8 +1,9 @@
 import { parseSource } from "@sysdml/parser";
 import { describe, test, expect } from "vitest";
 
-import { compileAST, DiagnosticCode } from "../src/index.js";
-import type { IRExpressionNode } from "../src/index.js";
+import { DiagnosticCode } from "@sysdml/contracts";
+import type { IRExpressionNode } from "@sysdml/contracts";
+import { compileAST } from "../src/index.js";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 

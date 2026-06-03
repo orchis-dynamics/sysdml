@@ -1,8 +1,8 @@
 import { parseSource } from "@sysdml/parser";
 import { describe, test, expect } from "vitest";
 
+import { DiagnosticCode } from "@sysdml/contracts";
 import { compileAST } from "../src/compile.js";
-import { DiagnosticCode } from "../src/diagnostics.js";
 
 const ONE_STOCK = `stock s { init: 0 }`;
 

@@ -12,10 +12,10 @@
 		"test:watch": "vitest"
 	},
 	"dependencies": {
-		"@sysdml/contracts": "workspace:*",
-		"@sysdml/parser": "workspace:*"
+		"@sysdml/contracts": "workspace:*"
 	},
 	"devDependencies": {
+		"@sysdml/parser": "workspace:*",
 		"@types/node": "^24.12.4",
 		"typescript": "^5.4.5",
 		"vitest": "^4.1.5"

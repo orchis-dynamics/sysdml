@@ -1,9 +1,5 @@
-import type { IR, IRGraphicalFunction } from "@sysdml/contracts";
+import type { IRGraphicalFunction } from "@sysdml/contracts";
 import type { SimDiagnostic } from "@sysdml/contracts";
-
-export type { SimRow, SimulationResult, Simulator } from "@sysdml/contracts";
-export { SimDiagnosticCode } from "@sysdml/contracts";
-export type { SimDiagnostic } from "@sysdml/contracts";
 
 export type Env = Record<string, number>;
 

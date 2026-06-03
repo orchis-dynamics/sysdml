@@ -1,12 +1,9 @@
 import { parseSource } from "@sysdml/parser";
 import { describe, test, expect, beforeEach } from "vitest";
 
-import {
-	compileAST,
-	DiagnosticCode,
-	resetLookupCounter,
-} from "../src/index.js";
-import type { IR, IRGraphicalFunction } from "../src/index.js";
+import { DiagnosticCode } from "@sysdml/contracts";
+import type { IR, IRGraphicalFunction } from "@sysdml/contracts";
+import { compileAST, resetLookupCounter } from "../src/index.js";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 

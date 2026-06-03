@@ -1,8 +1,8 @@
 import { parseSource } from "@sysdml/parser";
 import { describe, test, expect } from "vitest";
 
+import { DiagnosticCode } from "@sysdml/contracts";
 import { compileAST } from "../src/compile.js";
-import { DiagnosticCode } from "../src/diagnostics.js";
 
 describe("MULTI_MODEL_NOT_SUPPORTED (B1)", () => {
 	test("single-model file produces no MULTI_MODEL_NOT_SUPPORTED", () => {

@@ -3,7 +3,7 @@ import type { IR } from "@sysdml/contracts";
 import { parseSource } from "@sysdml/parser";
 
 import { EulerSimulator } from "../src/euler.js";
-import type { SimRow } from "../src/types.js";
+import type { SimRow } from "@sysdml/contracts";
 
 export function buildIR(src: string): IR {
 	const { ast, diagnostics: parseDiagnostics } = parseSource(src);

@@ -3,16 +3,10 @@ import type { IR, IRGraphicalFunction } from "@sysdml/contracts";
 import { desugarIR } from "./desugar.js";
 import { evalExpr } from "./eval.js";
 import { toposort } from "./toposort.js";
-import type {
-	Env,
-	EvalContext,
-	SimContext,
-	SimDiagnostic,
-	SimRow,
-	SimulationResult,
-	Simulator,
-} from "./types.js";
-import { SimDiagnosticCode, SimulationHaltedError } from "./types.js";
+import { SimDiagnosticCode } from "@sysdml/contracts";
+import type { SimDiagnostic, SimRow, SimulationResult, Simulator } from "@sysdml/contracts";
+import type { Env, EvalContext, SimContext } from "./types.js";
+import { SimulationHaltedError } from "./types.js";
 
 export class EulerSimulator implements Simulator {
 	simulate(ir: IR): SimulationResult {

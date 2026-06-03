@@ -3,7 +3,7 @@ import { parseSource } from "@sysdml/parser";
 import { describe, test, expect } from "vitest";
 
 import { EulerSimulator } from "../src/index.js";
-import { SimDiagnosticCode } from "../src/types.js";
+import { SimDiagnosticCode } from "@sysdml/contracts";
 
 const simulator = new EulerSimulator();
 

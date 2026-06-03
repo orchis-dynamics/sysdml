@@ -1,7 +1,7 @@
 import type { IRAuxiliary, IRExpressionNode, IRFlow } from "@sysdml/contracts";
 
-import type { SimDiagnostic } from "./types.js";
-import { SimDiagnosticCode } from "./types.js";
+import type { SimDiagnostic } from "@sysdml/contracts";
+import { SimDiagnosticCode } from "@sysdml/contracts";
 
 export interface ToposortResult {
 	orderedAux: IRAuxiliary[];

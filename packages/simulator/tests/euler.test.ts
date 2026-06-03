@@ -1,7 +1,7 @@
 import { describe, test, expect } from "vitest";
 
 import { EulerSimulator } from "../src/index.js";
-import { SimDiagnosticCode } from "../src/types.js";
+import { SimDiagnosticCode } from "@sysdml/contracts";
 import { buildIR, evalAux, runExpr, runModel } from "./helpers.js";
 
 // ── Basic eval ──────────────────────────────────────────────────────────────

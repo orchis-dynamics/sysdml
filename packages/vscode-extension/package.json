@@ -24,7 +24,6 @@
 	},
 	"devDependencies": {
 		"@sysdml/contracts": "workspace:*",
-		"@sysdml/ir": "workspace:*",
 		"@sysdml/lsp-server": "workspace:*",
 		"@types/node": "^24.12.4",
 		"@types/vscode": "^1.85.0",

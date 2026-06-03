@@ -11,11 +11,8 @@ import {
 import { SYSDMLLexer } from "../generated/SYSDMLLexer.js";
 import { SYSDMLParser } from "../generated/SYSDMLParser.js";
 import { ASTBuilder } from "./ast/ASTBuilder.js";
-import type { Diagnostic, FileNode, Span } from "./ast/types.js";
+import type { Diagnostic, FileNode, Span } from "@sysdml/contracts";
 import type { ParseResult } from "@sysdml/contracts";
-
-export type { Span, Diagnostic, ParseResult } from "@sysdml/contracts";
-export type { ASTNode, FileNode } from "./ast/types.js";
 
 class CollectingErrorListener extends BaseErrorListener {
 	readonly diagnostics: Diagnostic[] = [];

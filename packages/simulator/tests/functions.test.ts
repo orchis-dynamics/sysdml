@@ -1,7 +1,8 @@
 import { describe, test, expect } from "vitest";
 
 import { evalBuiltin } from "../src/functions.js";
-import { SimDiagnosticCode, SimulationHaltedError } from "../src/types.js";
+import { SimDiagnosticCode } from "@sysdml/contracts";
+import { SimulationHaltedError } from "../src/types.js";
 
 const noCtx = { t: 0, start: 0, end: 10, step: 1 };
 

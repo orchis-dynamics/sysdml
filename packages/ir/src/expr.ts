@@ -4,13 +4,13 @@ import {
 	BUILTIN_ARITY,
 	BUILTIN_FUNCTIONS,
 	ZERO_ARG_BUILTINS,
-} from "./builtins.js";
-import { DiagnosticCode } from "./diagnostics.js";
+} from "@sysdml/contracts";
+import { DiagnosticCode } from "@sysdml/contracts";
 import type {
 	IRDiagnostic,
 	IRExpressionNode,
 	IRGraphicalFunction,
-} from "./types.js";
+} from "@sysdml/contracts";
 
 let _lookupCounter = 0;
 

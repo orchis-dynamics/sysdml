@@ -2,8 +2,9 @@ import type { IRBinaryOperator, IRExpressionNode } from "@sysdml/contracts";
 
 import { evalBuiltin } from "./functions.js";
 import { gfLookup } from "./gf.js";
+import { SimDiagnosticCode } from "@sysdml/contracts";
 import type { EvalContext } from "./types.js";
-import { SimDiagnosticCode, SimulationHaltedError } from "./types.js";
+import { SimulationHaltedError } from "./types.js";
 
 const DEFERRED_V2_FUNCTIONS = new Set([
 	"RANDOM",
