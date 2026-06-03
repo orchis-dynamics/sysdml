@@ -202,6 +202,8 @@ export interface EndpointNode {
 	span: Span;
 }
 
+// FlowPropertyNode is a discriminated union on `key` so that `value`'s type
+// narrows correctly when you branch on `prop.key`.
 export type FlowPropertyNode =
 	| {
 			type: "FlowProperty";
@@ -252,7 +254,13 @@ export type DeclarationNode =
 
 export interface FileNode {
 	type: "File";
+	/** The entry / first declared model. Always present. */
 	model: ModelDeclarationNode;
+	/** Submodel declarations beyond the entry (XMILE §4.7: separate `model`
+	 * blocks at the file level, instantiated by the entry model via a future
+	 * `module` construct). Always empty in v0.1 source files; the IR compile
+	 * pass emits a `MULTI_MODEL_NOT_SUPPORTED` diagnostic for each element
+	 * here until submodel instantiation lands. */
 	submodels: ModelDeclarationNode[];
 	decls: DeclarationNode[];
 	span: Span;

@@ -1,3 +1,6 @@
+// IR expression nodes — no spans, no parse artifacts.
+// GroupedExpression is collapsed; tree structure already encodes precedence.
+// Comparison and logical ops return 1.0 (true) or 0.0 (false) at simulation time.
 export type IRBinaryOperator =
 	| "+"
 	| "-"

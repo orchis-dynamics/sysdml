@@ -43,6 +43,7 @@ export interface IRConnection {
 
 export type IRGraphicalFunctionKind = "linear" | "extra" | "step";
 
+// Exactly one of xscale or xpts is set (never both, never neither).
 export interface IRGraphicalFunction {
 	id: string;
 	kind: IRGraphicalFunctionKind;
