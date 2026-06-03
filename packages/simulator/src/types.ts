@@ -1,4 +1,9 @@
-import type { IR, IRGraphicalFunction } from "@sysdml/ir";
+import type { IR, IRGraphicalFunction } from "@sysdml/contracts";
+import type { SimDiagnostic } from "@sysdml/contracts";
+
+export type { SimRow, SimulationResult, Simulator } from "@sysdml/contracts";
+export { SimDiagnosticCode } from "@sysdml/contracts";
+export type { SimDiagnostic } from "@sysdml/contracts";
 
 export type Env = Record<string, number>;
 
@@ -17,40 +22,9 @@ export interface EvalContext {
 	gfRegistry: ReadonlyMap<string, IRGraphicalFunction>;
 }
 
-export interface SimRow {
-	time: number;
-	[id: string]: number;
-}
-
-export const SimDiagnosticCode = {
-	CYCLE_IN_AUX: "CYCLE_IN_AUX",
-	INIT_REQUIRES_IDENT: "INIT_REQUIRES_IDENT",
-	INVALID_DELAY_ORDER: "INVALID_DELAY_ORDER",
-	WARN_PULSE_INTERVAL: "WARN_PULSE_INTERVAL",
-	FUNCTION_NOT_IN_V1: "FUNCTION_NOT_IN_V1",
-	MATH_DOMAIN_ERROR: "MATH_DOMAIN_ERROR",
-} as const;
-
-export type SimDiagnosticCode =
-	(typeof SimDiagnosticCode)[keyof typeof SimDiagnosticCode];
-
-export interface SimDiagnostic {
-	code: SimDiagnosticCode;
-	message: string;
-}
-
 export class SimulationHaltedError extends Error {
 	constructor(public readonly diagnostic: SimDiagnostic) {
 		super(diagnostic.message);
 		this.name = "SimulationHaltedError";
 	}
-}
-
-export interface SimulationResult {
-	rows: SimRow[];
-	diagnostics: SimDiagnostic[];
-}
-
-export interface Simulator {
-	simulate(ir: IR): SimulationResult;
 }

@@ -187,6 +187,9 @@ importers:
       '@simlin/engine':
         specifier: workspace:*
         version: link:../vendor/simlin-engine
+      '@sysdml/contracts':
+        specifier: workspace:*
+        version: link:../contracts
       '@sysdml/ir':
         specifier: workspace:*
         version: link:../ir

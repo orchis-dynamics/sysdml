@@ -12,6 +12,7 @@
 	},
 	"dependencies": {
 		"@simlin/engine": "workspace:*",
+		"@sysdml/contracts": "workspace:*",
 		"@sysdml/ir": "workspace:*"
 	},
 	"devDependencies": {
