@@ -3,6 +3,7 @@ packages/parser/generated/
 packages/parser/src/grammar/.antlr/
 **/node_modules
 **/dist/
+packages/contracts/docs-api/
 .worktrees/
 
 .claude/
