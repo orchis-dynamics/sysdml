@@ -126,6 +126,9 @@ importers:
 
   packages/renderer:
     dependencies:
+      '@sysdml/contracts':
+        specifier: workspace:*
+        version: link:../contracts
       '@sysdml/ir':
         specifier: workspace:*
         version: link:../ir
@@ -248,6 +251,9 @@ importers:
 
   packages/vscode-extension:
     devDependencies:
+      '@sysdml/contracts':
+        specifier: workspace:*
+        version: link:../contracts
       '@sysdml/ir':
         specifier: workspace:*
         version: link:../ir

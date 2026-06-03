@@ -1,4 +1,8 @@
-import type { IR } from "@sysdml/ir";
+import type { IR } from "@sysdml/contracts";
+import type {
+	ExtensionToWebviewMessage,
+	WebviewToExtensionMessage,
+} from "@sysdml/contracts";
 
 export interface IRTransport {
 	start(): void;
@@ -6,11 +10,8 @@ export interface IRTransport {
 	onError(cb: (message: string) => void): void;
 }
 
-export type InboundMessage =
-	| { type: "update"; ir: IR }
-	| { type: "error"; message: string };
-
-export type OutboundMessage = { type: "ready" };
+export type InboundMessage = ExtensionToWebviewMessage;
+export type OutboundMessage = WebviewToExtensionMessage;
 
 export function isInboundMessage(value: unknown): value is InboundMessage {
 	return (
