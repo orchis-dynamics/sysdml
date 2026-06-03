@@ -4,9 +4,9 @@ import type {
 	IRExpressionNode,
 	IRFlow,
 	IRStock,
+	SimDiagnostic,
 } from "@sysdml/contracts";
 
-import type { SimDiagnostic } from "@sysdml/contracts";
 import { SimDiagnosticCode } from "@sysdml/contracts";
 
 interface DesugarState {

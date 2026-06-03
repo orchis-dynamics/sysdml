@@ -1,10 +1,9 @@
-import type { IR, IRGraphicalFunction } from "@sysdml/contracts";
+import type { IR, IRGraphicalFunction, SimDiagnostic, SimRow, SimulationResult, Simulator } from "@sysdml/contracts";
 
 import { desugarIR } from "./desugar.js";
 import { evalExpr } from "./eval.js";
 import { toposort } from "./toposort.js";
 import { SimDiagnosticCode } from "@sysdml/contracts";
-import type { SimDiagnostic, SimRow, SimulationResult, Simulator } from "@sysdml/contracts";
 import type { Env, EvalContext, SimContext } from "./types.js";
 import { SimulationHaltedError } from "./types.js";
 

@@ -1,6 +1,5 @@
-import type { IRAuxiliary, IRExpressionNode, IRFlow } from "@sysdml/contracts";
+import type { IRAuxiliary, IRExpressionNode, IRFlow, SimDiagnostic } from "@sysdml/contracts";
 
-import type { SimDiagnostic } from "@sysdml/contracts";
 import { SimDiagnosticCode } from "@sysdml/contracts";
 
 export interface ToposortResult {

@@ -11,12 +11,6 @@ import type {
 	NumberListNode,
 	PositionNode,
 	Span,
-} from "@sysdml/contracts";
-
-import { BUILTIN_FUNCTIONS } from "@sysdml/contracts";
-import { DiagnosticCode } from "@sysdml/contracts";
-import { compileExpr, resetLookupCounter } from "./expr.js";
-import type {
 	IR,
 	IRDiagnostic,
 	CompileResult,
@@ -26,6 +20,9 @@ import type {
 	IRGraphicalFunction,
 	IRPosition,
 } from "@sysdml/contracts";
+
+import { BUILTIN_FUNCTIONS, DiagnosticCode } from "@sysdml/contracts";
+import { compileExpr, resetLookupCounter } from "./expr.js";
 
 function isTimeDeclaration(n: DeclarationNode): n is TimeDeclarationNode {
 	return n.type === "TimeDeclaration";

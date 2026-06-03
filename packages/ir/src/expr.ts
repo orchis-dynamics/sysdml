@@ -1,16 +1,6 @@
-import type { ExpressionNode } from "@sysdml/contracts";
+import type { ExpressionNode, IRDiagnostic, IRExpressionNode, IRGraphicalFunction } from "@sysdml/contracts";
 
-import {
-	BUILTIN_ARITY,
-	BUILTIN_FUNCTIONS,
-	ZERO_ARG_BUILTINS,
-} from "@sysdml/contracts";
-import { DiagnosticCode } from "@sysdml/contracts";
-import type {
-	IRDiagnostic,
-	IRExpressionNode,
-	IRGraphicalFunction,
-} from "@sysdml/contracts";
+import { BUILTIN_ARITY, BUILTIN_FUNCTIONS, ZERO_ARG_BUILTINS, DiagnosticCode } from "@sysdml/contracts";
 
 let _lookupCounter = 0;
 
