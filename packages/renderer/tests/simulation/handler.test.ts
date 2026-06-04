@@ -2,9 +2,8 @@ import { compileAST } from "@sysdml/ir";
 import { parseSource } from "@sysdml/parser";
 import type { IR, SimulationResult, Simulator } from "@sysdml/contracts";
 import { describe, expect, test } from "vitest";
-
 import { handleSimulationRequest } from "../../src/simulation/handler.js";
-import type { SimulateRequest } from "../../src/simulation/types.js";
+import type { SimulateRequest, WorkerRequest } from "../../src/simulation/types.js";
 
 const stubResult: SimulationResult = { rows: [{ time: 0 }], diagnostics: [] };
 const stubSimulator: Simulator = {
@@ -54,17 +53,36 @@ describe("handleSimulationRequest", () => {
 		expect(response.jobId).toBe(42);
 	});
 
-	test("halted simulation returns result with diagnostics (not error)", async () => {
+	test("forwards a simulator result with diagnostics as a result response", async () => {
+		const diagnosticResult: SimulationResult = {
+			rows: [{ time: 0 }],
+			diagnostics: [{ code: "CYCLE_IN_AUX", message: "cycle detected" }],
+		};
+		const diagnosticSimulator: Simulator = {
+			simulate(_ir: IR): SimulationResult {
+				return diagnosticResult;
+			},
+		};
 		const request: SimulateRequest = {
 			type: "simulate",
 			jobId: 1,
 			ir: buildIR(MINIMAL_MODEL),
 		};
-		const response = await handleSimulationRequest(request, stubSimulator);
+		const response = await handleSimulationRequest(request, diagnosticSimulator);
 		expect(response.type).toBe("result");
 		if (response.type !== "result") throw new Error("unreachable");
 		expect(response.jobId).toBe(1);
-		expect(response.result).toBe(stubResult);
+		expect(response.result.diagnostics).toBe(diagnosticResult.diagnostics);
+	});
+
+	test("returns error response for an unknown request type", async () => {
+		const badRequest = { type: "bogus", jobId: 7 } as unknown as WorkerRequest;
+		const response = await handleSimulationRequest(badRequest, stubSimulator);
+		expect(response.type).toBe("error");
+		if (response.type !== "error") throw new Error("unreachable");
+		expect(response.jobId).toBe(7);
+		expect(response.message).toContain("Unknown request type");
+		expect(response.diagnostic).toBeNull();
 	});
 
 	test("returns error response when simulator throws an unexpected JS error", async () => {
