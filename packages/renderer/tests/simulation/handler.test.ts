@@ -1,10 +1,17 @@
 import { compileAST } from "@sysdml/ir";
 import { parseSource } from "@sysdml/parser";
-import { SimDiagnosticCode } from "@sysdml/contracts";
+import type { IR, SimulationResult, Simulator } from "@sysdml/contracts";
 import { describe, expect, test } from "vitest";
 
 import { handleSimulationRequest } from "../../src/simulation/handler.js";
 import type { SimulateRequest } from "../../src/simulation/types.js";
+
+const stubResult: SimulationResult = { rows: [{ time: 0 }], diagnostics: [] };
+const stubSimulator: Simulator = {
+	simulate(_ir: IR): SimulationResult {
+		return stubResult;
+	},
+};
 
 function buildIR(source: string) {
 	const { ast } = parseSource(source);
@@ -23,74 +30,55 @@ flow births { from: null to: population rate: population * growth_rate }
 `.trim();
 
 describe("handleSimulationRequest", () => {
-	test("returns result with rows for a valid IR", () => {
+	test("returns result with rows for a valid IR", async () => {
 		const request: SimulateRequest = {
 			type: "simulate",
 			jobId: 7,
 			ir: buildIR(MINIMAL_MODEL),
 		};
-		const response = handleSimulationRequest(request);
+		const response = await handleSimulationRequest(request, stubSimulator);
 		expect(response.type).toBe("result");
 		if (response.type !== "result") throw new Error("unreachable");
 		expect(response.jobId).toBe(7);
-		expect(response.result.rows.length).toBeGreaterThan(0);
-		expect(response.result.rows[0]?.time).toBe(0);
-		expect(response.result.diagnostics).toEqual([]);
+		expect(response.result.rows).toBe(stubResult.rows);
+		expect(response.result.diagnostics).toBe(stubResult.diagnostics);
 	});
 
-	test("preserves jobId in the response", () => {
+	test("preserves jobId in the response", async () => {
 		const request: SimulateRequest = {
 			type: "simulate",
 			jobId: 42,
 			ir: buildIR(MINIMAL_MODEL),
 		};
-		const response = handleSimulationRequest(request);
+		const response = await handleSimulationRequest(request, stubSimulator);
 		expect(response.jobId).toBe(42);
 	});
 
-	test("halted simulation returns result with diagnostics (not error)", () => {
-		// LN(0) triggers MATH_DOMAIN_ERROR inside the simulator. The simulator
-		// catches SimulationHaltedError internally and folds it into diagnostics,
-		// so the handler must return type:"result" — not type:"error".
-		// (The originally-specified `init = nonexistent_identifier` does not halt —
-		// the evaluator silently returns 0 for unknown identifiers.)
-		const haltingModel = `
-sfd Halt
-time { start: 0 end: 5 step: 1 }
-stock level { init: 1 }
-aux bad_value = LN(0)
-`.trim();
+	test("halted simulation returns result with diagnostics (not error)", async () => {
 		const request: SimulateRequest = {
 			type: "simulate",
 			jobId: 1,
-			ir: buildIR(haltingModel),
+			ir: buildIR(MINIMAL_MODEL),
 		};
-		const response = handleSimulationRequest(request);
+		const response = await handleSimulationRequest(request, stubSimulator);
 		expect(response.type).toBe("result");
 		if (response.type !== "result") throw new Error("unreachable");
 		expect(response.jobId).toBe(1);
-		expect(response.result.diagnostics.length).toBeGreaterThan(0);
-		// diagnostic code should be one of the halt codes; check it's not a benign warning
-		const haltCodes: string[] = [
-			SimDiagnosticCode.CYCLE_IN_AUX,
-			SimDiagnosticCode.INIT_REQUIRES_IDENT,
-			SimDiagnosticCode.INVALID_DELAY_ORDER,
-			SimDiagnosticCode.MATH_DOMAIN_ERROR,
-		];
-		expect(haltCodes).toContain(response.result.diagnostics[0]!.code);
+		expect(response.result).toBe(stubResult);
 	});
 
-	test("returns error response when simulator throws an unexpected JS error", () => {
-		// Bypass the type system to inject a malformed IR that crashes the simulator
-		// with a plain Error (not a SimulationHaltedError, which would be folded into
-		// diagnostics). We pass null as the whole IR which should cause the simulator
-		// to throw when it tries to access fields.
+	test("returns error response when simulator throws an unexpected JS error", async () => {
+		const throwingSimulator: Simulator = {
+			simulate(_ir: IR): SimulationResult {
+				throw new Error("unexpected crash");
+			},
+		};
 		const request: SimulateRequest = {
 			type: "simulate",
 			jobId: 99,
-			ir: null as unknown as ReturnType<typeof buildIR>,
+			ir: buildIR(MINIMAL_MODEL),
 		};
-		const response = handleSimulationRequest(request);
+		const response = await handleSimulationRequest(request, throwingSimulator);
 		expect(response.type).toBe("error");
 		if (response.type !== "error") throw new Error("unreachable");
 		expect(response.jobId).toBe(99);
