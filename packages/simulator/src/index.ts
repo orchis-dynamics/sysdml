@@ -1,1 +1,3 @@
-export { EulerSimulator } from "./euler.js";
+export { SimlinSimulator } from "./simlin-simulator.js";
+export { irToSimlinProject } from "./ir-to-simlin.js";
+export { configureSimulatorWasm } from "./wasm.js";

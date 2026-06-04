@@ -4,7 +4,7 @@ import { formatCsv } from "../src/csv.js";
 import { runPipeline } from "../src/pipeline.js";
 
 describe("formatCsv", () => {
-	it("emits a header row of time + variables in IR order, then one data row per step", () => {
+	it("emits a header row of time + variables in IR order, then one data row per step", async () => {
 		const source = `sfd Test
 
 time {
@@ -17,13 +17,13 @@ stock population {
 	init: 100
 }
 `;
-		const { ir, simulation } = runPipeline(source);
+		const { ir, simulation } = await runPipeline(source);
 		const csv = formatCsv(ir!, simulation!);
 
 		expect(csv).toBe("time,population\n0,100\n1,100\n2,100\n");
 	});
 
-	it("orders columns: stocks first, then aux, then flows, all in declaration order", () => {
+	it("orders columns: stocks first, then aux, then flows, all in declaration order", async () => {
 		const source = `sfd Test
 
 time {
@@ -50,7 +50,7 @@ flow d {
 
 aux e = 4
 `;
-		const { ir, simulation } = runPipeline(source);
+		const { ir, simulation } = await runPipeline(source);
 		const csv = formatCsv(ir!, simulation!);
 
 		const headerLine = csv.split("\n")[0];

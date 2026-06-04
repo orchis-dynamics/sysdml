@@ -5,8 +5,8 @@ import {
 import { runPipeline } from "./pipeline.js";
 import type { CommandResult } from "./types.js";
 
-export function runParseCommand(source: string): CommandResult {
-	const { ast, parseDiagnostics } = runPipeline(source);
+export async function runParseCommand(source: string): Promise<CommandResult> {
+	const { ast, parseDiagnostics } = await runPipeline(source);
 
 	if (ast === null) {
 		return {

@@ -10,5 +10,5 @@ export interface SimulationResult {
 	diagnostics: SimDiagnostic[];
 }
 export interface Simulator {
-	simulate(ir: IR): SimulationResult;
+	simulate(ir: IR): Promise<SimulationResult>;
 }

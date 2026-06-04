@@ -16,8 +16,8 @@ stock population {
 `;
 
 describe("runPipeline", () => {
-	it("parses, compiles, and simulates a minimal model end-to-end", () => {
-		const result = runPipeline(minimalModel);
+	it("parses, compiles, and simulates a minimal model end-to-end", async () => {
+		const result = await runPipeline(minimalModel);
 
 		expect(result.parseDiagnostics).toEqual([]);
 		expect(result.compileDiagnostics).toEqual([]);
@@ -29,16 +29,16 @@ describe("runPipeline", () => {
 		expect(result.simulation!.rows[0].population).toBe(100);
 	});
 
-	it("stops at parse stage when source has syntax errors", () => {
-		const result = runPipeline("model {{{");
+	it("stops at parse stage when source has syntax errors", async () => {
+		const result = await runPipeline("model {{{");
 		expect(result.parseDiagnostics.length).toBeGreaterThan(0);
 		expect(result.ast).toBeNull();
 		expect(result.ir).toBeNull();
 		expect(result.simulation).toBeNull();
 	});
 
-	it("stops at compile stage when source has semantic errors", () => {
-		const result = runPipeline(`sfd Test
+	it("stops at compile stage when source has semantic errors", async () => {
+		const result = await runPipeline(`sfd Test
 
 time {
 	start: 0

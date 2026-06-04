@@ -16,8 +16,8 @@ stock population {
 `;
 
 describe("runParseCommand", () => {
-	it("emits AST JSON on stdout and exits 0 on a valid model", () => {
-		const result = runParseCommand(minimalModel);
+	it("emits AST JSON on stdout and exits 0 on a valid model", async () => {
+		const result = await runParseCommand(minimalModel);
 
 		expect(result.exitCode).toBe(0);
 		expect(result.stderr).toBe("");
@@ -25,8 +25,8 @@ describe("runParseCommand", () => {
 		expect(parsed.type).toBe("File");
 	});
 
-	it("emits diagnostics on stderr and exits 1 on syntax error", () => {
-		const result = runParseCommand("model {{{");
+	it("emits diagnostics on stderr and exits 1 on syntax error", async () => {
+		const result = await runParseCommand("model {{{");
 
 		expect(result.exitCode).toBe(1);
 		expect(result.stdout).toBe("");

@@ -1,12 +1,15 @@
 /// <reference lib="webworker" />
 
-import { EulerSimulator } from "@sysdml/simulator";
+import { configureSimulatorWasm, SimlinSimulator } from "@sysdml/simulator";
+import wasmUrl from "@simlin/engine/core/libsimlin.wasm?url";
 
 import { handleSimulationRequest } from "./handler.js";
 import type { WorkerRequest } from "./types.js";
 
+configureSimulatorWasm(wasmUrl);
+
 const workerScope = self as unknown as DedicatedWorkerGlobalScope;
-const simulator = new EulerSimulator();
+const simulator = new SimlinSimulator();
 
 workerScope.addEventListener(
 	"message",

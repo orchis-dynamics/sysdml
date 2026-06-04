@@ -11,12 +11,12 @@ export interface SimulateOptions {
 	format: "json" | "csv";
 }
 
-export function runSimulateCommand(
+export async function runSimulateCommand(
 	source: string,
 	options: SimulateOptions,
-): CommandResult {
+): Promise<CommandResult> {
 	const { ast, parseDiagnostics, ir, compileDiagnostics, simulation } =
-		runPipeline(source);
+		await runPipeline(source);
 
 	if (ast === null) {
 		return {

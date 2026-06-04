@@ -39,19 +39,7 @@ export interface IRDiagnostic {
 	span?: Span;
 }
 
-export const SimDiagnosticCode = {
-	CYCLE_IN_AUX: "CYCLE_IN_AUX",
-	INIT_REQUIRES_IDENT: "INIT_REQUIRES_IDENT",
-	INVALID_DELAY_ORDER: "INVALID_DELAY_ORDER",
-	WARN_PULSE_INTERVAL: "WARN_PULSE_INTERVAL",
-	FUNCTION_NOT_IN_V1: "FUNCTION_NOT_IN_V1",
-	MATH_DOMAIN_ERROR: "MATH_DOMAIN_ERROR",
-} as const;
-
-export type SimDiagnosticCode =
-	(typeof SimDiagnosticCode)[keyof typeof SimDiagnosticCode];
-
 export interface SimDiagnostic {
-	code: SimDiagnosticCode;
+	code: string;
 	message: string;
 }
