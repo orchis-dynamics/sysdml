@@ -219,6 +219,28 @@ importers:
         specifier: ^4.1.5
         version: 4.1.6(@types/node@24.12.4)(happy-dom@20.9.0)(vite@6.4.2(@types/node@24.12.4)(jiti@2.7.0)(lightningcss@1.32.0)(yaml@2.9.0))
 
+  packages/simulator-legacy:
+    dependencies:
+      '@sysdml/contracts':
+        specifier: workspace:*
+        version: link:../contracts
+    devDependencies:
+      '@sysdml/ir':
+        specifier: workspace:*
+        version: link:../ir
+      '@sysdml/parser':
+        specifier: workspace:*
+        version: link:../parser
+      '@types/node':
+        specifier: ^24.12.4
+        version: 24.12.4
+      typescript:
+        specifier: ^5.4.5
+        version: 5.9.3
+      vitest:
+        specifier: ^4.1.5
+        version: 4.1.6(@types/node@24.12.4)(happy-dom@20.9.0)(vite@6.4.2(@types/node@24.12.4)(jiti@2.7.0)(lightningcss@1.32.0)(yaml@2.9.0))
+
   packages/vendor/simlin-engine:
     devDependencies:
       '@types/jest':
