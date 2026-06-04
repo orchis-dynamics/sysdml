@@ -21,9 +21,11 @@ that define a contract's valid value-space (e.g. `DiagnosticCode`, `BUILTIN_*`).
 
 ## Domain dependency graph
 
-The domains form an acyclic graph: `expression` and `syntax` are leaves, and the
-arrows point from a domain to the domains it depends on.
+The domains form an acyclic graph: leaves depend on nothing, and arrows point from a
+domain to the domains it depends on. Generated from the actual cross-domain imports by
+`scripts/generate-diagrams.mjs` — do not edit the block below by hand.
 
+<!-- generated:domain-dag -->
 ```mermaid
 graph TD
   expression["expression — leaf"]
@@ -35,26 +37,33 @@ graph TD
   simulation --> diagnostics
   protocol --> model
 ```
+<!-- /generated:domain-dag -->
 
 ## Model shape
 
-How the `IR` model graph (the `model/` domain) composes, and where the shared
-`IRExpressionNode` formula tree (`expression/` domain) is referenced.
+How the `IR` model graph composes, and where the shared `IRExpressionNode` formula tree
+is referenced — edge labels are the property names. Generated from the `model/` domain's
+type definitions by `scripts/generate-diagrams.mjs` — do not edit the block below by hand.
 
+<!-- generated:model-shape -->
 ```mermaid
 graph TD
-  CompileResult --> IR
-  CompileResult --> IRDiagnostic
-  IR --> IRTime
-  IR --> IRStock
-  IR --> IRFlow
-  IR --> IRAuxiliary
-  IR --> IRConnection
-  IR --> IRGraphicalFunction
   IRStock -->|init| IRExpressionNode
+  IRStock -->|position| IRPosition
   IRAuxiliary -->|expr| IRExpressionNode
+  IRAuxiliary -->|position| IRPosition
   IRFlow -->|rate| IRExpressionNode
-  IRStock -.position.-> IRPosition
-  IRFlow -.position / via.-> IRPosition
-  IRConnection -.via.-> IRPosition
+  IRFlow -->|position| IRPosition
+  IRFlow -->|via| IRPosition
+  IRConnection -->|via| IRPosition
+  IRGraphicalFunction -->|kind| IRGraphicalFunctionKind
+  IR -->|time| IRTime
+  IR -->|stocks| IRStock
+  IR -->|auxiliaries| IRAuxiliary
+  IR -->|flows| IRFlow
+  IR -->|connections| IRConnection
+  IR -->|graphicalFunctions| IRGraphicalFunction
+  CompileResult -->|ir| IR
+  CompileResult -->|diagnostics| IRDiagnostic
 ```
+<!-- /generated:model-shape -->

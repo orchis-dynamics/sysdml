@@ -40,7 +40,9 @@
 		"build": "tsc",
 		"test": "vitest run",
 		"test:watch": "vitest",
-		"docs": "typedoc"
+		"diagrams": "node scripts/generate-diagrams.mjs",
+		"diagrams:check": "node scripts/generate-diagrams.mjs --check",
+		"docs": "node scripts/generate-diagrams.mjs && typedoc"
 	},
 	"devDependencies": {
 		"@types/node": "^24.12.4",
