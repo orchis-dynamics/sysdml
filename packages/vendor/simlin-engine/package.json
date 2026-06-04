@@ -34,6 +34,7 @@
       "module": "./lib.browser/backend-factory.browser.js",
       "node": "./lib/backend-factory.node.js"
     },
+    "./core/libsimlin.wasm": "./core/libsimlin.wasm",
     "./*": {
       "types": "./lib/*.d.ts",
       "module": "./lib.browser/*.js",
