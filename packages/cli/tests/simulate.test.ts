@@ -23,7 +23,7 @@ describe("runSimulateCommand", () => {
 		expect(result.stderr).toBe("");
 		const parsed = JSON.parse(result.stdout);
 		expect(parsed.rows).toHaveLength(3);
-		expect(parsed.rows[0]).toMatchObject({ time: 0, population: 100 });
+		expect(parsed.rows[0]).toEqual({ time: 0, population: 100 });
 	});
 
 	it("emits CSV on stdout when format=csv", async () => {
@@ -51,7 +51,7 @@ aux a = nonexistent
 		expect(result.stderr).toContain("--- Diagnostics ---");
 	});
 
-	it("throws a SimlinError when the model uses a function the engine cannot compile", async () => {
+	it("exits 1 with stderr diagnostics when the engine cannot compile a model function", async () => {
 		const usesDeferredFunction = `sfd Test
 
 time {
@@ -66,8 +66,12 @@ stock x {
 
 aux a = RANDOM(0, 1)
 `;
-		await expect(
-			runSimulateCommand(usesDeferredFunction, { format: "json" }),
-		).rejects.toThrow();
+		const result = await runSimulateCommand(usesDeferredFunction, {
+			format: "json",
+		});
+
+		expect(result.exitCode).toBe(1);
+		expect(result.stdout).toBe("");
+		expect(result.stderr).toContain("[error]");
 	});
 });

@@ -45,6 +45,10 @@ export async function runSimulateCommand(
 			? formatCsv(ir, simulation)
 			: JSON.stringify(simulation, null, 2) + "\n";
 
+	const hasErrors = simulation.diagnostics.some(
+		(diagnostic) => diagnostic.code === "error",
+	);
+
 	const stderr =
 		simulation.diagnostics.length > 0
 			? formatDiagnosticBlock(
@@ -54,5 +58,5 @@ export async function runSimulateCommand(
 				)
 			: "";
 
-	return { stdout, stderr, exitCode: 0 };
+	return { stdout: hasErrors ? "" : stdout, stderr, exitCode: hasErrors ? 1 : 0 };
 }

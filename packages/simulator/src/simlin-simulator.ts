@@ -24,19 +24,26 @@ function backend(): Promise<DirectBackend> {
 	return readyBackend;
 }
 
+function modelVariableIds(ir: IR): string[] {
+	return [
+		...ir.stocks.map((stock) => stock.id),
+		...ir.auxiliaries.map((auxiliary) => auxiliary.id),
+		...ir.flows.map((flow) => flow.id),
+	];
+}
+
 function transposeRun(
 	time: Float64Array,
 	results: ReadonlyMap<string, Float64Array>,
-	variableNames: readonly string[],
+	variableIds: readonly string[],
 ): SimRow[] {
 	const rows: SimRow[] = [];
 	for (let step = 0; step < time.length; step++) {
 		const row: SimRow = { time: time[step] };
-		for (const name of variableNames) {
-			if (name === "time") continue;
-			const series = results.get(name);
+		for (const id of variableIds) {
+			const series = results.get(id);
 			if (series !== undefined) {
-				row[name] = series[step];
+				row[id] = series[step];
 			}
 		}
 		rows.push(row);
@@ -46,26 +53,38 @@ function transposeRun(
 
 export class SimlinSimulator implements Simulator {
 	async simulate(ir: IR): Promise<SimulationResult> {
-		const engine = await backend();
-		const projectJson = JSON.stringify(irToSimlinProject(ir));
-		const handle = await engine.projectOpenJson(
-			new TextEncoder().encode(projectJson),
-			SimlinJsonFormat.Native,
-		);
-		const project = new Project(handle, engine);
-		const model = await project.mainModel();
+		try {
+			const engine = await backend();
+			const projectJson = JSON.stringify(irToSimlinProject(ir));
+			const handle = await engine.projectOpenJson(
+				new TextEncoder().encode(projectJson),
+				SimlinJsonFormat.Native,
+			);
+			const project = new Project(handle, engine);
+			const model = await project.mainModel();
 
-		const issues = await model.check();
-		const diagnostics: SimDiagnostic[] = issues.map((issue) => ({
-			code: issue.severity,
-			message: issue.variable
-				? `${issue.variable}: ${issue.message}`
-				: issue.message,
-		}));
+			const issues = await model.check();
+			const diagnostics: SimDiagnostic[] = issues.map((issue) => ({
+				code: issue.severity,
+				message: issue.variable
+					? `${issue.variable}: ${issue.message}`
+					: issue.message,
+			}));
 
-		const run = await model.run();
-		const rows = transposeRun(run.time, run.results, run.varNames);
+			const run = await model.run();
+			const rows = transposeRun(run.time, run.results, modelVariableIds(ir));
 
-		return { rows, diagnostics };
+			return { rows, diagnostics };
+		} catch (error) {
+			return {
+				rows: [],
+				diagnostics: [
+					{
+						code: "error",
+						message: error instanceof Error ? error.message : String(error),
+					},
+				],
+			};
+		}
 	}
 }

@@ -21,6 +21,13 @@ aux birth_rate = 0.02
 flow births { from: null to: population rate: population * birth_rate }
 `.trim();
 
+const unsupportedFunctionModel = `
+sfd unsupported
+time { start: 0 end: 2 step: 1 }
+stock x { init: 0 }
+flow inflow { from: null to: x rate: RANDOM(0, 1) }
+`.trim();
+
 describe("SimlinSimulator", () => {
 	test("runs a model and returns rows keyed by variable id", async () => {
 		const result = await new SimlinSimulator().simulate(buildIR(growthModel));
@@ -29,5 +36,20 @@ describe("SimlinSimulator", () => {
 		expect(result.rows[0].population).toBeCloseTo(100, 9);
 		expect(result.rows[10].population).toBeGreaterThan(100);
 		expect(result.diagnostics).toEqual([]);
+		expect(Object.keys(result.rows[0]).sort()).toEqual([
+			"birth_rate",
+			"births",
+			"population",
+			"time",
+		]);
+	});
+
+	test("resolves with diagnostics instead of throwing on unsupported engine functions", async () => {
+		const result = await new SimlinSimulator().simulate(
+			buildIR(unsupportedFunctionModel),
+		);
+		expect(result.rows).toEqual([]);
+		expect(result.diagnostics.length).toBeGreaterThan(0);
+		expect(result.diagnostics[0].code).toBe("error");
 	});
 });
