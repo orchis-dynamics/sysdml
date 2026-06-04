@@ -4,7 +4,7 @@ import { compileAST } from "@sysdml/ir";
 import { Project } from "@simlin/engine";
 import { parseSource } from "@sysdml/parser";
 
-import { irToSimlinProject } from "../src/simlinBackend.ts";
+import { irToSimlinProject } from "../src/ir-to-simlin.ts";
 
 const defaultModel = `
 sfd population_growth
