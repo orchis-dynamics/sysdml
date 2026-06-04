@@ -1,7 +1,15 @@
 {
-	"entryPoints": ["src/index.ts"],
+	"entryPoints": [
+		"src/expression/index.ts",
+		"src/syntax/index.ts",
+		"src/diagnostics/index.ts",
+		"src/model/index.ts",
+		"src/simulation/index.ts",
+		"src/protocol/index.ts"
+	],
 	"out": "docs-api",
 	"readme": "README.md",
 	"includeVersion": true,
-	"excludeInternal": true
+	"excludeInternal": true,
+	"plugin": ["typedoc-plugin-mermaid"]
 }

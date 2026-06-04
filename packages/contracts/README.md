@@ -18,3 +18,43 @@ that define a contract's valid value-space (e.g. `DiagnosticCode`, `BUILTIN_*`).
 - `simulation/` — simulation output (`SimulationResult`, `SimRow`, `Simulator`).
 - `protocol/` — serialized messages crossing process boundaries (extension ↔ webview).
   Runtime schemas land here when added.
+
+## Domain dependency graph
+
+The domains form an acyclic graph: `expression` and `syntax` are leaves, and the
+arrows point from a domain to the domains it depends on.
+
+```mermaid
+graph TD
+  expression["expression — leaf"]
+  syntax["syntax — leaf"]
+  diagnostics --> syntax
+  model --> expression
+  model --> diagnostics
+  simulation --> model
+  simulation --> diagnostics
+  protocol --> model
+```
+
+## Model shape
+
+How the `IR` model graph (the `model/` domain) composes, and where the shared
+`IRExpressionNode` formula tree (`expression/` domain) is referenced.
+
+```mermaid
+graph TD
+  CompileResult --> IR
+  CompileResult --> IRDiagnostic
+  IR --> IRTime
+  IR --> IRStock
+  IR --> IRFlow
+  IR --> IRAuxiliary
+  IR --> IRConnection
+  IR --> IRGraphicalFunction
+  IRStock -->|init| IRExpressionNode
+  IRAuxiliary -->|expr| IRExpressionNode
+  IRFlow -->|rate| IRExpressionNode
+  IRStock -.position.-> IRPosition
+  IRFlow -.position / via.-> IRPosition
+  IRConnection -.via.-> IRPosition
+```
