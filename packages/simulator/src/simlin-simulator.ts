@@ -10,16 +10,13 @@ import type {
 } from "@sysdml/contracts";
 
 import { irToSimlinProject } from "./ir-to-simlin.js";
-import { getConfiguredWasmSource } from "./wasm.js";
 
 let readyBackend: Promise<DirectBackend> | null = null;
 
 function backend(): Promise<DirectBackend> {
 	if (readyBackend === null) {
 		const instance = new DirectBackend();
-		readyBackend = instance
-			.init(getConfiguredWasmSource())
-			.then(() => instance);
+		readyBackend = instance.init().then(() => instance);
 	}
 	return readyBackend;
 }

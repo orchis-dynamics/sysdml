@@ -1,6 +1,8 @@
 import tailwindcss from "@tailwindcss/vite";
 import vue from "@vitejs/plugin-vue";
 import { defineConfig, type Plugin } from "vite";
+import topLevelAwait from "vite-plugin-top-level-await";
+import wasm from "vite-plugin-wasm";
 
 import { sysdmlDev } from "./plugins/sysdml-dev.js";
 
@@ -31,13 +33,24 @@ function workerInline(mode: string): Plugin {
 	};
 }
 
+// The vendored `@simlin/engine` browser build loads its WASM through the
+// "ESM integration proposal for Wasm" (`import * as wasm from "….wasm"`), which
+// Rollup cannot handle on its own. `vite-plugin-wasm` + `vite-plugin-top-level-await`
+// teach Vite to instantiate it. The import lives inside the simulation worker,
+// so the plugins must also run in the dedicated `worker` build pass.
 export default defineConfig(({ mode }) => ({
 	plugins: [
 		vue(),
 		tailwindcss(),
 		workerInline(mode),
+		wasm(),
+		topLevelAwait(),
 		sysdmlDev({ file: process.env["SYSDML_FILE"] }),
 	],
+	worker: {
+		format: "es",
+		plugins: () => [wasm(), topLevelAwait()],
+	},
 	build: {
 		outDir: "dist",
 		target: "esnext",

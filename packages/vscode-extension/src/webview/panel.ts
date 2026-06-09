@@ -106,7 +106,7 @@ function buildWebViewHtml(
 		"default-src 'none'",
 		`img-src ${cspSource} https: data:`,
 		`style-src ${cspSource} 'unsafe-inline'`,
-		`script-src ${cspSource}`,
+		`script-src ${cspSource} 'wasm-unsafe-eval'`,
 		`font-src ${cspSource}`,
 		`connect-src ${cspSource}`,
 		`worker-src ${cspSource} blob:`,
