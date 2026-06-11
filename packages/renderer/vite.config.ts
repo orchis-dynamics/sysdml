@@ -38,6 +38,20 @@ function workerInline(mode: string): Plugin {
 // Rollup cannot handle on its own. `vite-plugin-wasm` + `vite-plugin-top-level-await`
 // teach Vite to instantiate it. The import lives inside the simulation worker,
 // so the plugins must also run in the dedicated `worker` build pass.
+// The inlined `blob:` simulation worker (see `workerInline`) has a `blob:` base
+// and the webview iframe origin, so a wasm emitted as a separate `/assets/…`
+// file is fetched from the wrong origin and blocked by the webview CSP. Inlining
+// it as a base64 `data:` URL drops the fetch — the engine loader decodes data
+// URLs directly via `WebAssembly.instantiate`.
+function wasmAssetsInlineLimit(mode: string) {
+	const isVscodeBuild = mode === "vscode";
+	if (!isVscodeBuild) {
+		return undefined;
+	}
+	return (filePath: string): boolean | undefined =>
+		filePath.endsWith(".wasm") ? true : undefined;
+}
+
 export default defineConfig(({ mode }) => ({
 	plugins: [
 		vue(),
@@ -54,6 +68,7 @@ export default defineConfig(({ mode }) => ({
 	build: {
 		outDir: "dist",
 		target: "esnext",
+		assetsInlineLimit: wasmAssetsInlineLimit(mode),
 		rollupOptions: {
 			input: "index.html",
 		},
