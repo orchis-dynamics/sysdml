@@ -1,5 +1,6 @@
 import { Project } from "@simlin/engine";
 import { DirectBackend } from "@simlin/engine/direct-backend";
+import { canonicalizeIdent } from "@simlin/engine/internal/canonicalize";
 import { SimlinJsonFormat } from "@simlin/engine/internal/types";
 import type {
 	IR,
@@ -29,19 +30,36 @@ function modelVariableIds(ir: IR): string[] {
 	];
 }
 
+interface VariableSeries {
+	id: string;
+	values: Float64Array;
+}
+
+function resolveVariableSeries(
+	results: ReadonlyMap<string, Float64Array>,
+	variableIds: readonly string[],
+): VariableSeries[] {
+	const resolved: VariableSeries[] = [];
+	for (const id of variableIds) {
+		const values = results.get(canonicalizeIdent(id));
+		if (values !== undefined) {
+			resolved.push({ id, values });
+		}
+	}
+	return resolved;
+}
+
 function transposeRun(
 	time: Float64Array,
 	results: ReadonlyMap<string, Float64Array>,
 	variableIds: readonly string[],
 ): SimRow[] {
+	const series = resolveVariableSeries(results, variableIds);
 	const rows: SimRow[] = [];
 	for (let step = 0; step < time.length; step++) {
 		const row: SimRow = { time: time[step] };
-		for (const id of variableIds) {
-			const series = results.get(id);
-			if (series !== undefined) {
-				row[id] = series[step];
-			}
+		for (const entry of series) {
+			row[entry.id] = entry.values[step];
 		}
 		rows.push(row);
 	}

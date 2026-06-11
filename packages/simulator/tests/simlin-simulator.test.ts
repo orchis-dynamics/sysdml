@@ -28,6 +28,14 @@ stock x { init: 0 }
 flow inflow { from: null to: x rate: RANDOM(0, 1) }
 `.trim();
 
+const camelCaseModel = `
+sfd hydro
+time { start: 0 end: 3 step: 1 }
+stock waterStock { init: 50 }
+aux inflowRate = 5
+flow addWater { from: null to: waterStock rate: inflowRate }
+`.trim();
+
 describe("SimlinSimulator", () => {
 	test("runs a model and returns rows keyed by variable id", async () => {
 		const result = await new SimlinSimulator().simulate(buildIR(growthModel));
@@ -42,6 +50,21 @@ describe("SimlinSimulator", () => {
 			"population",
 			"time",
 		]);
+	});
+
+	test("keys rows by the original camelCase id even though the engine canonicalizes identifiers to lowercase", async () => {
+		const result = await new SimlinSimulator().simulate(
+			buildIR(camelCaseModel),
+		);
+		expect(result.diagnostics).toEqual([]);
+		expect(Object.keys(result.rows[0]).sort()).toEqual([
+			"addWater",
+			"inflowRate",
+			"time",
+			"waterStock",
+		]);
+		expect(result.rows[0].waterStock).toBeCloseTo(50, 9);
+		expect(result.rows[3].waterStock).toBeCloseTo(65, 9);
 	});
 
 	test("resolves with diagnostics instead of throwing on unsupported engine functions", async () => {
