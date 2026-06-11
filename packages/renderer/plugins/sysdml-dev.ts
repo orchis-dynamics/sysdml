@@ -1,8 +1,7 @@
-import type { EventEmitter } from "node:events";
 import { readFileSync } from "node:fs";
 
-import { compileAST } from "@sysdml/ir";
 import type { IR } from "@sysdml/contracts";
+import { compileAST } from "@sysdml/ir";
 import { parseSource } from "@sysdml/parser";
 import chokidar from "chokidar";
 import type { Plugin, ViteDevServer } from "vite";
@@ -93,7 +92,7 @@ export function sysdmlDev(options: SysdmlDevOptions): Plugin {
 				return;
 			}
 
-			const httpServer: EventEmitter = server.httpServer;
+			const httpServer = server.httpServer;
 			const handleUpgrade = (
 				request: import("node:http").IncomingMessage,
 				socket: import("node:stream").Duplex,
