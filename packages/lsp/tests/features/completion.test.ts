@@ -59,7 +59,6 @@ describe("getCompletionItems", () => {
 
 	it("offers flow identifiers in addition to stocks and null after 'from:'", () => {
 		const { ast, ir } = analyze(SOURCE);
-		// cursor after 'from: ' on line 11 — same position as the stock test
 		const items = getCompletionItems(SOURCE, ast, ir, {
 			line: 11,
 			character: 8,
