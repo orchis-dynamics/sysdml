@@ -57,6 +57,19 @@ describe("getCompletionItems", () => {
 		expect(labels).not.toContain("birth_rate"); // not a stock
 	});
 
+	it("offers flow identifiers in addition to stocks and null after 'from:'", () => {
+		const { ast, ir } = analyze(SOURCE);
+		// cursor after 'from: ' on line 11 — same position as the stock test
+		const items = getCompletionItems(SOURCE, ast, ir, {
+			line: 11,
+			character: 8,
+		});
+		const labels = items.map((i) => i.label);
+		expect(labels).toContain("null");
+		expect(labels).toContain("population"); // a stock
+		expect(labels).toContain("births"); // the flow declared in SOURCE
+	});
+
 	it("offers all identifiers and builtins inside an expression", () => {
 		const src = SOURCE.replace("rate: 1", "rate: ");
 		// Note: this source won't parse because rate is incomplete, so ast and ir will be null.

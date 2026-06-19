@@ -54,6 +54,16 @@ function getStockIds(ast: FileNode | null): string[] {
 		.map((d) => d.id);
 }
 
+function getFlowIds(ast: FileNode | null): string[] {
+	if (!ast) return [];
+	return ast.decls
+		.filter(
+			(d): d is Extract<typeof d, { type: "FlowDeclaration" }> =>
+				d.type === "FlowDeclaration",
+		)
+		.map((d) => d.id);
+}
+
 function getAllUserIds(ast: FileNode | null, ir: IR | null): string[] {
 	if (ir) {
 		return [
@@ -83,10 +93,19 @@ export function getCompletionItems(
 
 	switch (context) {
 		case "flow-endpoint": {
-			const stocks = getStockIds(ast).map((id) => CompletionItem.create(id));
 			const nullItem = CompletionItem.create("null");
 			nullItem.kind = CompletionItemKind.Keyword;
-			return [nullItem, ...stocks];
+			const stocks = getStockIds(ast).map((id) => {
+				const item = CompletionItem.create(id);
+				item.kind = CompletionItemKind.Variable;
+				return item;
+			});
+			const flows = getFlowIds(ast).map((id) => {
+				const item = CompletionItem.create(id);
+				item.kind = CompletionItemKind.Variable;
+				return item;
+			});
+			return [nullItem, ...stocks, ...flows];
 		}
 		case "gf-kind":
 			return GF_KIND_VALUES.map((v) => {
