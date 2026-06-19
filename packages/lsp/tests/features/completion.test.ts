@@ -95,6 +95,62 @@ describe("getCompletionItems", () => {
 		expect(labels).toContain("step");
 	});
 
+	describe("rate expression ranking", () => {
+		const CONNECTED_SOURCE = `sfd m
+time { start: 0
+ end: 10
+ step: 1
+}
+stock population { init: 100 }
+aux birth_rate = 0.02
+aux unrelated = 5
+flow births {
+  from: null
+  to: population
+  rate: birth_rate
+}
+birth_rate ->+ births
+`;
+
+		it("ranks the flow's connected variables before unconnected ones", () => {
+			const { ast, ir } = analyze(CONNECTED_SOURCE);
+			const src = CONNECTED_SOURCE.replace("rate: birth_rate", "rate: ");
+			const items = getCompletionItems(src, ast, ir, {
+				line: 11,
+				character: 8,
+			});
+
+			const birthRate = items.find((i) => i.label === "birth_rate");
+			const population = items.find((i) => i.label === "population");
+			const unrelated = items.find((i) => i.label === "unrelated");
+
+			expect(birthRate?.sortText).toBe("0_birth_rate");
+			expect(population?.sortText).toBe("0_population");
+			expect(unrelated?.sortText).toBe("1_unrelated");
+		});
+
+		it("does not rank when the expression is not inside a flow", () => {
+			const validSource = `sfd m
+time { start: 0
+ end: 10
+ step: 1
+}
+aux base = 5
+stock population {
+  init: base
+}
+`;
+			const { ast, ir } = analyze(validSource);
+			const src = validSource.replace("init: base", "init: ");
+			const items = getCompletionItems(src, ast, ir, {
+				line: 7,
+				character: 8,
+			});
+			const base = items.find((i) => i.label === "base");
+			expect(base?.sortText).toBe("1_base");
+		});
+	});
+
 	describe("layout keyword completions", () => {
 		it("suggests 'position' inside a stock block", () => {
 			const src = "sfd m\nstock s {\n  init: 100\n  ";

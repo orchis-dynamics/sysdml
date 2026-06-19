@@ -44,6 +44,28 @@ function detectContext(source: string, position: Position): CompletionContext {
 	return "top-level";
 }
 
+function findEnclosingFlowId(
+	source: string,
+	position: Position,
+): string | null {
+	const lines = source.split("\n");
+	const sourceUpToCursor = lines
+		.slice(0, position.line)
+		.concat(lines[position.line]?.slice(0, position.character) ?? "")
+		.join("\n");
+
+	const openBraces = (sourceUpToCursor.match(/{/g) ?? []).length;
+	const closeBraces = (sourceUpToCursor.match(/}/g) ?? []).length;
+	if (openBraces <= closeBraces) return null;
+
+	const lastOpenBraceIndex = sourceUpToCursor.lastIndexOf("{");
+	const headerBeforeBrace = sourceUpToCursor.slice(0, lastOpenBraceIndex);
+	const flowHeaderMatch = /\bflow\s+([A-Za-z_][A-Za-z0-9_]*)\s*$/.exec(
+		headerBeforeBrace,
+	);
+	return flowHeaderMatch ? flowHeaderMatch[1] : null;
+}
+
 function getStockIds(ast: FileNode | null): string[] {
 	if (!ast) return [];
 	return ast.decls
@@ -83,6 +105,24 @@ function getAllUserIds(ast: FileNode | null, ir: IR | null): string[] {
 		.map((d) => d.id);
 }
 
+function getConnectedVariableIds(flowId: string, ir: IR | null): Set<string> {
+	const connectedIds = new Set<string>();
+	if (!ir) return connectedIds;
+
+	const flow = ir.flows.find((f) => f.id === flowId);
+	if (flow) {
+		if (flow.from) connectedIds.add(flow.from);
+		if (flow.to) connectedIds.add(flow.to);
+	}
+
+	for (const connection of ir.connections) {
+		if (connection.from === flowId) connectedIds.add(connection.to);
+		if (connection.to === flowId) connectedIds.add(connection.from);
+	}
+
+	return connectedIds;
+}
+
 export function getCompletionItems(
 	source: string,
 	ast: FileNode | null,
@@ -120,14 +160,21 @@ export function getCompletionItems(
 				return item;
 			});
 		case "expression": {
+			const enclosingFlowId = findEnclosingFlowId(source, position);
+			const connectedIds = enclosingFlowId
+				? getConnectedVariableIds(enclosingFlowId, ir)
+				: new Set<string>();
+
 			const userIds = getAllUserIds(ast, ir).map((id) => {
 				const item = CompletionItem.create(id);
 				item.kind = CompletionItemKind.Variable;
+				item.sortText = connectedIds.has(id) ? `0_${id}` : `1_${id}`;
 				return item;
 			});
 			const builtins = Array.from(BUILTIN_FUNCTIONS).map((name) => {
 				const item = CompletionItem.create(name);
 				item.kind = CompletionItemKind.Function;
+				item.sortText = `2_${name}`;
 				return item;
 			});
 			return [...userIds, ...builtins];
