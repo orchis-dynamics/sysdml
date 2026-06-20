@@ -18,6 +18,42 @@ type CompletionContext =
 	| "block-key"
 	| "top-level";
 
+function replaceCommentsWithSpaces(source: string): string {
+	const characters = source.split("");
+	let index = 0;
+	while (index < source.length) {
+		const current = source[index];
+		const next = source[index + 1];
+		const isLineComment = current === "#" || (current === "/" && next === "/");
+		const isBlockCommentStart = current === "/" && next === "*";
+		if (isLineComment) {
+			while (index < source.length && source[index] !== "\n") {
+				characters[index] = " ";
+				index += 1;
+			}
+		} else if (isBlockCommentStart) {
+			characters[index] = " ";
+			characters[index + 1] = " ";
+			index += 2;
+			while (
+				index < source.length &&
+				!(source[index] === "*" && source[index + 1] === "/")
+			) {
+				if (source[index] !== "\n") characters[index] = " ";
+				index += 1;
+			}
+			if (index < source.length) {
+				characters[index] = " ";
+				characters[index + 1] = " ";
+				index += 2;
+			}
+		} else {
+			index += 1;
+		}
+	}
+	return characters.join("");
+}
+
 function detectContext(source: string, position: Position): CompletionContext {
 	const lines = source.split("\n");
 	const line = lines[position.line] ?? "";
@@ -129,7 +165,8 @@ export function getCompletionItems(
 	ir: IR | null,
 	position: Position,
 ): CompletionItem[] {
-	const context = detectContext(source, position);
+	const maskedSource = replaceCommentsWithSpaces(source);
+	const context = detectContext(maskedSource, position);
 
 	switch (context) {
 		case "flow-endpoint": {
@@ -160,7 +197,7 @@ export function getCompletionItems(
 				return item;
 			});
 		case "expression": {
-			const enclosingFlowId = findEnclosingFlowId(source, position);
+			const enclosingFlowId = findEnclosingFlowId(maskedSource, position);
 			const connectedIds = enclosingFlowId
 				? getConnectedVariableIds(enclosingFlowId, ir)
 				: new Set<string>();

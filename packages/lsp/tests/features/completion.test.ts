@@ -150,6 +150,46 @@ stock population {
 		});
 	});
 
+	describe("comment-aware context detection", () => {
+		it("ignores an unbalanced brace inside a comment at top level", () => {
+			const src = `sfd m\n// TODO: wrap in flow {\n`;
+			const items = getCompletionItems(src, null, null, {
+				line: 2,
+				character: 0,
+			});
+			const labels = items.map((i) => i.label);
+			expect(labels).toContain("stock");
+			expect(labels).toContain("flow");
+			expect(labels).not.toContain("position");
+		});
+
+		it("ranks rate variables even when a comment in the flow block contains a brace", () => {
+			const sourceWithComment = `sfd m
+time { start: 0
+ end: 10
+ step: 1
+}
+stock population { init: 100 }
+aux birth_rate = 0.02
+flow births {
+  // balance the books } here
+  from: null
+  to: population
+  rate: birth_rate
+}
+birth_rate ->+ births
+`;
+			const { ast, ir } = analyze(sourceWithComment);
+			const src = sourceWithComment.replace("rate: birth_rate", "rate: ");
+			const items = getCompletionItems(src, ast, ir, {
+				line: 11,
+				character: 8,
+			});
+			const birthRate = items.find((i) => i.label === "birth_rate");
+			expect(birthRate?.sortText).toBe("0_birth_rate");
+		});
+	});
+
 	describe("layout keyword completions", () => {
 		it("suggests 'position' inside a stock block", () => {
 			const src = "sfd m\nstock s {\n  init: 100\n  ";
