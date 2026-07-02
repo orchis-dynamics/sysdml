@@ -16,7 +16,12 @@ import {
 } from "vscode-languageserver/node.js";
 
 import { analyzeDocument } from "./analysis.js";
-import { setAnalysis, getAnalysis, deleteAnalysis } from "./documents.js";
+import {
+	setAnalysis,
+	getAnalysis,
+	getLastParsedAnalysis,
+	deleteAnalysis,
+} from "./documents.js";
 import { getCompletionItems } from "./features/completion.js";
 import { getDefinitionLocation } from "./features/definition.js";
 import { formatSource } from "./features/formatting.js";
@@ -68,8 +73,8 @@ function startServer(connection: ReturnType<typeof createConnection>): void {
 
 	connection.onCompletion((params) => {
 		const doc = documents.get(params.textDocument.uri);
-		const analysis = getAnalysis(params.textDocument.uri);
 		if (!doc) return [];
+		const analysis = getLastParsedAnalysis(params.textDocument.uri);
 		return getCompletionItems(
 			doc.getText(),
 			analysis?.ast ?? null,

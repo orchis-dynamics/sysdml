@@ -18,6 +18,42 @@ type CompletionContext =
 	| "block-key"
 	| "top-level";
 
+function replaceCommentsWithSpaces(source: string): string {
+	const characters = source.split("");
+	let index = 0;
+	while (index < source.length) {
+		const current = source[index];
+		const next = source[index + 1];
+		const isLineComment = current === "#" || (current === "/" && next === "/");
+		const isBlockCommentStart = current === "/" && next === "*";
+		if (isLineComment) {
+			while (index < source.length && source[index] !== "\n") {
+				characters[index] = " ";
+				index += 1;
+			}
+		} else if (isBlockCommentStart) {
+			characters[index] = " ";
+			characters[index + 1] = " ";
+			index += 2;
+			while (
+				index < source.length &&
+				!(source[index] === "*" && source[index + 1] === "/")
+			) {
+				if (source[index] !== "\n") characters[index] = " ";
+				index += 1;
+			}
+			if (index < source.length) {
+				characters[index] = " ";
+				characters[index + 1] = " ";
+				index += 2;
+			}
+		} else {
+			index += 1;
+		}
+	}
+	return characters.join("");
+}
+
 function detectContext(source: string, position: Position): CompletionContext {
 	const lines = source.split("\n");
 	const line = lines[position.line] ?? "";
@@ -44,12 +80,44 @@ function detectContext(source: string, position: Position): CompletionContext {
 	return "top-level";
 }
 
+function findEnclosingFlowId(
+	source: string,
+	position: Position,
+): string | null {
+	const lines = source.split("\n");
+	const sourceUpToCursor = lines
+		.slice(0, position.line)
+		.concat(lines[position.line]?.slice(0, position.character) ?? "")
+		.join("\n");
+
+	const openBraces = (sourceUpToCursor.match(/{/g) ?? []).length;
+	const closeBraces = (sourceUpToCursor.match(/}/g) ?? []).length;
+	if (openBraces <= closeBraces) return null;
+
+	const lastOpenBraceIndex = sourceUpToCursor.lastIndexOf("{");
+	const headerBeforeBrace = sourceUpToCursor.slice(0, lastOpenBraceIndex);
+	const flowHeaderMatch = /\bflow\s+([A-Za-z_][A-Za-z0-9_]*)\s*$/.exec(
+		headerBeforeBrace,
+	);
+	return flowHeaderMatch ? flowHeaderMatch[1] : null;
+}
+
 function getStockIds(ast: FileNode | null): string[] {
 	if (!ast) return [];
 	return ast.decls
 		.filter(
 			(d): d is Extract<typeof d, { type: "StockDeclaration" }> =>
 				d.type === "StockDeclaration",
+		)
+		.map((d) => d.id);
+}
+
+function getFlowIds(ast: FileNode | null): string[] {
+	if (!ast) return [];
+	return ast.decls
+		.filter(
+			(d): d is Extract<typeof d, { type: "FlowDeclaration" }> =>
+				d.type === "FlowDeclaration",
 		)
 		.map((d) => d.id);
 }
@@ -73,20 +141,48 @@ function getAllUserIds(ast: FileNode | null, ir: IR | null): string[] {
 		.map((d) => d.id);
 }
 
+function getConnectedVariableIds(flowId: string, ir: IR | null): Set<string> {
+	const connectedIds = new Set<string>();
+	if (!ir) return connectedIds;
+
+	const flow = ir.flows.find((f) => f.id === flowId);
+	if (flow) {
+		if (flow.from) connectedIds.add(flow.from);
+		if (flow.to) connectedIds.add(flow.to);
+	}
+
+	for (const connection of ir.connections) {
+		if (connection.from === flowId) connectedIds.add(connection.to);
+		if (connection.to === flowId) connectedIds.add(connection.from);
+	}
+
+	return connectedIds;
+}
+
 export function getCompletionItems(
 	source: string,
 	ast: FileNode | null,
 	ir: IR | null,
 	position: Position,
 ): CompletionItem[] {
-	const context = detectContext(source, position);
+	const maskedSource = replaceCommentsWithSpaces(source);
+	const context = detectContext(maskedSource, position);
 
 	switch (context) {
 		case "flow-endpoint": {
-			const stocks = getStockIds(ast).map((id) => CompletionItem.create(id));
 			const nullItem = CompletionItem.create("null");
 			nullItem.kind = CompletionItemKind.Keyword;
-			return [nullItem, ...stocks];
+			const stocks = getStockIds(ast).map((id) => {
+				const item = CompletionItem.create(id);
+				item.kind = CompletionItemKind.Variable;
+				return item;
+			});
+			const flows = getFlowIds(ast).map((id) => {
+				const item = CompletionItem.create(id);
+				item.kind = CompletionItemKind.Variable;
+				return item;
+			});
+			return [nullItem, ...stocks, ...flows];
 		}
 		case "gf-kind":
 			return GF_KIND_VALUES.map((v) => {
@@ -101,14 +197,21 @@ export function getCompletionItems(
 				return item;
 			});
 		case "expression": {
+			const enclosingFlowId = findEnclosingFlowId(maskedSource, position);
+			const connectedIds = enclosingFlowId
+				? getConnectedVariableIds(enclosingFlowId, ir)
+				: new Set<string>();
+
 			const userIds = getAllUserIds(ast, ir).map((id) => {
 				const item = CompletionItem.create(id);
 				item.kind = CompletionItemKind.Variable;
+				item.sortText = connectedIds.has(id) ? `0_${id}` : `1_${id}`;
 				return item;
 			});
 			const builtins = Array.from(BUILTIN_FUNCTIONS).map((name) => {
 				const item = CompletionItem.create(name);
 				item.kind = CompletionItemKind.Function;
+				item.sortText = `2_${name}`;
 				return item;
 			});
 			return [...userIds, ...builtins];
