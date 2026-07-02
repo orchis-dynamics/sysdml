@@ -1,5 +1,5 @@
-import { compileAST } from "@sysdml/ir";
 import type { IR } from "@sysdml/contracts";
+import { compileAST } from "@sysdml/ir";
 import { parseSource } from "@sysdml/parser";
 import { describe, expect, test } from "vitest";
 
@@ -44,5 +44,71 @@ describe("irToSimlinProject", () => {
 			dt: "1",
 			method: "euler",
 		});
+	});
+
+	test("preserves both lookups when a graphical function is nested inside another's argument", () => {
+		const nestedGraphicalFunctions = `
+sfd nested_gf
+time { start: 0 end: 1 step: 1 }
+stock s { init: 0 }
+aux x = 3
+gf inner { xscale: [0, 10] ypts: [0, 100] }
+gf outer { xscale: [0, 100] ypts: [0, 1000] }
+aux y = outer(inner(x))
+`.trim();
+		const [model] = irToSimlinProject(buildIR(nestedGraphicalFunctions)).models;
+		const graphicalFunctionCount = model.auxiliaries.filter(
+			(auxiliary) => auxiliary.graphicalFunction !== undefined,
+		).length;
+		expect(graphicalFunctionCount).toBe(2);
+		const y = model.auxiliaries.find((auxiliary) => auxiliary.name === "y");
+		expect(y?.equation).not.toBe("x");
+	});
+
+	test("avoids collision when a user variable already uses a hidden-auxiliary name", () => {
+		const collidingModel = `
+sfd collide
+time { start: 0 end: 1 step: 1 }
+stock s { init: 0 }
+aux _lookup_0 = 5
+aux x = 3
+gf g { xscale: [0, 10] ypts: [0, 100] }
+aux y = 2 * g(x)
+`.trim();
+		const [model] = irToSimlinProject(buildIR(collidingModel)).models;
+		const userAuxiliary = model.auxiliaries.find(
+			(auxiliary) => auxiliary.name === "_lookup_0",
+		);
+		expect(userAuxiliary?.equation).toBe("5");
+		expect(userAuxiliary?.graphicalFunction).toBeUndefined();
+		const hiddenAuxiliary = model.auxiliaries.find(
+			(auxiliary) => auxiliary.name === "_lookup_1",
+		);
+		expect(hiddenAuxiliary?.graphicalFunction).toBeDefined();
+	});
+
+	test("throws instead of silently dropping a graphical-function call with no definition", () => {
+		const danglingGraphicalFunction: IR = {
+			ir_version: "0.1",
+			model: { id: "dangling", kind: "sfd" },
+			time: { start: 0, end: 1, step: 1 },
+			stocks: [{ id: "s", init: { type: "Number", value: 0 } }],
+			auxiliaries: [
+				{
+					id: "y",
+					expr: {
+						type: "GraphicalFunctionCall",
+						name: "missing",
+						argument: { type: "Number", value: 1 },
+					},
+				},
+			],
+			flows: [],
+			connections: [],
+			graphicalFunctions: [],
+		};
+		expect(() => irToSimlinProject(danglingGraphicalFunction)).toThrow(
+			/missing/,
+		);
 	});
 });

@@ -37,25 +37,53 @@ function serializeBinaryOperator(operator: IRBinaryOperator): string {
 	return KEYWORD_OPERATORS[operator] ?? operator;
 }
 
-function serializeExpression(node: IRExpressionNode): string {
+function serializeExpression(
+	node: IRExpressionNode,
+	context: EquationLoweringContext,
+): string {
+	const serialize = (child: IRExpressionNode): string =>
+		serializeExpression(child, context);
 	switch (node.type) {
 		case "Number":
 			return String(node.value);
 		case "Reference":
 			return node.id;
 		case "UnaryMinus":
-			return `-(${serializeExpression(node.operand)})`;
+			return `-(${serialize(node.operand)})`;
 		case "Not":
-			return `NOT (${serializeExpression(node.operand)})`;
+			return `NOT (${serialize(node.operand)})`;
 		case "BinaryOperation":
-			return `(${serializeExpression(node.left)} ${serializeBinaryOperator(node.op)} ${serializeExpression(node.right)})`;
+			return `(${serialize(node.left)} ${serializeBinaryOperator(node.op)} ${serialize(node.right)})`;
 		case "IfThenElse":
-			return `IF (${serializeExpression(node.cond)}) THEN (${serializeExpression(node.thenBranch)}) ELSE (${serializeExpression(node.elseBranch)})`;
+			return `IF (${serialize(node.cond)}) THEN (${serialize(node.thenBranch)}) ELSE (${serialize(node.elseBranch)})`;
 		case "FunctionCall":
-			return `${node.name}(${node.args.map(serializeExpression).join(", ")})`;
+			return `${node.name}(${node.args.map(serialize).join(", ")})`;
 		case "GraphicalFunctionCall":
-			return serializeExpression(node.argument);
+			return serializeGraphicalFunctionCall(node, context);
 	}
+}
+
+function serializeGraphicalFunctionCall(
+	node: Extract<IRExpressionNode, { type: "GraphicalFunctionCall" }>,
+	context: EquationLoweringContext,
+): string {
+	const argument = serializeExpression(node.argument, context);
+	const definition = findGraphicalFunctionDefinition(
+		node.name,
+		context.graphicalFunctions,
+	);
+	if (!definition) {
+		throw new Error(
+			`graphical function '${node.name}' is referenced but not defined in the IR`,
+		);
+	}
+	const hiddenName = context.allocateHiddenAuxiliaryName();
+	context.hiddenAuxiliaries.push({
+		name: hiddenName,
+		equation: argument,
+		graphicalFunction: convertGraphicalFunction(definition),
+	});
+	return hiddenName;
 }
 
 function serializeGraphicalFunctionKind(
@@ -94,17 +122,61 @@ function convertGraphicalFunction(
 	return result;
 }
 
-function findGraphicalFunction(
-	expression: IRExpressionNode,
+function findGraphicalFunctionDefinition(
+	name: string,
 	graphicalFunctions: IRGraphicalFunction[],
-): SimlinGraphicalFunction | undefined {
-	if (expression.type !== "GraphicalFunctionCall") {
-		return undefined;
+): IRGraphicalFunction | undefined {
+	return graphicalFunctions.find((candidate) => candidate.id === name);
+}
+
+interface EquationLoweringContext {
+	graphicalFunctions: IRGraphicalFunction[];
+	allocateHiddenAuxiliaryName: () => string;
+	hiddenAuxiliaries: SimlinAuxiliary[];
+}
+
+function createHiddenAuxiliaryNameAllocator(ir: IR): () => string {
+	const usedNames = new Set<string>();
+	for (const stock of ir.stocks) usedNames.add(stock.id);
+	for (const auxiliary of ir.auxiliaries) usedNames.add(auxiliary.id);
+	for (const flow of ir.flows) usedNames.add(flow.id);
+	for (const graphicalFunction of ir.graphicalFunctions)
+		usedNames.add(graphicalFunction.id);
+	let counter = 0;
+	return () => {
+		let candidate = `_lookup_${counter}`;
+		while (usedNames.has(candidate)) {
+			counter += 1;
+			candidate = `_lookup_${counter}`;
+		}
+		usedNames.add(candidate);
+		counter += 1;
+		return candidate;
+	};
+}
+
+interface LoweredEquation {
+	equation: string;
+	graphicalFunction?: SimlinGraphicalFunction;
+}
+
+function lowerEquation(
+	expression: IRExpressionNode,
+	context: EquationLoweringContext,
+): LoweredEquation {
+	if (expression.type === "GraphicalFunctionCall") {
+		const definition = findGraphicalFunctionDefinition(
+			expression.name,
+			context.graphicalFunctions,
+		);
+		if (definition) {
+			return {
+				equation: serializeExpression(expression.argument, context),
+				graphicalFunction: convertGraphicalFunction(definition),
+			};
+		}
 	}
-	const definition = graphicalFunctions.find(
-		(candidate) => candidate.id === expression.name,
-	);
-	return definition ? convertGraphicalFunction(definition) : undefined;
+	return { equation: serializeExpression(expression, context) };
 }
 
 interface StockFlowWiring {
@@ -134,46 +206,57 @@ function buildStockFlowWiring(flows: IRFlow[]): Map<string, StockFlowWiring> {
 	return wiringByStockId;
 }
 
-function mapStocks(ir: IR): SimlinStock[] {
+function mapStocks(ir: IR, context: EquationLoweringContext): SimlinStock[] {
 	const wiringByStockId = buildStockFlowWiring(ir.flows);
 	return ir.stocks.map((stock) => {
 		const wiring = wiringByStockId.get(stock.id);
 		return {
 			name: stock.id,
-			initialEquation: serializeExpression(stock.init),
+			initialEquation: lowerEquation(stock.init, context).equation,
 			inflows: wiring ? wiring.inflows : [],
 			outflows: wiring ? wiring.outflows : [],
 		};
 	});
 }
 
-function mapFlows(ir: IR): SimlinFlow[] {
+function mapFlows(ir: IR, context: EquationLoweringContext): SimlinFlow[] {
 	return ir.flows.map((flow) => {
-		const graphicalFunction = findGraphicalFunction(
-			flow.rate,
-			ir.graphicalFunctions,
-		);
-		const equation = serializeExpression(flow.rate);
-		return graphicalFunction
-			? { name: flow.id, equation, graphicalFunction }
-			: { name: flow.id, equation };
+		const lowered = lowerEquation(flow.rate, context);
+		return lowered.graphicalFunction
+			? {
+					name: flow.id,
+					equation: lowered.equation,
+					graphicalFunction: lowered.graphicalFunction,
+				}
+			: { name: flow.id, equation: lowered.equation };
 	});
 }
 
-function mapAuxiliaries(ir: IR): SimlinAuxiliary[] {
+function mapAuxiliaries(
+	ir: IR,
+	context: EquationLoweringContext,
+): SimlinAuxiliary[] {
 	return ir.auxiliaries.map((auxiliary) => {
-		const graphicalFunction = findGraphicalFunction(
-			auxiliary.expr,
-			ir.graphicalFunctions,
-		);
-		const equation = serializeExpression(auxiliary.expr);
-		return graphicalFunction
-			? { name: auxiliary.id, equation, graphicalFunction }
-			: { name: auxiliary.id, equation };
+		const lowered = lowerEquation(auxiliary.expr, context);
+		return lowered.graphicalFunction
+			? {
+					name: auxiliary.id,
+					equation: lowered.equation,
+					graphicalFunction: lowered.graphicalFunction,
+				}
+			: { name: auxiliary.id, equation: lowered.equation };
 	});
 }
 
 export function irToSimlinProject(ir: IR): SimlinProject {
+	const context: EquationLoweringContext = {
+		graphicalFunctions: ir.graphicalFunctions,
+		allocateHiddenAuxiliaryName: createHiddenAuxiliaryNameAllocator(ir),
+		hiddenAuxiliaries: [],
+	};
+	const stocks = mapStocks(ir, context);
+	const flows = mapFlows(ir, context);
+	const auxiliaries = mapAuxiliaries(ir, context);
 	return {
 		name: ir.model.id,
 		simSpecs: {
@@ -185,9 +268,9 @@ export function irToSimlinProject(ir: IR): SimlinProject {
 		models: [
 			{
 				name: "main",
-				stocks: mapStocks(ir),
-				flows: mapFlows(ir),
-				auxiliaries: mapAuxiliaries(ir),
+				stocks,
+				flows,
+				auxiliaries: [...auxiliaries, ...context.hiddenAuxiliaries],
 			},
 		],
 	};

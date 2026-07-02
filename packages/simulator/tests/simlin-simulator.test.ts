@@ -1,5 +1,5 @@
-import { compileAST } from "@sysdml/ir";
 import type { IR } from "@sysdml/contracts";
+import { compileAST } from "@sysdml/ir";
 import { parseSource } from "@sysdml/parser";
 import { describe, expect, test } from "vitest";
 
@@ -28,12 +28,40 @@ stock x { init: 0 }
 flow inflow { from: null to: x rate: RANDOM(0, 1) }
 `.trim();
 
+const forecastModel = `
+sfd forecast
+time { start: 0 end: 3 step: 1 }
+stock s { init: 0 }
+aux input = TIME
+aux probe = FORCST(input, 2, 1)
+`.trim();
+
+const supportedSmoothingModel = `
+sfd smoothing
+time { start: 0 end: 3 step: 1 }
+stock s { init: 0 }
+aux input = TIME
+aux smoothed = SMTH1(input, 2)
+aux delayed = DELAY1(input, 1)
+aux trended = TREND(input, 2)
+`.trim();
+
 const camelCaseModel = `
 sfd hydro
 time { start: 0 end: 3 step: 1 }
 stock waterStock { init: 50 }
 aux inflowRate = 5
 flow addWater { from: null to: waterStock rate: inflowRate }
+`.trim();
+
+const nestedLookupModel = `
+sfd nested_lookup
+time { start: 0 end: 1 step: 1 }
+stock reservoir { init: 2 * response(3) }
+aux level = 3
+gf response { xscale: [0, 10] ypts: [0, 100] }
+aux direct = response(level)
+aux scaled = 2 * response(level)
 `.trim();
 
 describe("SimlinSimulator", () => {
@@ -67,12 +95,56 @@ describe("SimlinSimulator", () => {
 		expect(result.rows[3].waterStock).toBeCloseTo(65, 9);
 	});
 
-	test("resolves with diagnostics instead of throwing on unsupported engine functions", async () => {
+	test("evaluates a graphical function nested inside a larger expression", async () => {
+		const result = await new SimlinSimulator().simulate(
+			buildIR(nestedLookupModel),
+		);
+		expect(result.diagnostics).toEqual([]);
+		expect(result.rows[0].direct).toBeCloseTo(30, 9);
+		expect(result.rows[0].scaled).toBeCloseTo(60, 9);
+		expect(result.rows[0].reservoir).toBeCloseTo(60, 9);
+	});
+
+	test("evaluates a graphical function nested inside another's argument", async () => {
+		const chainedLookupModel = `
+sfd chained_lookup
+time { start: 0 end: 1 step: 1 }
+stock s { init: 0 }
+aux x = 3
+gf inner { xscale: [0, 10] ypts: [0, 100] }
+gf outer { xscale: [0, 100] ypts: [0, 1000] }
+aux y = outer(inner(x))
+`.trim();
+		const result = await new SimlinSimulator().simulate(
+			buildIR(chainedLookupModel),
+		);
+		expect(result.diagnostics).toEqual([]);
+		expect(result.rows[0].y).toBeCloseTo(300, 9);
+	});
+
+	test("reports a clear diagnostic for stochastic functions the deterministic engine cannot run", async () => {
 		const result = await new SimlinSimulator().simulate(
 			buildIR(unsupportedFunctionModel),
 		);
 		expect(result.rows).toEqual([]);
-		expect(result.diagnostics.length).toBeGreaterThan(0);
+		expect(result.diagnostics).toHaveLength(1);
 		expect(result.diagnostics[0].code).toBe("error");
+		expect(result.diagnostics[0].message).toContain("RANDOM");
+	});
+
+	test("reports a clear diagnostic naming an unsupported builtin instead of an opaque engine error", async () => {
+		const result = await new SimlinSimulator().simulate(buildIR(forecastModel));
+		expect(result.rows).toEqual([]);
+		expect(result.diagnostics).toHaveLength(1);
+		expect(result.diagnostics[0].code).toBe("error");
+		expect(result.diagnostics[0].message).toContain("FORCST");
+	});
+
+	test("does not flag builtins the engine supports", async () => {
+		const result = await new SimlinSimulator().simulate(
+			buildIR(supportedSmoothingModel),
+		);
+		expect(result.diagnostics).toEqual([]);
+		expect(result.rows.length).toBe(4);
 	});
 });
