@@ -1,7 +1,6 @@
 /// <reference types="vite/client" />
 
-import type { IR } from "@sysdml/ir";
-import type { SimulationResult } from "@sysdml/simulator";
+import type { IR, SimulationResult } from "@sysdml/contracts";
 
 import type { WorkerRequest, WorkerResponse } from "./types.js";
 // The worker import form is selected at build time by the `workerInline` Vite

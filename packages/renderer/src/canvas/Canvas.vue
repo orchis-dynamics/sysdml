@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { IR } from "@sysdml/ir";
+import type { IR } from "@sysdml/contracts";
 import { useResizeObserver } from "@vueuse/core";
 import { ref, computed, watch, type Component } from "vue";
 

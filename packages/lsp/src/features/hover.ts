@@ -1,6 +1,6 @@
-import type { IR, IRExpressionNode, IRPosition } from "@sysdml/ir";
-import { BUILTIN_ARITY } from "@sysdml/ir";
-import type { FileNode } from "@sysdml/parser";
+import type { IR, IRExpressionNode, IRPosition } from "@sysdml/contracts";
+import { BUILTIN_ARITY } from "@sysdml/contracts";
+import type { FileNode } from "@sysdml/contracts";
 import { Hover, MarkupKind } from "vscode-languageserver/node.js";
 import type { Position } from "vscode-languageserver/node.js";
 

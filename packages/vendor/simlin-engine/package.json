@@ -1,0 +1,74 @@
+{
+  "name": "@simlin/engine",
+  "version": "2.0.0",
+  "description": "an engine for building, running and analyzing system dynamics models",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/bpowers/simlin.git",
+    "directory": "src/engine"
+  },
+  "author": {
+    "name": "Bobby Powers",
+    "email": "bobbypowers@gmail.com"
+  },
+  "license": "Apache-2.0",
+  "publishConfig": {
+    "access": "public"
+  },
+  "main": "lib/index.js",
+  "browser": "lib.browser/index.js",
+  "types": "lib/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/index.d.ts",
+      "module": "./lib.browser/index.js",
+      "node": "./lib/index.js"
+    },
+    "./internal/wasm": {
+      "types": "./lib/internal/wasm.node.d.ts",
+      "module": "./lib.browser/internal/wasm.browser.js",
+      "node": "./lib/internal/wasm.node.js"
+    },
+    "./internal/backend-factory": {
+      "types": "./lib/backend-factory.node.d.ts",
+      "module": "./lib.browser/backend-factory.browser.js",
+      "node": "./lib/backend-factory.node.js"
+    },
+    "./core/libsimlin.wasm": "./core/libsimlin.wasm",
+    "./*": {
+      "types": "./lib/*.d.ts",
+      "module": "./lib.browser/*.js",
+      "node": "./lib/*.js"
+    }
+  },
+  "sideEffects": false,
+  "files": [
+    "lib",
+    "lib.browser",
+    "core/libsimlin.wasm"
+  ],
+  "devDependencies": {
+    "@types/jest": "^30.0.0",
+    "@types/node": "^25.2.0",
+    "@typescript-eslint/eslint-plugin": "^8.54.0",
+    "@typescript-eslint/parser": "^8.54.0",
+    "eslint": "^9.39.2",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-import": "^2.32.0",
+    "eslint-plugin-prettier": "^5.5.5",
+    "jest": "^30.2.0",
+    "prettier": "^3.8.1",
+    "ts-jest": "^29.4.6",
+    "typescript": "^5.9.3"
+  },
+  "scripts": {
+    "needs-format": "prettier -l 'src/**/*.ts' 'tests/**/*.ts'",
+    "format": "prettier --write 'src/**/*.ts' 'tests/**/*.ts'",
+    "lint": "eslint --cache --cache-location node_modules/.cache/eslint/ src",
+    "clean": "rm -rf ./lib ./lib.browser ./core",
+    "build": "bash build.sh",
+    "tsc": "tsc",
+    "test": "jest",
+    "test:watch": "jest --watch"
+  }
+}

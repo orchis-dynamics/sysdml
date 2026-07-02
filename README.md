@@ -8,23 +8,31 @@ This repository is a [pnpm workspace](https://pnpm.io/workspaces) containing the
 
 ## Packages
 
-| Package                                                            | Name                 | Description                                                   |
-| ------------------------------------------------------------------ | -------------------- | ------------------------------------------------------------- |
-| [`packages/parser`](packages/parser/README.md)                     | `@sysdml/parser`     | ANTLR4 TypeScript parser: SysDML source → typed AST           |
-| [`packages/ir`](packages/ir/README.md)                             | `@sysdml/ir`         | AST → Intermediate Representation, with semantic diagnostics  |
-| [`packages/simulator`](packages/simulator)                         | `@sysdml/simulator`  | Deterministic Euler simulator over IR                         |
-| [`packages/lsp`](packages/lsp)                                     | `@sysdml/lsp-server` | Language Server Protocol implementation                       |
-| [`packages/renderer`](packages/renderer)                           | `@sysdml/renderer`   | Vue 3 + Vite diagram renderer                                 |
-| [`packages/cli`](packages/cli/README.md)                           | `@sysdml/cli`        | `sysdml` command-line tool (`parse` + `simulate` subcommands) |
-| [`packages/vscode-extension`](packages/vscode-extension/README.md) | `sysdml-vscode`      | VS Code extension (language support + diagram view)           |
+| Package                                                            | Name                       | Description                                                                 |
+| ------------------------------------------------------------------ | -------------------------- | -------------------------------------------------------------------------- |
+| [`packages/contracts`](packages/contracts/README.md)              | `@sysdml/contracts`        | Shared, behavior-free type contracts for every type that crosses a package boundary |
+| [`packages/parser`](packages/parser/README.md)                     | `@sysdml/parser`           | ANTLR4 TypeScript parser: SysDML source → typed AST                         |
+| [`packages/ir`](packages/ir/README.md)                             | `@sysdml/ir`               | AST → Intermediate Representation, with semantic diagnostics                |
+| [`packages/simulator`](packages/simulator)                         | `@sysdml/simulator`        | Simulation backend: compiles IR → Simlin project JSON and runs the Simlin engine |
+| [`packages/simulator-legacy`](packages/simulator-legacy)           | `@sysdml/simulator-legacy` | Archived deterministic Euler simulator over IR (reference / regression)     |
+| [`packages/lsp`](packages/lsp)                                     | `@sysdml/lsp-server`       | Language Server Protocol implementation                                     |
+| [`packages/renderer`](packages/renderer)                           | `@sysdml/renderer`         | Vue 3 + Vite diagram renderer                                               |
+| [`packages/cli`](packages/cli/README.md)                           | `@sysdml/cli`              | `sysdml` command-line tool (`parse` + `simulate` subcommands)               |
+| [`packages/vscode-extension`](packages/vscode-extension/README.md) | `sysdml-vscode`            | VS Code extension (language support + diagram view)                         |
+| [`packages/vendor/simlin-engine`](packages/vendor/simlin-engine)   | `@simlin/engine`           | Vendored Apache-2.0 [Simlin](https://github.com/bpowers/simlin) engine — WebAssembly system-dynamics runtime |
 
 ## Architecture
 
 ```
-Parser → AST → IR → (Simulator | Renderer)
+                          @sysdml/contracts        shared types (no behavior)
+                                  ▲ imported by every package below
+                                  │
+Parser → AST → IR → ( Simulator → @simlin/engine (wasm)  |  Renderer )
 ```
 
 Each layer has strict boundaries — the parser produces only structural AST, with no semantic analysis or name resolution.
+
+`@sysdml/contracts` is a leaf package holding every type that crosses a package boundary; it carries no runtime behavior, only the types plus the enums and const-tables that define a contract's valid value-space. The simulator no longer ships its own integrator — it compiles the IR to Simlin's project JSON and delegates to the vendored, Apache-2.0-licensed Simlin engine running as WebAssembly. The original Euler integrator is preserved as `@sysdml/simulator-legacy` for reference and regression comparison.
 
 See `AGENT_CONTEXT.md` for architectural constraints and `docs/spec/` for language specifications.
 

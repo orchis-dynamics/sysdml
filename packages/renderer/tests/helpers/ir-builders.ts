@@ -5,7 +5,7 @@ import type {
 	IRExpressionNode,
 	IRFlow,
 	IRStock,
-} from "@sysdml/ir";
+} from "@sysdml/contracts";
 
 const ZERO: IRExpressionNode = { type: "Number", value: 0 };
 

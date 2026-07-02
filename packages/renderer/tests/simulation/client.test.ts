@@ -1,5 +1,4 @@
-import type { IR } from "@sysdml/ir";
-import type { SimulationResult } from "@sysdml/simulator";
+import type { IR, SimulationResult } from "@sysdml/contracts";
 import { describe, expect, test, vi, beforeEach, afterEach } from "vitest";
 
 import { SimulatorClient } from "../../src/simulation/client.js";

@@ -1,8 +1,9 @@
 import { parseSource } from "@sysdml/parser";
 import { describe, test, it, expect, beforeAll } from "vitest";
 
-import { compileAST, DiagnosticCode } from "../src/index.js";
-import type { IR, IRExpressionNode } from "../src/index.js";
+import { DiagnosticCode } from "@sysdml/contracts";
+import type { IR, IRExpressionNode } from "@sysdml/contracts";
+import { compileAST } from "../src/index.js";
 
 function parse(src: string) {
 	const { ast, diagnostics } = parseSource(src);

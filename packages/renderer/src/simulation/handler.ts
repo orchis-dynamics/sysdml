@@ -1,10 +1,11 @@
-import { EulerSimulator } from "@sysdml/simulator";
+import type { Simulator } from "@sysdml/contracts";
 
 import type { WorkerRequest, WorkerResponse } from "./types.js";
 
-export function handleSimulationRequest(
+export async function handleSimulationRequest(
 	request: WorkerRequest,
-): WorkerResponse {
+	simulator: Simulator,
+): Promise<WorkerResponse> {
 	if (request.type !== "simulate") {
 		return {
 			type: "error",
@@ -15,7 +16,7 @@ export function handleSimulationRequest(
 	}
 
 	try {
-		const result = new EulerSimulator().simulate(request.ir);
+		const result = await simulator.simulate(request.ir);
 		return { type: "result", jobId: request.jobId, result };
 	} catch (error) {
 		return {

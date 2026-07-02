@@ -84,7 +84,7 @@ import type {
 	TimeDeclarationNode,
 	TimePropertyNode,
 	UnaryExpressionNode,
-} from "./types.js";
+} from "@sysdml/contracts";
 
 // ── Span helpers ─────────────────────────────────────────────────────────────
 

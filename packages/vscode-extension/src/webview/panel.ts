@@ -1,11 +1,9 @@
 import * as fs from "fs";
 import * as path from "path";
 
-import type { IR } from "@sysdml/ir";
+import type { ExtensionToWebviewMessage, IR } from "@sysdml/contracts";
 import * as vscode from "vscode";
 import { type LanguageClient, State } from "vscode-languageclient/node";
-
-import type { ExtensionToWebViewMessage } from "./bridge";
 
 interface GetIRResult {
 	ir: IR | null;
@@ -73,13 +71,13 @@ export class DiagramPanel {
 				uri: activeEditor.document.uri.toString(),
 			});
 
-			const message: ExtensionToWebViewMessage = result.ir
+			const message: ExtensionToWebviewMessage = result.ir
 				? { type: "update", ir: result.ir }
 				: { type: "error", message: "No IR available — check for diagnostics" };
 
 			await this.panel.webview.postMessage(message);
 		} catch (err) {
-			const message: ExtensionToWebViewMessage = {
+			const message: ExtensionToWebviewMessage = {
 				type: "error",
 				message: String(err),
 			};
@@ -108,7 +106,7 @@ function buildWebViewHtml(
 		"default-src 'none'",
 		`img-src ${cspSource} https: data:`,
 		`style-src ${cspSource} 'unsafe-inline'`,
-		`script-src ${cspSource}`,
+		`script-src ${cspSource} 'wasm-unsafe-eval'`,
 		`font-src ${cspSource}`,
 		`connect-src ${cspSource}`,
 		`worker-src ${cspSource} blob:`,

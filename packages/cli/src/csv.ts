@@ -1,5 +1,4 @@
-import type { IR } from "@sysdml/ir";
-import type { SimulationResult } from "@sysdml/simulator";
+import type { IR, SimulationResult } from "@sysdml/contracts";
 
 export function formatCsv(ir: IR, result: SimulationResult): string {
 	const columnIds = [

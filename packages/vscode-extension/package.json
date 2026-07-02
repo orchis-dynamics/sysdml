@@ -23,7 +23,7 @@
 		"build:renderer": "cd ../renderer && npm run build:vscode && rm -rf ../vscode-extension/renderer-dist && cp -r dist/ ../vscode-extension/renderer-dist/"
 	},
 	"devDependencies": {
-		"@sysdml/ir": "workspace:*",
+		"@sysdml/contracts": "workspace:*",
 		"@sysdml/lsp-server": "workspace:*",
 		"@types/node": "^24.12.4",
 		"@types/vscode": "^1.85.0",

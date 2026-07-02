@@ -1,4 +1,4 @@
-import type { SimRow, SimulationResult } from "@sysdml/simulator";
+import type { SimRow, SimulationResult } from "@sysdml/contracts";
 
 export interface TimeseriesPlotData {
 	rows: SimRow[];

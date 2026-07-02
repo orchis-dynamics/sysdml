@@ -1,4 +1,4 @@
-import type { IRConnection, IRFlow } from "@sysdml/ir";
+import type { IRConnection, IRFlow } from "@sysdml/contracts";
 
 import { LayoutEdge } from "./layout-types.js";
 

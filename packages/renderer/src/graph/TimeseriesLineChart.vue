@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { SimRow } from "@sysdml/simulator";
+import type { SimRow } from "@sysdml/contracts";
 import { VisAxis, VisLine, VisXYContainer } from "@unovis/vue";
 import { computed } from "vue";
 

@@ -57,6 +57,18 @@ describe("getCompletionItems", () => {
 		expect(labels).not.toContain("birth_rate"); // not a stock
 	});
 
+	it("offers flow identifiers in addition to stocks and null after 'from:'", () => {
+		const { ast, ir } = analyze(SOURCE);
+		const items = getCompletionItems(SOURCE, ast, ir, {
+			line: 11,
+			character: 8,
+		});
+		const labels = items.map((i) => i.label);
+		expect(labels).toContain("null");
+		expect(labels).toContain("population"); // a stock
+		expect(labels).toContain("births"); // the flow declared in SOURCE
+	});
+
 	it("offers all identifiers and builtins inside an expression", () => {
 		const src = SOURCE.replace("rate: 1", "rate: ");
 		// Note: this source won't parse because rate is incomplete, so ast and ir will be null.
@@ -80,6 +92,102 @@ describe("getCompletionItems", () => {
 		expect(labels).toContain("linear");
 		expect(labels).toContain("extra");
 		expect(labels).toContain("step");
+	});
+
+	describe("rate expression ranking", () => {
+		const CONNECTED_SOURCE = `sfd m
+time { start: 0
+ end: 10
+ step: 1
+}
+stock population { init: 100 }
+aux birth_rate = 0.02
+aux unrelated = 5
+flow births {
+  from: null
+  to: population
+  rate: birth_rate
+}
+birth_rate ->+ births
+`;
+
+		it("ranks the flow's connected variables before unconnected ones", () => {
+			const { ast, ir } = analyze(CONNECTED_SOURCE);
+			const src = CONNECTED_SOURCE.replace("rate: birth_rate", "rate: ");
+			const items = getCompletionItems(src, ast, ir, {
+				line: 11,
+				character: 8,
+			});
+
+			const birthRate = items.find((i) => i.label === "birth_rate");
+			const population = items.find((i) => i.label === "population");
+			const unrelated = items.find((i) => i.label === "unrelated");
+
+			expect(birthRate?.sortText).toBe("0_birth_rate");
+			expect(population?.sortText).toBe("0_population");
+			expect(unrelated?.sortText).toBe("1_unrelated");
+		});
+
+		it("does not rank when the expression is not inside a flow", () => {
+			const validSource = `sfd m
+time { start: 0
+ end: 10
+ step: 1
+}
+aux base = 5
+stock population {
+  init: base
+}
+`;
+			const { ast, ir } = analyze(validSource);
+			const src = validSource.replace("init: base", "init: ");
+			const items = getCompletionItems(src, ast, ir, {
+				line: 7,
+				character: 8,
+			});
+			const base = items.find((i) => i.label === "base");
+			expect(base?.sortText).toBe("1_base");
+		});
+	});
+
+	describe("comment-aware context detection", () => {
+		it("ignores an unbalanced brace inside a comment at top level", () => {
+			const src = `sfd m\n// TODO: wrap in flow {\n`;
+			const items = getCompletionItems(src, null, null, {
+				line: 2,
+				character: 0,
+			});
+			const labels = items.map((i) => i.label);
+			expect(labels).toContain("stock");
+			expect(labels).toContain("flow");
+			expect(labels).not.toContain("position");
+		});
+
+		it("ranks rate variables even when a comment in the flow block contains a brace", () => {
+			const sourceWithComment = `sfd m
+time { start: 0
+ end: 10
+ step: 1
+}
+stock population { init: 100 }
+aux birth_rate = 0.02
+flow births {
+  // balance the books } here
+  from: null
+  to: population
+  rate: birth_rate
+}
+birth_rate ->+ births
+`;
+			const { ast, ir } = analyze(sourceWithComment);
+			const src = sourceWithComment.replace("rate: birth_rate", "rate: ");
+			const items = getCompletionItems(src, ast, ir, {
+				line: 11,
+				character: 8,
+			});
+			const birthRate = items.find((i) => i.label === "birth_rate");
+			expect(birthRate?.sortText).toBe("0_birth_rate");
+		});
 	});
 
 	describe("layout keyword completions", () => {

@@ -1,4 +1,4 @@
-import type { IRConnection, IRPosition } from "@sysdml/ir";
+import type { IRConnection, IRPosition } from "@sysdml/contracts";
 
 import { FR, THEME } from "./layout-theme";
 import { LayoutInputNode, LayoutNode, NodeKindEnum } from "./layout-types";

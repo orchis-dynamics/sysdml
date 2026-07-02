@@ -1,4 +1,4 @@
-import { IRPosition } from "@sysdml/ir";
+import type { IRPosition } from "@sysdml/contracts";
 
 export enum NodeKindEnum {
 	Stock = "stock",

@@ -1,4 +1,4 @@
-import type { FileNode, DeclarationNode } from "@sysdml/parser";
+import type { FileNode, DeclarationNode } from "@sysdml/contracts";
 import { DocumentSymbol, SymbolKind } from "vscode-languageserver/node.js";
 
 import { spanToRange } from "../analysis.js";

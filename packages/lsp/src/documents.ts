@@ -1,15 +1,24 @@
 import type { DocumentAnalysis } from "./analysis.js";
 
-const cache = new Map<string, DocumentAnalysis>();
+const latestAnalysisByUri = new Map<string, DocumentAnalysis>();
+const lastParsedAnalysisByUri = new Map<string, DocumentAnalysis>();
 
 export function getAnalysis(uri: string): DocumentAnalysis | null {
-	return cache.get(uri) ?? null;
+	return latestAnalysisByUri.get(uri) ?? null;
+}
+
+export function getLastParsedAnalysis(uri: string): DocumentAnalysis | null {
+	return lastParsedAnalysisByUri.get(uri) ?? null;
 }
 
 export function setAnalysis(uri: string, analysis: DocumentAnalysis): void {
-	cache.set(uri, analysis);
+	latestAnalysisByUri.set(uri, analysis);
+	if (analysis.ast) {
+		lastParsedAnalysisByUri.set(uri, analysis);
+	}
 }
 
 export function deleteAnalysis(uri: string): void {
-	cache.delete(uri);
+	latestAnalysisByUri.delete(uri);
+	lastParsedAnalysisByUri.delete(uri);
 }

@@ -1,4 +1,4 @@
-import type { IR, IRStock, IRFlow, IRPosition, IRConnection } from "@sysdml/ir";
+import type { IR, IRStock, IRFlow, IRPosition, IRConnection } from "@sysdml/contracts";
 
 import { constructAuxiliaryLayoutNodes } from "./layout-auxiliaries";
 import { constructLayoutEdges } from "./layout-edges";
@@ -17,7 +17,7 @@ export function isCausalLoopDiagram(ir: IR): boolean {
 }
 
 export function computeLayout(ir: IR): LayoutResult {
-	return isCausalLoopDiagram(ir) ? layoutCLD(ir) : buildSFDLayout(ir);
+	return isCausalLoopDiagram(ir) ? buildLayoutCLD(ir) : buildLayoutSFD(ir);
 }
 
 const NODE_SIZE_CALC: Record<NodeKind, (idLength: number) => NodeSize> = {
@@ -120,7 +120,7 @@ function buildSkeleton(stocks: IRStock[], flows: IRFlow[]) {
 
 	const entries = [...directionalAdjacencyMap.entries()];
 
-	const graphHasTails = entries.find(([_, value]) => value.inputs.length === 0);
+	const graphHasTails = entries.some(([, value]) => value.inputs.length === 0);
 
 	const branchEntries = graphHasTails
 		? entries
@@ -148,7 +148,7 @@ function buildSkeleton(stocks: IRStock[], flows: IRFlow[]) {
 	return constructSkeletonLayoutNodes(directionalAdjacencyMap, branches);
 }
 
-function buildSFDLayout(ir: IR): LayoutResult {
+function buildLayoutSFD(ir: IR): LayoutResult {
 	const skeleton = buildSkeleton(ir.stocks, ir.flows);
 	const auxiliaryNodes = constructAuxiliaryLayoutNodes(
 		ir.auxiliaries,
@@ -175,7 +175,7 @@ function collectConnectionEndpoints(connections: IRConnection[]): string[] {
 	return [...endpoints];
 }
 
-function layoutCLD(ir: IR): LayoutResult {
+function buildLayoutCLD(ir: IR): LayoutResult {
 	const endpointNodes: LayoutInputNode[] = collectConnectionEndpoints(
 		ir.connections,
 	).map((id) => ({ id }));

@@ -1,4 +1,4 @@
-import type { FileNode } from "@sysdml/parser";
+import type { FileNode } from "@sysdml/contracts";
 import { Location } from "vscode-languageserver/node.js";
 import type { Position } from "vscode-languageserver/node.js";
 

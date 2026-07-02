@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { IR } from "@sysdml/ir";
+import type { IR } from "@sysdml/contracts";
 import { ref, onMounted, onUnmounted } from "vue";
 
 import Canvas from "./canvas/Canvas.vue";

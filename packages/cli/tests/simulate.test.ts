@@ -16,8 +16,8 @@ stock population {
 `;
 
 describe("runSimulateCommand", () => {
-	it("emits JSON simulation result on stdout and exits 0 (default format)", () => {
-		const result = runSimulateCommand(minimalModel, { format: "json" });
+	it("emits JSON simulation result on stdout and exits 0 (default format)", async () => {
+		const result = await runSimulateCommand(minimalModel, { format: "json" });
 
 		expect(result.exitCode).toBe(0);
 		expect(result.stderr).toBe("");
@@ -26,14 +26,14 @@ describe("runSimulateCommand", () => {
 		expect(parsed.rows[0]).toEqual({ time: 0, population: 100 });
 	});
 
-	it("emits CSV on stdout when format=csv", () => {
-		const result = runSimulateCommand(minimalModel, { format: "csv" });
+	it("emits CSV on stdout when format=csv", async () => {
+		const result = await runSimulateCommand(minimalModel, { format: "csv" });
 
 		expect(result.exitCode).toBe(0);
 		expect(result.stdout).toBe("time,population\n0,100\n1,100\n2,100\n");
 	});
 
-	it("exits 1 with stderr diagnostics and no stdout on compile errors", () => {
+	it("exits 1 with stderr diagnostics and no stdout on compile errors", async () => {
 		const broken = `sfd Test
 
 time {
@@ -44,14 +44,14 @@ time {
 
 aux a = nonexistent
 `;
-		const result = runSimulateCommand(broken, { format: "json" });
+		const result = await runSimulateCommand(broken, { format: "json" });
 
 		expect(result.exitCode).toBe(1);
 		expect(result.stdout).toBe("");
 		expect(result.stderr).toContain("--- Diagnostics ---");
 	});
 
-	it("emits partial output on stdout and diagnostics on stderr when a sim function is unimplemented", () => {
+	it("exits 1 with stderr diagnostics when the engine cannot compile a model function", async () => {
 		const usesDeferredFunction = `sfd Test
 
 time {
@@ -66,10 +66,12 @@ stock x {
 
 aux a = RANDOM(0, 1)
 `;
-		const result = runSimulateCommand(usesDeferredFunction, { format: "json" });
+		const result = await runSimulateCommand(usesDeferredFunction, {
+			format: "json",
+		});
 
-		expect(result.exitCode).toBe(0);
-		expect(result.stdout).not.toBe("");
-		expect(result.stderr).toContain("FUNCTION_NOT_IN_V1");
+		expect(result.exitCode).toBe(1);
+		expect(result.stdout).toBe("");
+		expect(result.stderr).toContain("[error]");
 	});
 });

@@ -11,12 +11,12 @@ export interface SimulateOptions {
 	format: "json" | "csv";
 }
 
-export function runSimulateCommand(
+export async function runSimulateCommand(
 	source: string,
 	options: SimulateOptions,
-): CommandResult {
+): Promise<CommandResult> {
 	const { ast, parseDiagnostics, ir, compileDiagnostics, simulation } =
-		runPipeline(source);
+		await runPipeline(source);
 
 	if (ast === null) {
 		return {
@@ -45,6 +45,10 @@ export function runSimulateCommand(
 			? formatCsv(ir, simulation)
 			: JSON.stringify(simulation, null, 2) + "\n";
 
+	const hasErrors = simulation.diagnostics.some(
+		(diagnostic) => diagnostic.code === "error",
+	);
+
 	const stderr =
 		simulation.diagnostics.length > 0
 			? formatDiagnosticBlock(
@@ -54,5 +58,5 @@ export function runSimulateCommand(
 				)
 			: "";
 
-	return { stdout, stderr, exitCode: 0 };
+	return { stdout: hasErrors ? "" : stdout, stderr, exitCode: hasErrors ? 1 : 0 };
 }

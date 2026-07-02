@@ -3,6 +3,7 @@ packages/parser/generated/
 packages/parser/src/grammar/.antlr/
 **/node_modules
 **/dist/
+packages/contracts/docs-api/
 .worktrees/
 
 .claude/
@@ -15,3 +16,4 @@ AGENT_CONTEXT.md
 run.sh
 .DS_Store
 *.vsix
+*.mmd

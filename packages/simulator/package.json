@@ -11,9 +11,11 @@
 		"test:watch": "vitest"
 	},
 	"dependencies": {
-		"@sysdml/ir": "workspace:*"
+		"@simlin/engine": "workspace:*",
+		"@sysdml/contracts": "workspace:*"
 	},
 	"devDependencies": {
+		"@sysdml/ir": "workspace:*",
 		"@sysdml/parser": "workspace:*",
 		"@types/node": "^24.12.4",
 		"typescript": "^5.4.5",

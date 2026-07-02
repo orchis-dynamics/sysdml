@@ -86,7 +86,7 @@ async function dispatchParse(args: string[]): Promise<number> {
 		process.stderr.write(`${loaded.message}\n`);
 		return 1;
 	}
-	const result = runParseCommand(loaded.source);
+	const result = await runParseCommand(loaded.source);
 	writeCommandResult(result);
 	return result.exitCode;
 }
@@ -116,7 +116,7 @@ async function dispatchSimulate(args: string[]): Promise<number> {
 		process.stderr.write(`${loaded.message}\n`);
 		return 1;
 	}
-	const result = runSimulateCommand(loaded.source, {
+	const result = await runSimulateCommand(loaded.source, {
 		format: values.csv ? "csv" : "json",
 	});
 	writeCommandResult(result);
