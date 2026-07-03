@@ -124,10 +124,12 @@ async function dispatchSimulate(args: string[]): Promise<number> {
 }
 
 main()
-	.then((exitCode) => process.exit(exitCode))
+	.then((exitCode) => {
+		process.exitCode = exitCode;
+	})
 	.catch((error) => {
 		process.stderr.write(
 			`Fatal: ${error instanceof Error ? error.message : String(error)}\n`,
 		);
-		process.exit(2);
+		process.exitCode = 2;
 	});
