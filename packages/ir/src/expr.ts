@@ -1,12 +1,8 @@
-import type { ExpressionNode, IRDiagnostic, IRExpressionNode, IRGraphicalFunction } from "@sysdml/contracts";
+import type { ExpressionNode, IRDiagnostic, IRExpressionNode, IRGraphicalFunction, Span } from "@sysdml/contracts";
 
 import { BUILTIN_ARITY, BUILTIN_FUNCTIONS, ZERO_ARG_BUILTINS, DiagnosticCode } from "@sysdml/contracts";
 
-let _lookupCounter = 0;
-
-export function resetLookupCounter(): void {
-	_lookupCounter = 0;
-}
+export const RESERVED_LOOKUP_PREFIX = "__lookup_";
 
 export function compileExpr(
 	node: ExpressionNode,
@@ -108,6 +104,7 @@ export function compileExpr(
 			if (graphicalFunctionNames.has(node.name)) {
 				return compileGfCall(
 					node.name,
+					node.nameSpan,
 					node.args,
 					validIds,
 					graphicalFunctionNames,
@@ -118,6 +115,7 @@ export function compileExpr(
 
 			if (uppercasedName === "LOOKUP") {
 				return compileLookup(
+					node.nameSpan,
 					node.args,
 					validIds,
 					graphicalFunctionNames,
@@ -174,6 +172,7 @@ export function compileExpr(
 
 function compileGfCall(
 	name: string,
+	nameSpan: Span,
 	args: readonly ExpressionNode[],
 	validIds: ReadonlySet<string>,
 	graphicalFunctionNames: ReadonlySet<string>,
@@ -184,51 +183,88 @@ function compileGfCall(
 		errors.push({
 			code: DiagnosticCode.GF_WRONG_ARITY,
 			message: `Graphical function '${name}' expects 1 argument, got ${args.length}`,
+			span: nameSpan,
 		});
 	}
+	const compiledArguments = args.map((argument) =>
+		compileExpr(
+			argument,
+			validIds,
+			graphicalFunctionNames,
+			errors,
+			syntheticGraphicalFunctions,
+		),
+	);
+	const fallbackArgument: IRExpressionNode = { type: "Number", value: 0 };
 	const compiledArgument =
-		args.length > 0
-			? compileExpr(
-					args[0],
-					validIds,
-					graphicalFunctionNames,
-					errors,
-					syntheticGraphicalFunctions,
-				)
-			: ({ type: "Number", value: 0 } as IRExpressionNode);
+		compiledArguments.length > 0 ? compiledArguments[0] : fallbackArgument;
 	return { type: "GraphicalFunctionCall", name, argument: compiledArgument };
 }
 
 function compileLookup(
+	nameSpan: Span,
 	args: readonly ExpressionNode[],
 	validIds: ReadonlySet<string>,
 	graphicalFunctionNames: ReadonlySet<string>,
 	errors: IRDiagnostic[],
 	syntheticGraphicalFunctions: IRGraphicalFunction[],
 ): IRExpressionNode {
-	const yPointCount = args.length - 1;
-	if (args.length < 3) {
+	const compileArgument = (argument: ExpressionNode): IRExpressionNode =>
+		compileExpr(
+			argument,
+			validIds,
+			graphicalFunctionNames,
+			errors,
+			syntheticGraphicalFunctions,
+		);
+	const compileAllArguments = (): void => {
+		for (const argument of args) compileArgument(argument);
+	};
+
+	const { min, max } = BUILTIN_ARITY.LOOKUP;
+
+	if (args.length < min) {
+		const yPointCount = Math.max(args.length - 1, 0);
 		errors.push({
 			code: DiagnosticCode.LOOKUP_TOO_FEW_YPTS,
-			message: `lookup() requires at least 2 y-points (got ${yPointCount < 0 ? 0 : yPointCount})`,
+			message: `lookup() requires at least 2 y-points (got ${yPointCount})`,
+			span: nameSpan,
 		});
+		compileAllArguments();
+		return { type: "Number", value: 0 };
+	}
+
+	if (args.length > max) {
+		errors.push({
+			code: DiagnosticCode.WRONG_ARITY,
+			message: `'LOOKUP' expects ${min}–${max} argument(s), got ${args.length}`,
+			span: nameSpan,
+		});
+		compileAllArguments();
 		return { type: "Number", value: 0 };
 	}
 
 	const ypts: number[] = [];
+	let hasNonLiteralYPoint = false;
 	for (const yArgument of args.slice(1)) {
 		const literalValue = extractLiteralNumber(yArgument);
 		if (literalValue === null) {
 			errors.push({
 				code: DiagnosticCode.LOOKUP_NON_LITERAL_YPTS,
 				message: "lookup() y-values must be numeric literals",
+				span: yArgument.span,
 			});
-			return { type: "Number", value: 0 };
+			hasNonLiteralYPoint = true;
+		} else {
+			ypts.push(literalValue);
 		}
-		ypts.push(literalValue);
+	}
+	if (hasNonLiteralYPoint) {
+		compileAllArguments();
+		return { type: "Number", value: 0 };
 	}
 
-	const id = `__lookup_${_lookupCounter++}`;
+	const id = `${RESERVED_LOOKUP_PREFIX}${syntheticGraphicalFunctions.length}`;
 	syntheticGraphicalFunctions.push({
 		id,
 		kind: "linear",
@@ -238,26 +274,23 @@ function compileLookup(
 		yscale: null,
 	});
 
-	const compiledInput = compileExpr(
-		args[0],
-		validIds,
-		graphicalFunctionNames,
-		errors,
-		syntheticGraphicalFunctions,
-	);
-	return { type: "GraphicalFunctionCall", name: id, argument: compiledInput };
+	return {
+		type: "GraphicalFunctionCall",
+		name: id,
+		argument: compileArgument(args[0]),
+	};
 }
 
 function extractLiteralNumber(node: ExpressionNode): number | null {
 	if (node.type === "NumberLiteral") {
 		return parseFloat(node.value);
 	}
-	if (
-		node.type === "UnaryExpression" &&
-		node.op === "-" &&
-		node.operand.type === "NumberLiteral"
-	) {
-		return -parseFloat(node.operand.value);
+	if (node.type === "GroupedExpression") {
+		return extractLiteralNumber(node.expr);
+	}
+	if (node.type === "UnaryExpression" && node.op === "-") {
+		const operandValue = extractLiteralNumber(node.operand);
+		return operandValue === null ? null : -operandValue;
 	}
 	return null;
 }

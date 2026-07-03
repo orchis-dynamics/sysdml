@@ -18,11 +18,12 @@ import type {
 	IRAuxiliary,
 	IRFlow,
 	IRGraphicalFunction,
+	IRGraphicalFunctionKind,
 	IRPosition,
 } from "@sysdml/contracts";
 
 import { BUILTIN_FUNCTIONS, DiagnosticCode } from "@sysdml/contracts";
-import { compileExpr, resetLookupCounter } from "./expr.js";
+import { compileExpr, RESERVED_LOOKUP_PREFIX } from "./expr.js";
 
 function isTimeDeclaration(n: DeclarationNode): n is TimeDeclarationNode {
 	return n.type === "TimeDeclaration";
@@ -61,6 +62,12 @@ function posToIR(pos: PositionNode | undefined): IRPosition | undefined {
 	return { x: pos.x, y: pos.y };
 }
 
+function isGraphicalFunctionKind(
+	value: string,
+): value is IRGraphicalFunctionKind {
+	return value === "linear" || value === "extra" || value === "step";
+}
+
 function validateGraphicalFunctionBody(
 	id: string,
 	body: GraphicalFunctionBodyNode,
@@ -75,8 +82,12 @@ function validateGraphicalFunctionBody(
 
 	let isValid = true;
 
-	const rawKind = kindProp?.key === "kind" ? kindProp.value : "linear";
-	if (!["linear", "extra", "step"].includes(rawKind as string)) {
+	const rawKind =
+		kindProp && kindProp.key === "kind" ? kindProp.value : "linear";
+	let kind: IRGraphicalFunctionKind = "linear";
+	if (isGraphicalFunctionKind(rawKind)) {
+		kind = rawKind;
+	} else {
 		errors.push({
 			code: DiagnosticCode.INVALID_GF_KIND,
 			message: `'${id}': unknown kind '${rawKind}'; must be linear, extra, or step`,
@@ -84,12 +95,20 @@ function validateGraphicalFunctionBody(
 		});
 		isValid = false;
 	}
-	const kind = rawKind as "linear" | "extra" | "step";
 
-	if (!yptsProp) {
+	const ypts =
+		yptsProp && yptsProp.key === "ypts" ? numListToFloats(yptsProp.value) : null;
+	if (ypts === null) {
 		errors.push({
 			code: DiagnosticCode.MISSING_YPTS,
 			message: `'${id}': ypts is required`,
+			span: declSpan,
+		});
+		isValid = false;
+	} else if (ypts.length < 2) {
+		errors.push({
+			code: DiagnosticCode.YPTS_TOO_FEW,
+			message: `'${id}': ypts must have at least 2 values (got ${ypts.length})`,
 			span: declSpan,
 		});
 		isValid = false;
@@ -112,11 +131,7 @@ function validateGraphicalFunctionBody(
 		isValid = false;
 	}
 
-	if (!isValid) return null;
-
-	const ypts = numListToFloats(
-		(yptsProp! as { key: "ypts"; value: NumberListNode }).value,
-	);
+	if (!isValid || ypts === null) return null;
 
 	let xscale: [number, number] | null = null;
 	if (xscaleProp && xscaleProp.key === "xscale") {
@@ -125,6 +140,13 @@ function validateGraphicalFunctionBody(
 			errors.push({
 				code: DiagnosticCode.XSCALE_WRONG_COUNT,
 				message: `'${id}': xscale must have exactly 2 values (min and max), got ${values.length}`,
+				span: declSpan,
+			});
+			isValid = false;
+		} else if (values[0] >= values[1]) {
+			errors.push({
+				code: DiagnosticCode.XSCALE_NOT_ASCENDING,
+				message: `'${id}': xscale min must be less than max (got [${values[0]}, ${values[1]}])`,
 				span: declSpan,
 			});
 			isValid = false;
@@ -170,15 +192,93 @@ function validateGraphicalFunctionBody(
 		}
 	}
 
-	if (!isValid) return null;
-
 	let yscale: [number, number] | null = null;
 	if (yscaleProp && yscaleProp.key === "yscale") {
 		const values = numListToFloats(yscaleProp.value);
-		if (values.length === 2) yscale = [values[0], values[1]];
+		if (values.length !== 2) {
+			errors.push({
+				code: DiagnosticCode.YSCALE_WRONG_COUNT,
+				message: `'${id}': yscale must have exactly 2 values (min and max), got ${values.length}`,
+				span: declSpan,
+			});
+			isValid = false;
+		} else {
+			yscale = [values[0], values[1]];
+		}
 	}
 
+	if (!isValid) return null;
+
 	return { id, kind, xscale, xpts, ypts, yscale };
+}
+
+function validateGraphicalFunctionIdentifier(
+	graphicalFunctionDecl: GraphicalFunctionDeclarationNode,
+	errors: IRDiagnostic[],
+): void {
+	const id = graphicalFunctionDecl.id;
+	if (BUILTIN_FUNCTIONS.has(id.toUpperCase())) {
+		errors.push({
+			code: DiagnosticCode.IDENTIFIER_SHADOWS_BUILTIN,
+			message: `Graphical function identifier '${id}' shadows builtin function '${id.toUpperCase()}'`,
+			span: graphicalFunctionDecl.idSpan,
+		});
+	}
+	if (id.startsWith(RESERVED_LOOKUP_PREFIX)) {
+		errors.push({
+			code: DiagnosticCode.RESERVED_IDENTIFIER,
+			message: `Graphical function identifier '${id}' uses the reserved prefix '${RESERVED_LOOKUP_PREFIX}'`,
+			span: graphicalFunctionDecl.idSpan,
+		});
+	}
+}
+
+function compileTimeBlock(
+	timeDecl: TimeDeclarationNode,
+	errors: IRDiagnostic[],
+): { start: number; end: number; step: number } {
+	const findTimePropertyValue = (
+		key: "start" | "end" | "step",
+	): number | null => {
+		const prop = timeDecl.props.find((timeProp) => timeProp.key === key);
+		return prop ? parseFloat(prop.value.value) : null;
+	};
+
+	const start = findTimePropertyValue("start");
+	const end = findTimePropertyValue("end");
+	const step = findTimePropertyValue("step");
+
+	const requiredProperties: Array<{ key: string; value: number | null }> = [
+		{ key: "start", value: start },
+		{ key: "end", value: end },
+		{ key: "step", value: step },
+	];
+	for (const { key, value } of requiredProperties) {
+		if (value === null) {
+			errors.push({
+				code: DiagnosticCode.MISSING_TIME_PROPERTY,
+				message: `time block is missing required property '${key}'`,
+				span: timeDecl.span,
+			});
+		}
+	}
+
+	if (step !== null && step <= 0) {
+		errors.push({
+			code: DiagnosticCode.INVALID_TIME_STEP,
+			message: `time.step must be greater than 0 (got ${step})`,
+			span: timeDecl.span,
+		});
+	}
+	if (start !== null && end !== null && end < start) {
+		errors.push({
+			code: DiagnosticCode.INVALID_TIME_RANGE,
+			message: `time.end must be >= time.start (${end} < ${start})`,
+			span: timeDecl.span,
+		});
+	}
+
+	return { start: start ?? 0, end: end ?? 0, step: step ?? 1 };
 }
 
 export function compileAST(ast: FileNode): CompileResult {
@@ -290,43 +390,22 @@ export function compileAST(ast: FileNode): CompileResult {
 				span: graphicalFunctionDecl.span,
 			});
 		}
+		validateGraphicalFunctionIdentifier(graphicalFunctionDecl, errors);
 	}
 
 	// ── Time ──────────────────────────────────────────────────────────────────
 
 	const timeDecl = timeDecls[0];
-	let time = { start: 0, end: 0, step: 1 };
-
-	if (timeDecl) {
-		const getTimePropertyValue = (key: "start" | "end" | "step"): number => {
-			const prop = timeDecl.props.find((timeProp) => timeProp.key === key);
-			return prop ? parseFloat(prop.value.value) : 0;
-		};
-		time = {
-			start: getTimePropertyValue("start"),
-			end: getTimePropertyValue("end"),
-			step: getTimePropertyValue("step"),
-		};
-
-		if (time.step <= 0)
-			errors.push({
-				code: DiagnosticCode.INVALID_TIME_STEP,
-				message: `time.step must be greater than 0 (got ${time.step})`,
-				span: timeDecl.span,
-			});
-		if (time.end < time.start)
-			errors.push({
-				code: DiagnosticCode.INVALID_TIME_RANGE,
-				message: `time.end must be >= time.start (${time.end} < ${time.start})`,
-				span: timeDecl.span,
-			});
-	}
+	const time = timeDecl
+		? compileTimeBlock(timeDecl, errors)
+		: { start: 0, end: 0, step: 1 };
 
 	// ── Build valid ID set ────────────────────────────────────────────────────
 
 	const validIds = new Set<string>([
 		...stockDecls.map((stockDecl) => stockDecl.id),
 		...auxDecls.map((auxDecl) => auxDecl.id),
+		...flowDecls.map((flowDecl) => flowDecl.id),
 	]);
 
 	const graphicalFunctionNames = new Set<string>(
@@ -337,7 +416,6 @@ export function compileAST(ast: FileNode): CompileResult {
 
 	// ── Validate and build IRGraphicalFunction list ───────────────────────────
 
-	resetLookupCounter();
 	const syntheticGraphicalFunctions: IRGraphicalFunction[] = [];
 
 	const declaredGraphicalFunctions: IRGraphicalFunction[] = [];

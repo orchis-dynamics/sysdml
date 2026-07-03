@@ -103,4 +103,5 @@ export const ZERO_ARG_BUILTINS = new Set([
 	"STOPTIME",
 	"PI",
 	"INF",
+	"SELF",
 ]);

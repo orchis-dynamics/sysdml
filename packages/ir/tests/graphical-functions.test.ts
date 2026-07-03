@@ -1,9 +1,9 @@
 import { parseSource } from "@sysdml/parser";
-import { describe, test, expect, beforeEach } from "vitest";
+import { describe, test, expect } from "vitest";
 
 import { DiagnosticCode } from "@sysdml/contracts";
 import type { IR, IRGraphicalFunction } from "@sysdml/contracts";
-import { compileAST, resetLookupCounter } from "../src/index.js";
+import { compileAST } from "../src/index.js";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -46,10 +46,6 @@ function getGraphicalFunction(ir: IR, id: string): IRGraphicalFunction {
 	expect(found, `No GF with id '${id}' in IR`).toBeDefined();
 	return found!;
 }
-
-beforeEach(() => {
-	resetLookupCounter();
-});
 
 // ── Named GF — valid declarations ─────────────────────────────────────────────
 
@@ -381,6 +377,116 @@ describe("XSCALE_WRONG_COUNT", () => {
 	});
 });
 
+describe("XSCALE_NOT_ASCENDING", () => {
+	test("descending xscale emits XSCALE_NOT_ASCENDING", () => {
+		const { diagnostics } = compile("gf f { xscale: [1, 0] ypts: [0, 1] }");
+		expect(
+			diagnostics.some(
+				(diagnostic) => diagnostic.code === DiagnosticCode.XSCALE_NOT_ASCENDING,
+			),
+		).toBe(true);
+	});
+
+	test("equal xscale bounds emit XSCALE_NOT_ASCENDING", () => {
+		const { diagnostics } = compile("gf f { xscale: [0, 0] ypts: [0, 1] }");
+		expect(
+			diagnostics.some(
+				(diagnostic) => diagnostic.code === DiagnosticCode.XSCALE_NOT_ASCENDING,
+			),
+		).toBe(true);
+	});
+
+	test("ascending xscale does not emit XSCALE_NOT_ASCENDING", () => {
+		const { diagnostics } = compile("gf f { xscale: [0, 1] ypts: [0, 1] }");
+		expect(
+			diagnostics.some(
+				(diagnostic) => diagnostic.code === DiagnosticCode.XSCALE_NOT_ASCENDING,
+			),
+		).toBe(false);
+	});
+});
+
+describe("YPTS_TOO_FEW", () => {
+	test("empty ypts emits YPTS_TOO_FEW", () => {
+		const { diagnostics } = compile("gf f { xscale: [0, 1] ypts: [] }");
+		expect(
+			diagnostics.some(
+				(diagnostic) => diagnostic.code === DiagnosticCode.YPTS_TOO_FEW,
+			),
+		).toBe(true);
+	});
+
+	test("single-point ypts emits YPTS_TOO_FEW", () => {
+		const { diagnostics } = compile("gf f { xscale: [0, 1] ypts: [5] }");
+		expect(
+			diagnostics.some(
+				(diagnostic) => diagnostic.code === DiagnosticCode.YPTS_TOO_FEW,
+			),
+		).toBe(true);
+	});
+
+	test("two-point ypts compiles clean", () => {
+		const ir = compileValid("gf f { xscale: [0, 1] ypts: [0, 1] }");
+		expect(getGraphicalFunction(ir, "f").ypts).toEqual([0, 1]);
+	});
+});
+
+describe("YSCALE_WRONG_COUNT", () => {
+	test("yscale with 1 element emits YSCALE_WRONG_COUNT", () => {
+		const { diagnostics } = compile(
+			"gf f { xscale: [0, 1] ypts: [0, 1] yscale: [0] }",
+		);
+		expect(
+			diagnostics.some(
+				(diagnostic) => diagnostic.code === DiagnosticCode.YSCALE_WRONG_COUNT,
+			),
+		).toBe(true);
+	});
+
+	test("yscale with 3 elements emits YSCALE_WRONG_COUNT", () => {
+		const { diagnostics } = compile(
+			"gf f { xscale: [0, 1] ypts: [0, 1] yscale: [0, 0.5, 1] }",
+		);
+		expect(
+			diagnostics.some(
+				(diagnostic) => diagnostic.code === DiagnosticCode.YSCALE_WRONG_COUNT,
+			),
+		).toBe(true);
+	});
+
+	test("yscale with 2 elements does not emit YSCALE_WRONG_COUNT", () => {
+		const ir = compileValid(
+			"gf f { xscale: [0, 1] ypts: [0, 1] yscale: [0, 1] }",
+		);
+		expect(getGraphicalFunction(ir, "f").yscale).toEqual([0, 1]);
+	});
+});
+
+describe("RESERVED_IDENTIFIER", () => {
+	test("gf with __lookup_ prefix emits RESERVED_IDENTIFIER", () => {
+		const { diagnostics } = compile(
+			"gf __lookup_0 { xscale: [0, 1] ypts: [0, 1] }",
+		);
+		const diagnostic = diagnostics.find(
+			(candidate) => candidate.code === DiagnosticCode.RESERVED_IDENTIFIER,
+		);
+		expect(diagnostic).toBeDefined();
+		expect(diagnostic!.message).toContain("__lookup_");
+		expect(diagnostic!.span).toBeDefined();
+	});
+
+	test("gf without the reserved prefix does not emit RESERVED_IDENTIFIER", () => {
+		const { diagnostics } = compile(
+			"gf my_curve { xscale: [0, 1] ypts: [0, 1] }",
+		);
+		expect(
+			diagnostics.some(
+				(diagnostic) => diagnostic.code === DiagnosticCode.RESERVED_IDENTIFIER,
+			),
+		).toBe(false);
+	});
+});
+
 describe("XPTS_YPTS_COUNT_MISMATCH", () => {
 	test("xpts 3 elements, ypts 5 elements emits XPTS_YPTS_COUNT_MISMATCH", () => {
 		const { diagnostics } = compile(
@@ -559,6 +665,36 @@ describe("GF_WRONG_ARITY", () => {
 			),
 		).toBe(false);
 	});
+
+	test("GF_WRONG_ARITY diagnostic carries a span", () => {
+		const { diagnostics } = compile(`
+      gf f { xscale: [0, 1] ypts: [0, 1] }
+      aux result = f()
+    `);
+		const diagnostic = diagnostics.find(
+			(candidate) => candidate.code === DiagnosticCode.GF_WRONG_ARITY,
+		);
+		expect(diagnostic?.span).toBeDefined();
+	});
+
+	test("wrong-arity GF call still compiles its arguments", () => {
+		const { diagnostics } = compile(`
+      gf f { xscale: [0, 1] ypts: [0, 1] }
+      aux result = f(s, ghost)
+    `);
+		expect(
+			diagnostics.some(
+				(diagnostic) => diagnostic.code === DiagnosticCode.GF_WRONG_ARITY,
+			),
+		).toBe(true);
+		expect(
+			diagnostics.some(
+				(diagnostic) =>
+					diagnostic.code === DiagnosticCode.UNDEFINED_IDENTIFIER &&
+					diagnostic.message.includes("ghost"),
+			),
+		).toBe(true);
+	});
 });
 
 describe("LOOKUP_TOO_FEW_YPTS", () => {
@@ -587,6 +723,52 @@ describe("LOOKUP_TOO_FEW_YPTS", () => {
 				(diagnostic) => diagnostic.code === DiagnosticCode.LOOKUP_TOO_FEW_YPTS,
 			),
 		).toBe(false);
+	});
+
+	test("LOOKUP_TOO_FEW_YPTS diagnostic carries a span", () => {
+		const { diagnostics } = compile("aux result = lookup(s, 0)");
+		const diagnostic = diagnostics.find(
+			(candidate) => candidate.code === DiagnosticCode.LOOKUP_TOO_FEW_YPTS,
+		);
+		expect(diagnostic?.span).toBeDefined();
+	});
+
+	test("lookup with too few args still compiles its input", () => {
+		const { diagnostics } = compile("aux result = lookup(ghost)");
+		expect(
+			diagnostics.some(
+				(diagnostic) => diagnostic.code === DiagnosticCode.LOOKUP_TOO_FEW_YPTS,
+			),
+		).toBe(true);
+		expect(
+			diagnostics.some(
+				(diagnostic) =>
+					diagnostic.code === DiagnosticCode.UNDEFINED_IDENTIFIER &&
+					diagnostic.message.includes("ghost"),
+			),
+		).toBe(true);
+	});
+});
+
+describe("LOOKUP max arity", () => {
+	test("lookup with more than 1000 y-points emits WRONG_ARITY", () => {
+		const yPoints = Array.from({ length: 1001 }, (_, index) => index).join(
+			", ",
+		);
+		const { diagnostics } = compile(`aux result = lookup(s, ${yPoints})`);
+		const diagnostic = diagnostics.find(
+			(candidate) => candidate.code === DiagnosticCode.WRONG_ARITY,
+		);
+		expect(diagnostic).toBeDefined();
+		expect(diagnostic!.span).toBeDefined();
+	});
+
+	test("lookup with exactly 1000 y-points compiles clean", () => {
+		const yPoints = Array.from({ length: 1000 }, (_, index) => index).join(
+			", ",
+		);
+		const ir = compileValid(`aux result = lookup(s, ${yPoints})`);
+		expect(ir.graphicalFunctions[0].ypts).toHaveLength(1000);
 	});
 });
 
@@ -632,6 +814,41 @@ describe("LOOKUP_NON_LITERAL_YPTS", () => {
 					diagnostic.code === DiagnosticCode.LOOKUP_NON_LITERAL_YPTS,
 			),
 		).toBe(false);
+	});
+
+	test("LOOKUP_NON_LITERAL_YPTS diagnostic carries a span", () => {
+		const { diagnostics } = compile("aux result = lookup(s, 0, s, 1)");
+		const diagnostic = diagnostics.find(
+			(candidate) => candidate.code === DiagnosticCode.LOOKUP_NON_LITERAL_YPTS,
+		);
+		expect(diagnostic?.span).toBeDefined();
+	});
+
+	test("parenthesised literal y-point is accepted", () => {
+		const ir = compileValid("aux result = lookup(s, (0), 1)");
+		expect(ir.graphicalFunctions[0].ypts).toEqual([0, 1]);
+	});
+
+	test("parenthesised negative literal y-point is accepted", () => {
+		const ir = compileValid("aux result = lookup(s, (-1), 1)");
+		expect(ir.graphicalFunctions[0].ypts).toEqual([-1, 1]);
+	});
+
+	test("lookup with undefined input and non-literal y-point reports both", () => {
+		const { diagnostics } = compile("aux result = lookup(ghost, 0, s)");
+		expect(
+			diagnostics.some(
+				(diagnostic) =>
+					diagnostic.code === DiagnosticCode.LOOKUP_NON_LITERAL_YPTS,
+			),
+		).toBe(true);
+		expect(
+			diagnostics.some(
+				(diagnostic) =>
+					diagnostic.code === DiagnosticCode.UNDEFINED_IDENTIFIER &&
+					diagnostic.message.includes("ghost"),
+			),
+		).toBe(true);
 	});
 });
 
