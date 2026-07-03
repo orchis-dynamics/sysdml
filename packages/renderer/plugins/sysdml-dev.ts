@@ -52,8 +52,11 @@ export function sysdmlDev(options: SysdmlDevOptions): Plugin {
 				return { type: "error", message };
 			}
 			const { ir, diagnostics: compileDiagnostics } = compileAST(ast);
-			if (compileDiagnostics.length > 0) {
-				const message = compileDiagnostics.map((d) => d.message).join("; ");
+			const fatalDiagnostics = compileDiagnostics.filter(
+				(diagnostic) => diagnostic.severity !== "warning",
+			);
+			if (fatalDiagnostics.length > 0) {
+				const message = fatalDiagnostics.map((d) => d.message).join("; ");
 				return { type: "error", message };
 			}
 			if (ir === null) {
