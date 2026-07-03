@@ -11,10 +11,19 @@ import {
 	clipToBox,
 	connectionControlPoint,
 	flowElbowCorner,
+	routeConnection,
+	segmentConvexNormalAt,
+	segmentPointAt,
 	type Point,
+	type RoutedConnection,
 } from "./edge-geometry.js";
 import { computeLayout, isCausalLoopDiagram } from "./layout-engine.js";
-import type { LayoutNode, LayoutEdge, NodeKind } from "./layout-types.js";
+import type {
+	LayoutNode,
+	LayoutEdge,
+	LayoutConnectionEdge,
+	NodeKind,
+} from "./layout-types.js";
 import AuxNode from "./nodes/AuxNode.vue";
 import FlowNode from "./nodes/FlowNode.vue";
 import StockNode from "./nodes/StockNode.vue";
@@ -121,6 +130,16 @@ function targetBox(id: string): LayoutNode | null {
 	return resolvedNodes.value.find((n) => n.id === id) ?? null;
 }
 
+function routedConnectionFor(edge: LayoutConnectionEdge): RoutedConnection | null {
+	if (edge.angle === undefined && edge.via === undefined) return null;
+	return routeConnection(
+		nodeCenter(edge.source),
+		nodeCenter(edge.target),
+		targetBox(edge.target),
+		{ angle: edge.angle, via: edge.via },
+	);
+}
+
 function quadraticPoint(p0: Point, p1: Point, p2: Point, t: number): Point {
 	const a = (1 - t) * (1 - t);
 	const b = 2 * (1 - t) * t;
@@ -163,6 +182,10 @@ function edgeEndpoints(edge: LayoutEdge): {
 }
 
 function getEdgePath(edge: LayoutEdge): string {
+	if (edge.kind === "connection") {
+		const routedConnection = routedConnectionFor(edge);
+		if (routedConnection) return routedConnection.path;
+	}
 	const { source, controlPoint, corner, end } = edgeEndpoints(edge);
 	if (controlPoint !== null) {
 		return `M ${source.x} ${source.y} Q ${controlPoint.x} ${controlPoint.y} ${end.x} ${end.y}`;
@@ -186,6 +209,21 @@ const polarityLabels = computed<PolarityLabel[]>(() => {
 	for (const edge of layout.value.edges) {
 		if (edge.kind !== "connection") continue;
 		if (edge.polarity !== "+" && edge.polarity !== "-") continue;
+		const routedConnection = routedConnectionFor(edge);
+		if (routedConnection) {
+			const finalSegment =
+				routedConnection.segments[routedConnection.segments.length - 1];
+			const anchor = segmentPointAt(finalSegment, LABEL_PARAM);
+			const normal = segmentConvexNormalAt(finalSegment, LABEL_PARAM);
+			labels.push({
+				id: edge.id,
+				x: anchor.x + normal.x * LABEL_OFFSET,
+				y: anchor.y + normal.y * LABEL_OFFSET,
+				text: edge.polarity === "+" ? "+" : "−",
+				color: edge.polarity === "+" ? "#059669" : "#ef4444",
+			});
+			continue;
+		}
 		const { source, controlPoint, end } = edgeEndpoints(edge);
 		if (controlPoint === null) continue;
 		const point = quadraticPoint(source, controlPoint, end, LABEL_PARAM);
