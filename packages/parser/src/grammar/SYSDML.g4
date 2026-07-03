@@ -116,7 +116,7 @@ connProp
 // Expressions — rule hierarchy encodes precedence (no ambiguity)
 // Precedence, lowest → highest:
 //   IF/THEN/ELSE → OR → AND → NOT → equality (= <>) → relational (< <= > >=)
-//   → additive (+ -) → multiplicative (* / MOD) → unary (- + NOT) → exponent (^) → primary
+//   → additive (+ -) → multiplicative (* / MOD) → unary (- +) → exponent (^) → primary
 
 expr
     : IF expr THEN expr ELSE expr      # IfThenElseExpr
@@ -159,7 +159,7 @@ unaryExpr
     ;
 
 powExpr
-    : primary CARET powExpr            # PowerExpr
+    : primary CARET unaryExpr          # PowerExpr
     | primary                          # PowPrimary
     ;
 

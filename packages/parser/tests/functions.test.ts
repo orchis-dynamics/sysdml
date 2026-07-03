@@ -3,22 +3,29 @@ import { describe, test, expect } from "vitest";
 import { parseSource } from "../src/index.js";
 import type {
 	AuxiliaryDeclarationNode,
+	DeclarationNode,
+	ExpressionNode,
 	FunctionCallNode,
-	IdentifierReferenceNode,
 } from "../src/index.js";
 
-function auxExpr(src: string) {
+function isAuxiliaryDeclaration(
+	node: DeclarationNode,
+): node is AuxiliaryDeclarationNode {
+	return node.type === "AuxiliaryDeclaration";
+}
+
+function auxExpr(src: string): ExpressionNode {
 	const { ast, diagnostics } = parseSource(`sfd m\naux x = ${src}`);
 	expect(diagnostics).toHaveLength(0);
 	if (ast === null) throw new Error(`expected non-null ast for: ${src}`);
-	const decl = ast.decls[0] as AuxiliaryDeclarationNode;
-	expect(decl.type).toBe("AuxiliaryDeclaration");
-	if (decl.expr === null) throw new Error(`expected non-null expr for: ${src}`);
+	const decl = ast.decls[0];
+	if (decl === undefined || !isAuxiliaryDeclaration(decl))
+		throw new Error(`expected AuxiliaryDeclaration for: ${src}`);
 	return decl.expr;
 }
 
-function isFunctionCall(node: unknown): node is FunctionCallNode {
-	return (node as FunctionCallNode).type === "FunctionCall";
+function isFunctionCall(node: ExpressionNode): node is FunctionCallNode {
+	return node.type === "FunctionCall";
 }
 
 // ── Happy path ────────────────────────────────────────────────────────────────
@@ -124,8 +131,9 @@ describe("bare zero-arg identifiers", () => {
 	test("TIME without parens parses as IdentifierReference", () => {
 		// Resolution to FunctionCall happens at IR level
 		const expr = auxExpr("TIME");
-		expect(expr.type).toBe("IdentifierReference");
-		expect((expr as IdentifierReferenceNode).name).toBe("TIME");
+		if (expr.type !== "IdentifierReference")
+			throw new Error("expected IdentifierReference");
+		expect(expr.name).toBe("TIME");
 	});
 
 	test("PI without parens parses as IdentifierReference", () => {
