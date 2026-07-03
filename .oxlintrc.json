@@ -27,7 +27,8 @@
 		"no-nested-ternary": "warn",
 		"no-unused-vars": "warn",
 		"no-unreachable": "error",
-		"no-console": "warn"
+		"no-console": "warn",
+		"typescript/no-explicit-any": "error"
 	},
 	"env": {
 		"builtin": true
@@ -37,6 +38,7 @@
 		"**/renderer-dist/**",
 		"**/generated/**",
 		"**/.antlr/**",
-		"**/node_modules/**"
+		"**/node_modules/**",
+		"packages/vendor/**"
 	]
 }

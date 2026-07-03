@@ -14,6 +14,7 @@
 	"publisher": "orchis-dynamics",
 	"main": "./dist/extension.js",
 	"scripts": {
+		"clean": "rm -rf dist renderer-dist node_modules *.vsix",
 		"typecheck": "tsc --noEmit",
 		"build": "pnpm run build:renderer && pnpm run build:extension",
 		"build:extension": "pnpm run typecheck && node esbuild.js --production",

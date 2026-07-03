@@ -6,6 +6,7 @@
 		"**/generated/**",
 		"**/.antlr/**",
 		"**/node_modules/**",
+		"packages/vendor/**",
 		"pnpm-lock.yaml"
 	],
 	"printWidth": 80,
