@@ -57,7 +57,7 @@ describe("getCompletionItems", () => {
 		expect(labels).not.toContain("birth_rate"); // not a stock
 	});
 
-	it("offers flow identifiers in addition to stocks and null after 'from:'", () => {
+	it("does not offer flow identifiers after 'from:'", () => {
 		const { ast, ir } = analyze(SOURCE);
 		const items = getCompletionItems(SOURCE, ast, ir, {
 			line: 11,
@@ -66,7 +66,7 @@ describe("getCompletionItems", () => {
 		const labels = items.map((i) => i.label);
 		expect(labels).toContain("null");
 		expect(labels).toContain("population"); // a stock
-		expect(labels).toContain("births"); // the flow declared in SOURCE
+		expect(labels).not.toContain("births"); // flows are not valid endpoints
 	});
 
 	it("offers all identifiers and builtins inside an expression", () => {
@@ -190,44 +190,77 @@ birth_rate ->+ births
 		});
 	});
 
-	describe("layout keyword completions", () => {
-		it("suggests 'position' inside a stock block", () => {
+	describe("block key completions", () => {
+		it("suggests only stock keys inside a stock block", () => {
 			const src = "sfd m\nstock s {\n  init: 100\n  ";
 			const items = getCompletionItems(src, null, null, {
 				line: 3,
 				character: 2,
 			});
 			const labels = items.map((i) => i.label);
-			expect(labels).toContain("position");
+			expect(labels.sort()).toEqual(["init", "position"]);
 			const positionItem = items.find((i) => i.label === "position");
-			expect(positionItem).toBeDefined();
 			expect(positionItem?.kind).toBe(CompletionItemKind.Keyword);
 		});
 
-		it("suggests 'via' inside a flow block", () => {
+		it("suggests only flow keys inside a flow block", () => {
 			const src = "sfd m\nflow f {\n  from: null\n  to: s\n  rate: 0.01\n  ";
 			const items = getCompletionItems(src, null, null, {
 				line: 5,
 				character: 2,
 			});
 			const labels = items.map((i) => i.label);
-			expect(labels).toContain("via");
+			expect(labels.sort()).toEqual(["from", "position", "rate", "to", "via"]);
 			const viaItem = items.find((i) => i.label === "via");
-			expect(viaItem).toBeDefined();
 			expect(viaItem?.kind).toBe(CompletionItemKind.Keyword);
 		});
 
-		it("suggests 'angle' inside a connection block", () => {
+		it("suggests only connection keys inside a connection block", () => {
 			const src = "sfd m\nstock s { init: 0 }\na ->+ s {\n  ";
 			const items = getCompletionItems(src, null, null, {
 				line: 3,
 				character: 2,
 			});
 			const labels = items.map((i) => i.label);
-			expect(labels).toContain("angle");
+			expect(labels.sort()).toEqual(["angle", "via"]);
 			const angleItem = items.find((i) => i.label === "angle");
-			expect(angleItem).toBeDefined();
 			expect(angleItem?.kind).toBe(CompletionItemKind.Keyword);
+		});
+
+		it("suggests only time keys inside a time block", () => {
+			const src = "sfd m\ntime {\n  ";
+			const items = getCompletionItems(src, null, null, {
+				line: 2,
+				character: 2,
+			});
+			const labels = items.map((i) => i.label);
+			expect(labels.sort()).toEqual(["end", "start", "step"]);
+		});
+
+		it("suggests only gf keys inside a gf block", () => {
+			const src = "sfd m\ngf lookup {\n  ";
+			const items = getCompletionItems(src, null, null, {
+				line: 2,
+				character: 2,
+			});
+			const labels = items.map((i) => i.label);
+			expect(labels.sort()).toEqual([
+				"kind",
+				"xpts",
+				"xscale",
+				"ypts",
+				"yscale",
+			]);
+		});
+
+		it("suggests only position inside an aux meta block", () => {
+			const src = "sfd m\naux a = 0.02 {\n  ";
+			const items = getCompletionItems(src, null, null, {
+				line: 2,
+				character: 2,
+			});
+			const labels = items.map((i) => i.label);
+			expect(labels).toEqual(["position"]);
 		});
 	});
 });

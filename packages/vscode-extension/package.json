@@ -15,12 +15,13 @@
 	"main": "./dist/extension.js",
 	"scripts": {
 		"typecheck": "tsc --noEmit",
-		"build": "pnpm run build:renderer && pnpm run build:extension",
+		"build": "pnpm run build:lsp && pnpm run build:renderer && pnpm run build:extension",
 		"build:extension": "pnpm run typecheck && node esbuild.js --production",
 		"build:dev": "node esbuild.js",
 		"watch": "node esbuild.js --watch",
 		"package": "pnpm run build && vsce package --no-dependencies",
-		"build:renderer": "cd ../renderer && npm run build:vscode && rm -rf ../vscode-extension/renderer-dist && cp -r dist/ ../vscode-extension/renderer-dist/"
+		"build:lsp": "pnpm --filter @sysdml/lsp-server... build",
+		"build:renderer": "pnpm --filter @sysdml/contracts --filter @sysdml/parser --filter @sysdml/ir --filter @sysdml/simulator build && pnpm --filter @sysdml/renderer build:vscode && rm -rf renderer-dist && cp -R ../renderer/dist renderer-dist"
 	},
 	"devDependencies": {
 		"@sysdml/contracts": "workspace:*",
