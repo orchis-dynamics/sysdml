@@ -185,3 +185,140 @@ export function svgPathFromSegments(segments: PathSegment[]): string {
 	});
 	return pathParts.join(" ");
 }
+
+const COLLINEARITY_TOLERANCE_PIXELS = 0.5;
+const VIA_ENDPOINT_TOLERANCE_PIXELS = 1;
+const FULL_TURN_RADIANS = 2 * Math.PI;
+
+function normalizeAnglePositive(angleRadians: number): number {
+	const normalized = angleRadians % FULL_TURN_RADIANS;
+	return normalized < 0 ? normalized + FULL_TURN_RADIANS : normalized;
+}
+
+function circumcenter(a: Point, b: Point, c: Point): Point {
+	const doubledSignedArea =
+		2 * (a.x * (b.y - c.y) + b.x * (c.y - a.y) + c.x * (a.y - b.y));
+	const aSquared = a.x * a.x + a.y * a.y;
+	const bSquared = b.x * b.x + b.y * b.y;
+	const cSquared = c.x * c.x + c.y * c.y;
+	return {
+		x:
+			(aSquared * (b.y - c.y) + bSquared * (c.y - a.y) + cSquared * (a.y - b.y)) /
+			doubledSignedArea,
+		y:
+			(aSquared * (c.x - b.x) + bSquared * (a.x - c.x) + cSquared * (b.x - a.x)) /
+			doubledSignedArea,
+	};
+}
+
+export function arcThroughThreePoints(
+	source: Point,
+	via: Point,
+	target: Point,
+): PathSegment {
+	const chordX = target.x - source.x;
+	const chordY = target.y - source.y;
+	const chordLength = Math.hypot(chordX, chordY);
+	const crossProduct =
+		(via.x - source.x) * chordY - (via.y - source.y) * chordX;
+	const viaDistanceFromChord =
+		chordLength < ROUTING_EPSILON ? 0 : Math.abs(crossProduct) / chordLength;
+	if (viaDistanceFromChord < COLLINEARITY_TOLERANCE_PIXELS) {
+		return { kind: "line", start: source, end: target };
+	}
+	const center = circumcenter(source, via, target);
+	const radius = Math.hypot(source.x - center.x, source.y - center.y);
+	const startAngleRadians = Math.atan2(source.y - center.y, source.x - center.x);
+	const endAngleRadians = Math.atan2(target.y - center.y, target.x - center.x);
+	const viaAngleRadians = Math.atan2(via.y - center.y, via.x - center.x);
+	const positiveSweep = normalizeAnglePositive(endAngleRadians - startAngleRadians);
+	const viaOffset = normalizeAnglePositive(viaAngleRadians - startAngleRadians);
+	const deltaAngleRadians =
+		viaOffset <= positiveSweep ? positiveSweep : positiveSweep - FULL_TURN_RADIANS;
+	return { kind: "arc", center, radius, startAngleRadians, deltaAngleRadians };
+}
+
+export function tangentContinuationArc(
+	via: Point,
+	tangentDirection: Point,
+	target: Point,
+): PathSegment {
+	const tangentLength = Math.hypot(tangentDirection.x, tangentDirection.y);
+	const chordX = target.x - via.x;
+	const chordY = target.y - via.y;
+	const chordLength = Math.hypot(chordX, chordY);
+	if (tangentLength < ROUTING_EPSILON || chordLength < ROUTING_EPSILON) {
+		return { kind: "line", start: via, end: target };
+	}
+	const tangentUnitX = tangentDirection.x / tangentLength;
+	const tangentUnitY = tangentDirection.y / tangentLength;
+	const targetDistanceFromTangentLine =
+		tangentUnitX * chordY - tangentUnitY * chordX;
+	if (Math.abs(targetDistanceFromTangentLine) < COLLINEARITY_TOLERANCE_PIXELS) {
+		return { kind: "line", start: via, end: target };
+	}
+	const signedCenterDistance =
+		(chordLength * chordLength) / (2 * targetDistanceFromTangentLine);
+	const center = {
+		x: via.x - tangentUnitY * signedCenterDistance,
+		y: via.y + tangentUnitX * signedCenterDistance,
+	};
+	const radius = Math.abs(signedCenterDistance);
+	const startAngleRadians = Math.atan2(via.y - center.y, via.x - center.x);
+	const endAngleRadians = Math.atan2(target.y - center.y, target.x - center.x);
+	const radiusUnitX = (via.x - center.x) / radius;
+	const radiusUnitY = (via.y - center.y) / radius;
+	const positiveSweepTangentX = -radiusUnitY;
+	const positiveSweepTangentY = radiusUnitX;
+	const sweepSign =
+		tangentUnitX * positiveSweepTangentX + tangentUnitY * positiveSweepTangentY >= 0
+			? 1
+			: -1;
+	const positiveSweep = normalizeAnglePositive(endAngleRadians - startAngleRadians);
+	const deltaAngleRadians =
+		sweepSign > 0 ? positiveSweep : positiveSweep - FULL_TURN_RADIANS;
+	return { kind: "arc", center, radius, startAngleRadians, deltaAngleRadians };
+}
+
+export type ConnectionRoutingHints = {
+	angle?: number;
+	via?: Point;
+};
+
+function isUsableViaPoint(
+	via: Point | undefined,
+	source: Point,
+	target: Point,
+): via is Point {
+	if (!via) return false;
+	return (
+		Math.hypot(via.x - source.x, via.y - source.y) >=
+			VIA_ENDPOINT_TOLERANCE_PIXELS &&
+		Math.hypot(via.x - target.x, via.y - target.y) >=
+			VIA_ENDPOINT_TOLERANCE_PIXELS
+	);
+}
+
+export function connectionRoutedSegments(
+	source: Point,
+	target: Point,
+	hints: ConnectionRoutingHints,
+): PathSegment[] | null {
+	const angle = hints.angle;
+	const via = isUsableViaPoint(hints.via, source, target)
+		? hints.via
+		: undefined;
+	if (via !== undefined && angle !== undefined) {
+		const departureSegment = arcFromChordAndCentralAngle(source, via, angle);
+		const viaTangent = segmentTangentAt(departureSegment, 1);
+		const arrivalSegment = tangentContinuationArc(via, viaTangent, target);
+		return [departureSegment, arrivalSegment];
+	}
+	if (via !== undefined) {
+		return [arcThroughThreePoints(source, via, target)];
+	}
+	if (angle !== undefined) {
+		return [arcFromChordAndCentralAngle(source, target, angle)];
+	}
+	return null;
+}
