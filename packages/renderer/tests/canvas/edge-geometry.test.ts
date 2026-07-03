@@ -15,6 +15,9 @@ import {
 	connectionRoutedSegments,
 	clipSegmentsEndToBox,
 	routeConnection,
+	orthogonalPipePoints,
+	polylineMidpoint,
+	flowPipeGeometry,
 	type PathSegment,
 	type Point,
 } from "../../src/canvas/edge-geometry.js";
@@ -440,5 +443,112 @@ describe("routeConnection", () => {
 		expect(routed.path).toContain(" A ");
 		expect(segmentEndPoint(routed.segments[routed.segments.length - 1]).x)
 			.toBeCloseTo(80, 1);
+	});
+});
+
+describe("orthogonalPipePoints", () => {
+	test("no via and same Y yields a straight two-point pipe", () => {
+		expect(
+			orthogonalPipePoints({ x: 0, y: 0 }, [], { x: 100, y: 0 }),
+		).toEqual([
+			{ x: 0, y: 0 },
+			{ x: 100, y: 0 },
+		]);
+	});
+
+	test("no via with differing axes inserts the legacy elbow", () => {
+		expect(
+			orthogonalPipePoints({ x: 10, y: 50 }, [], { x: 100, y: 20 }),
+		).toEqual([
+			{ x: 10, y: 50 },
+			{ x: 100, y: 50 },
+			{ x: 100, y: 20 },
+		]);
+	});
+
+	test("via knees are followed with elbows inserted between diagonal neighbors", () => {
+		expect(
+			orthogonalPipePoints(
+				{ x: 0, y: 0 },
+				[{ x: 50, y: 40 }],
+				{ x: 100, y: 40 },
+			),
+		).toEqual([
+			{ x: 0, y: 0 },
+			{ x: 50, y: 0 },
+			{ x: 50, y: 40 },
+			{ x: 100, y: 40 },
+		]);
+	});
+
+	test("consecutive duplicate via points are skipped", () => {
+		expect(
+			orthogonalPipePoints(
+				{ x: 0, y: 0 },
+				[
+					{ x: 50, y: 0 },
+					{ x: 50, y: 0 },
+				],
+				{ x: 100, y: 0 },
+			),
+		).toEqual([
+			{ x: 0, y: 0 },
+			{ x: 50, y: 0 },
+			{ x: 100, y: 0 },
+		]);
+	});
+});
+
+describe("polylineMidpoint", () => {
+	test("midpoint of a straight pipe is its center", () => {
+		expect(
+			polylineMidpoint([
+				{ x: 0, y: 0 },
+				{ x: 100, y: 0 },
+			]),
+		).toEqual({ x: 50, y: 0 });
+	});
+
+	test("midpoint of an L-shaped pipe sits on the longer half", () => {
+		expect(
+			polylineMidpoint([
+				{ x: 0, y: 0 },
+				{ x: 60, y: 0 },
+				{ x: 60, y: 40 },
+			]),
+		).toEqual({ x: 50, y: 0 });
+	});
+
+	test("single-point polyline returns that point", () => {
+		expect(polylineMidpoint([{ x: 7, y: 9 }])).toEqual({ x: 7, y: 9 });
+	});
+});
+
+describe("flowPipeGeometry", () => {
+	test("straight pipe reproduces the legacy path and arrowhead strings", () => {
+		const geometry = flowPipeGeometry(
+			[
+				{ x: 0, y: 0 },
+				{ x: 100, y: 0 },
+			],
+			10,
+			6,
+		);
+		expect(geometry.pipePath).toBe("M 0 0 L 90 0");
+		expect(geometry.arrowheadPoints).toBe("100,0 90,6 90,-6");
+	});
+
+	test("elbowed pipe reproduces the legacy two-segment path", () => {
+		const geometry = flowPipeGeometry(
+			[
+				{ x: 10, y: 50 },
+				{ x: 100, y: 50 },
+				{ x: 100, y: 20 },
+			],
+			10,
+			6,
+		);
+		expect(geometry.pipePath).toBe("M 10 50 L 100 50 L 100 30");
+		expect(geometry.arrowheadPoints).toBe("100,20 106,30 94,30");
 	});
 });

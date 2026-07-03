@@ -11,6 +11,8 @@ import {
 	clipToBox,
 	connectionControlPoint,
 	flowElbowCorner,
+	flowPipeGeometry,
+	orthogonalPipePoints,
 	routeConnection,
 	segmentConvexNormalAt,
 	segmentPointAt,
@@ -22,6 +24,7 @@ import type {
 	LayoutNode,
 	LayoutEdge,
 	LayoutConnectionEdge,
+	LayoutFlowEdge,
 	NodeKind,
 } from "./layout-types.js";
 import AuxNode from "./nodes/AuxNode.vue";
@@ -271,29 +274,23 @@ interface FlowEdgeGeometry {
 	arrowheadPoints: string;
 }
 
-function flowEdgeGeometry(edge: LayoutEdge): FlowEdgeGeometry {
-	const { source, corner, end } = edgeEndpoints(edge);
-	const previousPoint = corner ?? source;
-	const deltaX = end.x - previousPoint.x;
-	const deltaY = end.y - previousPoint.y;
-	const segmentLength = Math.hypot(deltaX, deltaY) || 1;
-	const directionX = deltaX / segmentLength;
-	const directionY = deltaY / segmentLength;
-	const pipeEndX = end.x - directionX * FLOW_ARROWHEAD_LENGTH;
-	const pipeEndY = end.y - directionY * FLOW_ARROWHEAD_LENGTH;
-	const pipePath = corner
-		? `M ${source.x} ${source.y} L ${corner.x} ${corner.y} L ${pipeEndX} ${pipeEndY}`
-		: `M ${source.x} ${source.y} L ${pipeEndX} ${pipeEndY}`;
-	const perpendicularX = -directionY;
-	const perpendicularY = directionX;
-	const baseLeftX = pipeEndX + perpendicularX * FLOW_ARROWHEAD_HALF_WIDTH;
-	const baseLeftY = pipeEndY + perpendicularY * FLOW_ARROWHEAD_HALF_WIDTH;
-	const baseRightX = pipeEndX - perpendicularX * FLOW_ARROWHEAD_HALF_WIDTH;
-	const baseRightY = pipeEndY - perpendicularY * FLOW_ARROWHEAD_HALF_WIDTH;
-	return {
-		pipePath,
-		arrowheadPoints: `${end.x},${end.y} ${baseLeftX},${baseLeftY} ${baseRightX},${baseRightY}`,
-	};
+function flowEdgeGeometry(edge: LayoutFlowEdge): FlowEdgeGeometry {
+	const source = nodeCenter(edge.source);
+	const targetCenter = nodeCenter(edge.target);
+	const box = targetBox(edge.target);
+	const unclippedPoints = orthogonalPipePoints(
+		source,
+		edge.via ?? [],
+		targetCenter,
+	);
+	const beforeEnd = unclippedPoints[unclippedPoints.length - 2] ?? source;
+	const end = box ? clipToBox(beforeEnd, targetCenter, box) : targetCenter;
+	const pipePoints = [...unclippedPoints.slice(0, -1), end];
+	return flowPipeGeometry(
+		pipePoints,
+		FLOW_ARROWHEAD_LENGTH,
+		FLOW_ARROWHEAD_HALF_WIDTH,
+	);
 }
 
 type EdgeRenderItem =
