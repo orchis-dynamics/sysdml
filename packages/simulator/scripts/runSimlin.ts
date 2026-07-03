@@ -24,18 +24,24 @@ function compileToIR(source: string) {
 	if (parseDiagnostics.length > 0) {
 		throw new Error(`Parse error: ${parseDiagnostics[0].message}`);
 	}
-	const { ir, diagnostics: irDiagnostics } = compileAST(ast!);
+	if (ast === null) {
+		throw new Error("Parse error: no AST produced");
+	}
+	const { ir, diagnostics: irDiagnostics } = compileAST(ast);
 	if (irDiagnostics.length > 0) {
 		throw new Error(`IR error: ${irDiagnostics[0].message}`);
 	}
-	return ir!;
+	if (ir === null) {
+		throw new Error("IR error: compilation produced no IR");
+	}
+	return ir;
 }
 
 async function main() {
 	const ir = compileToIR(readModelSource());
 	const project = await Project.openJson(JSON.stringify(irToSimlinProject(ir)));
 
-	const errors = project.getErrors();
+	const errors = await project.getErrors();
 	if (errors.length > 0) {
 		console.error("Engine errors:", errors);
 		process.exit(1);

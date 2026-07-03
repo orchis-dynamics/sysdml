@@ -1,4 +1,5 @@
 import { Project } from "@simlin/engine";
+import type { Model, ModelIssue } from "@simlin/engine";
 import { DirectBackend } from "@simlin/engine/direct-backend";
 import { canonicalizeIdent } from "@simlin/engine/internal/canonicalize";
 import { SimlinJsonFormat } from "@simlin/engine/internal/types";
@@ -17,7 +18,13 @@ let readyBackend: Promise<DirectBackend> | null = null;
 function backend(): Promise<DirectBackend> {
 	if (readyBackend === null) {
 		const instance = new DirectBackend();
-		readyBackend = instance.init().then(() => instance);
+		const pendingBackend = instance.init().then(() => instance);
+		pendingBackend.catch(() => {
+			if (readyBackend === pendingBackend) {
+				readyBackend = null;
+			}
+		});
+		readyBackend = pendingBackend;
 	}
 	return readyBackend;
 }
@@ -66,40 +73,81 @@ function transposeRun(
 	return rows;
 }
 
+function checkIssueToDiagnostic(issue: ModelIssue): SimDiagnostic {
+	const message = issue.variable
+		? `${issue.variable}: ${issue.message}`
+		: issue.message;
+	if (issue.severity === "info") {
+		return { code: issue.severity, message };
+	}
+	return { code: issue.severity, message, severity: issue.severity };
+}
+
+function runFailureDiagnostic(error: unknown): SimDiagnostic {
+	return {
+		code: "error",
+		message: error instanceof Error ? error.message : String(error),
+		severity: "error",
+	};
+}
+
+interface DisposableHandle {
+	dispose(): Promise<void>;
+}
+
+async function disposeIgnoringErrors(handle: DisposableHandle): Promise<void> {
+	try {
+		await handle.dispose();
+	} catch {
+		return;
+	}
+}
+
+async function openProject(engine: DirectBackend, ir: IR): Promise<Project> {
+	const projectJson = JSON.stringify(irToSimlinProject(ir));
+	const handle = await engine.projectOpenJson(
+		new TextEncoder().encode(projectJson),
+		SimlinJsonFormat.Native,
+	);
+	return new Project(handle, engine);
+}
+
+async function collectCheckDiagnostics(model: Model): Promise<SimDiagnostic[]> {
+	const issues = await model.check();
+	return issues.map(checkIssueToDiagnostic);
+}
+
+async function runModelToRows(
+	model: Model,
+	variableIds: readonly string[],
+): Promise<SimRow[]> {
+	const sim = await model.simulate();
+	try {
+		await sim.runToEnd();
+		const run = await sim.getRun();
+		return transposeRun(run.time, run.results, variableIds);
+	} finally {
+		await disposeIgnoringErrors(sim);
+	}
+}
+
 export class SimlinSimulator implements Simulator {
 	async simulate(ir: IR): Promise<SimulationResult> {
+		const diagnostics: SimDiagnostic[] = [];
 		try {
 			const engine = await backend();
-			const projectJson = JSON.stringify(irToSimlinProject(ir));
-			const handle = await engine.projectOpenJson(
-				new TextEncoder().encode(projectJson),
-				SimlinJsonFormat.Native,
-			);
-			const project = new Project(handle, engine);
-			const model = await project.mainModel();
-
-			const issues = await model.check();
-			const diagnostics: SimDiagnostic[] = issues.map((issue) => ({
-				code: issue.severity,
-				message: issue.variable
-					? `${issue.variable}: ${issue.message}`
-					: issue.message,
-			}));
-
-			const run = await model.run();
-			const rows = transposeRun(run.time, run.results, modelVariableIds(ir));
-
-			return { rows, diagnostics };
+			const project = await openProject(engine, ir);
+			try {
+				const model = await project.mainModel();
+				diagnostics.push(...(await collectCheckDiagnostics(model)));
+				const rows = await runModelToRows(model, modelVariableIds(ir));
+				return { rows, diagnostics };
+			} finally {
+				await disposeIgnoringErrors(project);
+			}
 		} catch (error) {
-			return {
-				rows: [],
-				diagnostics: [
-					{
-						code: "error",
-						message: error instanceof Error ? error.message : String(error),
-					},
-				],
-			};
+			diagnostics.push(runFailureDiagnostic(error));
+			return { rows: [], diagnostics };
 		}
 	}
 }

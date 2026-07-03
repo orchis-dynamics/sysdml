@@ -42,4 +42,5 @@ export interface IRDiagnostic {
 export interface SimDiagnostic {
 	code: string;
 	message: string;
+	severity?: "error" | "warning";
 }
