@@ -28,16 +28,18 @@ export function flow(
 	from: string | null,
 	to: string | null,
 	position?: { x: number; y: number },
+	via?: { x: number; y: number }[],
 ): IRFlow {
-	return { id, from, to, rate: ZERO, position };
+	return { id, from, to, rate: ZERO, position, via };
 }
 
 export function connection(
 	from: string,
 	to: string,
 	polarity: "+" | "-" | "=>" = "+",
+	routing?: { angle?: number; via?: { x: number; y: number } },
 ): IRConnection {
-	return { from, to, polarity };
+	return { from, to, polarity, angle: routing?.angle, via: routing?.via };
 }
 
 export function ir(parts: Partial<IR> = {}): IR {
