@@ -7,7 +7,7 @@ OUT="generated"
 echo "Generating ANTLR4 TypeScript parser from $GRAMMAR..."
 pnpm exec antlr-ng \
   -D language=TypeScript \
-  -v \
+  -l false \
   -o "$OUT" \
   "$GRAMMAR"
 

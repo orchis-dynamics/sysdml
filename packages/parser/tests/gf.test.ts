@@ -3,9 +3,9 @@ import { describe, test, expect } from "vitest";
 import { parseSource } from "../src/index.js";
 import type {
 	AuxiliaryDeclarationNode,
+	DeclarationNode,
 	GraphicalFunctionDeclarationNode,
 	GraphicalFunctionBodyNode,
-	NumberListNode,
 } from "../src/index.js";
 
 function parseOk(src: string) {
@@ -22,22 +22,34 @@ function wrap(body: string) {
 	return `sfd m\ntime { start: 0 end: 1 step: 1 }\nstock s { init: 0 }\n${body}`;
 }
 
+function isGraphicalFunctionDeclaration(
+	declaration: DeclarationNode,
+): declaration is GraphicalFunctionDeclarationNode {
+	return declaration.type === "GraphicalFunctionDeclaration";
+}
+
+function isAuxiliaryDeclaration(
+	declaration: DeclarationNode,
+): declaration is AuxiliaryDeclarationNode {
+	return declaration.type === "AuxiliaryDeclaration";
+}
+
 function parseGraphicalFunctionDeclaration(
 	src: string,
 ): GraphicalFunctionDeclarationNode {
 	const ast = parseOk(wrap(src));
-	const declaration = ast.decls.find(
-		(decl) => decl.type === "GraphicalFunctionDeclaration",
-	) as GraphicalFunctionDeclarationNode;
-	expect(declaration).toBeDefined();
+	const declaration = ast.decls.find(isGraphicalFunctionDeclaration);
+	if (declaration === undefined)
+		throw new Error("expected GraphicalFunctionDeclaration");
 	return declaration;
 }
 
 function numListValues(body: GraphicalFunctionBodyNode, key: string): number[] {
 	const prop = body.props.find((property) => property.key === key);
 	if (prop === undefined) throw new Error(`expected prop '${key}'`);
-	const list = prop.value as NumberListNode;
-	return list.values.map(
+	if (prop.key === "kind")
+		throw new Error(`expected number list for prop '${key}'`);
+	return prop.value.values.map(
 		(signedNumber) =>
 			(signedNumber.negative ? -1 : 1) * parseFloat(signedNumber.lit.value),
 	);
@@ -166,8 +178,8 @@ describe("named gf — multiple in same model", () => {
 			),
 		);
 		const graphicalFunctionDeclarations = ast.decls.filter(
-			(declaration) => declaration.type === "GraphicalFunctionDeclaration",
-		) as GraphicalFunctionDeclarationNode[];
+			isGraphicalFunctionDeclaration,
+		);
 		expect(graphicalFunctionDeclarations).toHaveLength(2);
 		const [firstDeclaration, secondDeclaration] = graphicalFunctionDeclarations;
 		if (firstDeclaration === undefined || secondDeclaration === undefined) {
@@ -183,9 +195,8 @@ describe("named gf referenced in aux expression", () => {
 		const ast = parseOk(
 			wrap("gf f { xscale: [0, 1] ypts: [0, 1] }\naux result = f(s)"),
 		);
-		const aux = ast.decls.find(
-			(declaration) => declaration.type === "AuxiliaryDeclaration",
-		) as AuxiliaryDeclarationNode;
+		const aux = ast.decls.find(isAuxiliaryDeclaration);
+		if (aux === undefined) throw new Error("expected AuxiliaryDeclaration");
 		expect(aux.expr.type).toBe("FunctionCall");
 	});
 });
@@ -247,17 +258,15 @@ describe("aux with inline gf via named decl", () => {
 describe("lookup() inline function", () => {
 	test("parses as FunctionCall named lookup", () => {
 		const ast = parseOk(wrap("aux result = lookup(s, 0, 0.5, 1)"));
-		const aux = ast.decls.find(
-			(declaration) => declaration.type === "AuxiliaryDeclaration",
-		) as AuxiliaryDeclarationNode;
+		const aux = ast.decls.find(isAuxiliaryDeclaration);
+		if (aux === undefined) throw new Error("expected AuxiliaryDeclaration");
 		expect(aux.expr.type).toBe("FunctionCall");
 		if (aux.expr.type === "FunctionCall") expect(aux.expr.name).toBe("lookup");
 	});
 	test("first arg is input expression", () => {
 		const ast = parseOk(wrap("aux result = lookup(s, 0, 0.5, 1)"));
-		const aux = ast.decls.find(
-			(declaration) => declaration.type === "AuxiliaryDeclaration",
-		) as AuxiliaryDeclarationNode;
+		const aux = ast.decls.find(isAuxiliaryDeclaration);
+		if (aux === undefined) throw new Error("expected AuxiliaryDeclaration");
 		if (aux.expr.type === "FunctionCall") {
 			const firstArg = aux.expr.args[0];
 			if (firstArg === undefined) throw new Error("expected first arg");
@@ -266,9 +275,8 @@ describe("lookup() inline function", () => {
 	});
 	test("four total args (input + 3 ypts)", () => {
 		const ast = parseOk(wrap("aux result = lookup(s, 0, 0.5, 1)"));
-		const aux = ast.decls.find(
-			(declaration) => declaration.type === "AuxiliaryDeclaration",
-		) as AuxiliaryDeclarationNode;
+		const aux = ast.decls.find(isAuxiliaryDeclaration);
+		if (aux === undefined) throw new Error("expected AuxiliaryDeclaration");
 		if (aux.expr.type === "FunctionCall") expect(aux.expr.args).toHaveLength(4);
 	});
 	test("many y-points", () => {
@@ -277,9 +285,8 @@ describe("lookup() inline function", () => {
 				"aux result = lookup(s, 0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1)",
 			),
 		);
-		const aux = ast.decls.find(
-			(declaration) => declaration.type === "AuxiliaryDeclaration",
-		) as AuxiliaryDeclarationNode;
+		const aux = ast.decls.find(isAuxiliaryDeclaration);
+		if (aux === undefined) throw new Error("expected AuxiliaryDeclaration");
 		if (aux.expr.type === "FunctionCall")
 			expect(aux.expr.args).toHaveLength(12);
 	});
