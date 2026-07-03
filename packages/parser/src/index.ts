@@ -1,6 +1,5 @@
 export { parseSource } from "./parse.js";
 export type {
-	ASTNode,
 	AuxiliaryDeclarationNode,
 	BinaryExpressionNode,
 	BinaryOperator,
@@ -15,7 +14,6 @@ export type {
 	FunctionCallNode,
 	GraphicalFunctionBodyNode,
 	GraphicalFunctionDeclarationNode,
-	GraphicalFunctionKind,
 	GraphicalFunctionPropertyNode,
 	GroupedExpressionNode,
 	IdentifierReferenceNode,
