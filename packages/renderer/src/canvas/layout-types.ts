@@ -28,7 +28,6 @@ export interface LayoutEdge {
 	source: string;
 	target: string;
 	polarity?: "+" | "-" | "=>";
-	points: { x: number; y: number }[];
 }
 
 export interface LayoutResult {

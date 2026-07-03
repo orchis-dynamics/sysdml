@@ -6,6 +6,7 @@ import type {
 
 export interface IRTransport {
 	start(): void;
+	stop(): void;
 	onIR(cb: (ir: IR) => void): void;
 	onError(cb: (message: string) => void): void;
 }
@@ -14,11 +15,14 @@ export type InboundMessage = ExtensionToWebviewMessage;
 export type OutboundMessage = WebviewToExtensionMessage;
 
 export function isInboundMessage(value: unknown): value is InboundMessage {
-	return (
-		typeof value === "object" &&
-		value !== null &&
-		"type" in value &&
-		((value as { type: unknown }).type === "update" ||
-			(value as { type: unknown }).type === "error")
-	);
+	if (typeof value !== "object" || value === null || !("type" in value)) {
+		return false;
+	}
+	if (value.type === "update") {
+		return "ir" in value && typeof value.ir === "object" && value.ir !== null;
+	}
+	if (value.type === "error") {
+		return "message" in value && typeof value.message === "string";
+	}
+	return false;
 }

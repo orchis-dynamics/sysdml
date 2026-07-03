@@ -15,10 +15,35 @@ import type { WorkerRequest, WorkerResponse } from "./types.js";
 //                                       deployments like the hosted Monaco demo)
 import SimulatorWorker from "./worker.ts?worker";
 
-export type WorkerFactory = () => Worker;
+export interface SimulationWorkerMessageEvent {
+	data: WorkerResponse;
+}
+
+export interface SimulationWorkerErrorEvent {
+	message: string;
+	filename: string;
+	lineno: number;
+}
+
+export interface SimulationWorkerEventMap {
+	message: SimulationWorkerMessageEvent;
+	error: SimulationWorkerErrorEvent;
+	messageerror: unknown;
+}
+
+export interface SimulationWorker {
+	postMessage(message: WorkerRequest): void;
+	addEventListener<EventName extends keyof SimulationWorkerEventMap>(
+		type: EventName,
+		listener: (event: SimulationWorkerEventMap[EventName]) => void,
+	): void;
+	terminate(): void;
+}
+
+export type WorkerFactory = () => SimulationWorker;
 
 export class SimulatorClient {
-	private readonly worker: Worker;
+	private readonly worker: SimulationWorker;
 	private nextJobId = 1;
 	private latestJobId = 0;
 	private disposed = false;
@@ -27,20 +52,17 @@ export class SimulatorClient {
 
 	constructor(workerFactory: WorkerFactory) {
 		this.worker = workerFactory();
-		this.worker.addEventListener(
-			"message",
-			(event: MessageEvent<WorkerResponse>) => {
-				if (this.disposed) return;
-				const response = event.data;
-				if (response.jobId !== this.latestJobId) return;
-				if (response.type === "result") {
-					for (const cb of this.resultListeners) cb(response.result);
-				} else {
-					for (const cb of this.errorListeners) cb(response.message);
-				}
-			},
-		);
-		this.worker.addEventListener("error", (event: ErrorEvent) => {
+		this.worker.addEventListener("message", (event) => {
+			if (this.disposed) return;
+			const response = event.data;
+			if (response.jobId !== this.latestJobId) return;
+			if (response.type === "result") {
+				for (const cb of this.resultListeners) cb(response.result);
+			} else {
+				for (const cb of this.errorListeners) cb(response.message);
+			}
+		});
+		this.worker.addEventListener("error", (event) => {
 			if (this.disposed) return;
 			this.reportError(this.describeWorkerError(event));
 		});
@@ -52,7 +74,7 @@ export class SimulatorClient {
 		});
 	}
 
-	private describeWorkerError(event: ErrorEvent): string {
+	private describeWorkerError(event: SimulationWorkerErrorEvent): string {
 		const detail = event.message || "unknown error";
 		const location =
 			event.filename && event.lineno

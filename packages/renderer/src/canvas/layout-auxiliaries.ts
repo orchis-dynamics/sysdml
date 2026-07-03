@@ -1,7 +1,41 @@
 import type { IRConnection, IRPosition } from "@sysdml/contracts";
 
 import { FR, THEME } from "./layout-theme";
-import { LayoutInputNode, LayoutNode, NodeKindEnum } from "./layout-types";
+import {
+	LayoutInputNode,
+	LayoutNode,
+	NodeKindEnum,
+	NodeSize,
+} from "./layout-types";
+
+function getOrThrow<Value>(map: Map<string, Value>, key: string): Value {
+	const value = map.get(key);
+	if (value === undefined) {
+		throw new Error(`Missing layout entry for "${key}"`);
+	}
+	return value;
+}
+
+function computeAuxiliaryNodeSize(auxiliaryId: string): NodeSize {
+	return {
+		width: auxiliaryId.length * THEME.CHAR_WIDTH + 2 * THEME.STOCK_PADDING,
+		height: THEME.LINE_HEIGHT + 2 * THEME.STOCK_PADDING,
+	};
+}
+
+function convertTopLeftToCenter(
+	position: IRPosition,
+	size: NodeSize,
+): IRPosition {
+	return { x: position.x + size.width / 2, y: position.y + size.height / 2 };
+}
+
+function convertCenterToTopLeft(
+	position: IRPosition,
+	size: NodeSize,
+): IRPosition {
+	return { x: position.x - size.width / 2, y: position.y - size.height / 2 };
+}
 
 export function seedAuxiliaryPositions(
 	auxiliaries: LayoutInputNode[],
@@ -98,14 +132,14 @@ export function computeRepulsion(
 			const idA = ids[i];
 			const idB = ids[j];
 			const { unitX, unitY, distance } = unitVectorBetween(
-				positions.get(idA)!,
-				positions.get(idB)!,
+				getOrThrow(positions, idA),
+				getOrThrow(positions, idB),
 				idA,
 				idB,
 			);
 			const magnitude = (k * k) / distance;
-			const repulsionA = displacement.get(idA)!;
-			const repulsionB = displacement.get(idB)!;
+			const repulsionA = getOrThrow(displacement, idA);
+			const repulsionB = getOrThrow(displacement, idB);
 			repulsionA.x += unitX * magnitude;
 			repulsionA.y += unitY * magnitude;
 			repulsionB.x -= unitX * magnitude;
@@ -223,12 +257,12 @@ export function computeAttraction(
 		const unitY = deltaY / distance;
 		const magnitude = (distance * distance) / k;
 
-		const dFrom = displacement.get(edge.from)!;
-		const dTo = displacement.get(edge.to)!;
-		dFrom.x -= unitX * magnitude;
-		dFrom.y -= unitY * magnitude;
-		dTo.x += unitX * magnitude;
-		dTo.y += unitY * magnitude;
+		const displacementFrom = getOrThrow(displacement, edge.from);
+		const displacementTo = getOrThrow(displacement, edge.to);
+		displacementFrom.x -= unitX * magnitude;
+		displacementFrom.y -= unitY * magnitude;
+		displacementTo.x += unitX * magnitude;
+		displacementTo.y += unitY * magnitude;
 	});
 
 	return displacement;
@@ -243,8 +277,16 @@ export function constructAuxiliaryLayoutNodes(
 
 	const seeds = seedAuxiliaryPositions(auxiliaries, connections, skeletonNodes);
 
-	// Combined position map: aux seeds + skeleton centers (pinned).
-	const positions = new Map<string, IRPosition>(seeds);
+	const positions = new Map<string, IRPosition>();
+	auxiliaries.forEach((auxiliary) => {
+		const seed = getOrThrow(seeds, auxiliary.id);
+		positions.set(
+			auxiliary.id,
+			auxiliary.position
+				? convertTopLeftToCenter(seed, computeAuxiliaryNodeSize(auxiliary.id))
+				: seed,
+		);
+	});
 	const pinned = new Set<string>();
 	skeletonNodes.forEach((node, id) => {
 		positions.set(id, nodeCenter(node));
@@ -288,15 +330,12 @@ export function constructAuxiliaryLayoutNodes(
 
 	const result = new Map<string, LayoutNode>();
 	auxiliaries.forEach((auxiliary) => {
-		const position = currentPositions.get(auxiliary.id)!;
-		const size = {
-			width: auxiliary.id.length * THEME.CHAR_WIDTH + 2 * THEME.STOCK_PADDING,
-			height: THEME.LINE_HEIGHT + 2 * THEME.STOCK_PADDING,
-		};
+		const centerPosition = getOrThrow(currentPositions, auxiliary.id);
+		const size = computeAuxiliaryNodeSize(auxiliary.id);
 		result.set(auxiliary.id, {
 			id: auxiliary.id,
 			kind: NodeKindEnum.Aux,
-			position,
+			position: convertCenterToTopLeft(centerPosition, size),
 			size,
 		});
 	});

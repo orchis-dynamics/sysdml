@@ -3,16 +3,22 @@ import { ref, useTemplateRef, watch } from "vue";
 
 import IconFlowValve from "./Icon/IconFlowValve.vue";
 
-defineProps<{ label: string }>();
+const props = defineProps<{ label: string }>();
 
 const cloud = useTemplateRef("cloud");
 
 const labelOffset = ref(0);
 
-watch(cloud, () => {
-	if (typeof cloud.value?.firstElementChild?.clientWidth === "number")
-		labelOffset.value = cloud.value?.firstElementChild?.clientWidth / 2 - 12;
-});
+const HALF_VALVE_WIDTH_PIXELS = 12;
+
+function measureLabelOffset(): void {
+	const labelElement = cloud.value?.firstElementChild;
+	if (labelElement instanceof HTMLElement) {
+		labelOffset.value = labelElement.clientWidth / 2 - HALF_VALVE_WIDTH_PIXELS;
+	}
+}
+
+watch([cloud, () => props.label], measureLabelOffset, { flush: "post" });
 </script>
 
 <template>
@@ -23,7 +29,7 @@ watch(cloud, () => {
 	>
 		<span
 			class="absolute -bottom-8 text-sm"
-			:style="{ left: `-${labelOffset}px` }"
+			:style="{ left: `${-labelOffset}px` }"
 		>
 			{{ label }}
 		</span>

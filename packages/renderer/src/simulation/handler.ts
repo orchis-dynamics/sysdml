@@ -1,17 +1,54 @@
 import type { Simulator } from "@sysdml/contracts";
 
-import type { WorkerRequest, WorkerResponse } from "./types.js";
+import type { SimulateRequest, WorkerResponse } from "./types.js";
+
+function isSimulateRequest(value: unknown): value is SimulateRequest {
+	return (
+		typeof value === "object" &&
+		value !== null &&
+		"type" in value &&
+		value.type === "simulate" &&
+		"jobId" in value &&
+		typeof value.jobId === "number" &&
+		"ir" in value &&
+		typeof value.ir === "object" &&
+		value.ir !== null
+	);
+}
+
+function readJobId(value: unknown): number {
+	if (
+		typeof value === "object" &&
+		value !== null &&
+		"jobId" in value &&
+		typeof value.jobId === "number"
+	) {
+		return value.jobId;
+	}
+	return -1;
+}
+
+function readRequestType(value: unknown): string {
+	if (
+		typeof value === "object" &&
+		value !== null &&
+		"type" in value &&
+		typeof value.type === "string"
+	) {
+		return value.type;
+	}
+	return String(value);
+}
 
 export async function handleSimulationRequest(
-	request: WorkerRequest,
+	request: unknown,
 	simulator: Simulator,
 ): Promise<WorkerResponse> {
-	if (request.type !== "simulate") {
+	if (!isSimulateRequest(request)) {
 		return {
 			type: "error",
-			jobId: (request as { jobId?: number }).jobId ?? -1,
-			message: `Unknown request type: ${(request as { type: string }).type}`,
-			diagnostic: null,
+			jobId: readJobId(request),
+			message: `Unknown request type: ${readRequestType(request)}`,
 		};
 	}
 
@@ -23,7 +60,6 @@ export async function handleSimulationRequest(
 			type: "error",
 			jobId: request.jobId,
 			message: error instanceof Error ? error.message : String(error),
-			diagnostic: null,
 		};
 	}
 }
