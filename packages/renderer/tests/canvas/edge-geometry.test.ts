@@ -13,6 +13,8 @@ import {
 	arcThroughThreePoints,
 	tangentContinuationArc,
 	connectionRoutedSegments,
+	clipSegmentsEndToBox,
+	routeConnection,
 	type PathSegment,
 	type Point,
 } from "../../src/canvas/edge-geometry.js";
@@ -372,5 +374,71 @@ describe("connectionRoutedSegments", () => {
 		);
 		expect(segments).toHaveLength(1);
 		expect(segments?.[0].kind).toBe("arc");
+	});
+});
+
+describe("clipSegmentsEndToBox", () => {
+	const targetNodeBox = {
+		position: { x: 80, y: -20 },
+		size: { width: 40, height: 40 },
+	};
+
+	test("clipped endpoint lies on the box boundary and on the arc", () => {
+		const segment = arcFromChordAndCentralAngle(
+			{ x: 0, y: 0 },
+			{ x: 100, y: 0 },
+			90,
+		);
+		const clipped = clipSegmentsEndToBox([segment], targetNodeBox);
+		expect(clipped).toHaveLength(1);
+		const clippedEnd = segmentEndPoint(clipped[0]);
+		expect(clippedEnd.x).toBeCloseTo(80, 1);
+		if (clipped[0].kind !== "arc") throw new Error("expected an arc");
+		const distanceFromCenter = Math.hypot(
+			clippedEnd.x - clipped[0].center.x,
+			clippedEnd.y - clipped[0].center.y,
+		);
+		expect(distanceFromCenter).toBeCloseTo(clipped[0].radius, 4);
+	});
+
+	test("segments entirely inside the box after the crossing are dropped", () => {
+		const insideBoxPoint = { x: 100, y: 0 };
+		const chain = connectionRoutedSegments({ x: 0, y: 0 }, insideBoxPoint, {
+			angle: 40,
+			via: { x: 90, y: -10 },
+		});
+		if (!chain) throw new Error("expected segments");
+		const clipped = clipSegmentsEndToBox(chain, targetNodeBox);
+		expect(clipped).toHaveLength(1);
+	});
+
+	test("segments ending outside the box are returned unchanged", () => {
+		const segment = arcFromChordAndCentralAngle(
+			{ x: 0, y: 0 },
+			{ x: 50, y: 0 },
+			45,
+		);
+		expect(clipSegmentsEndToBox([segment], targetNodeBox)).toEqual([segment]);
+	});
+});
+
+describe("routeConnection", () => {
+	test("returns null without hints", () => {
+		expect(
+			routeConnection({ x: 0, y: 0 }, { x: 100, y: 0 }, null, {}),
+		).toBeNull();
+	});
+
+	test("returns an A-command path clipped to the box", () => {
+		const routed = routeConnection(
+			{ x: 0, y: 0 },
+			{ x: 100, y: 0 },
+			{ position: { x: 80, y: -20 }, size: { width: 40, height: 40 } },
+			{ angle: 90 },
+		);
+		if (!routed) throw new Error("expected a routed connection");
+		expect(routed.path).toContain(" A ");
+		expect(segmentEndPoint(routed.segments[routed.segments.length - 1]).x)
+			.toBeCloseTo(80, 1);
 	});
 });

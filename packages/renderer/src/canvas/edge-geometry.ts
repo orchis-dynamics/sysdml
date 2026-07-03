@@ -322,3 +322,69 @@ export function connectionRoutedSegments(
 	}
 	return null;
 }
+
+const CLIP_BISECTION_ITERATIONS = 25;
+
+function isPointInsideBox(point: Point, box: Box): boolean {
+	return (
+		point.x >= box.position.x &&
+		point.x <= box.position.x + box.size.width &&
+		point.y >= box.position.y &&
+		point.y <= box.position.y + box.size.height
+	);
+}
+
+function truncateSegment(segment: PathSegment, t: number): PathSegment {
+	if (segment.kind === "line") {
+		return { kind: "line", start: segment.start, end: segmentPointAt(segment, t) };
+	}
+	return { ...segment, deltaAngleRadians: segment.deltaAngleRadians * t };
+}
+
+export function clipSegmentsEndToBox(
+	segments: PathSegment[],
+	box: Box,
+): PathSegment[] {
+	const keptSegments = [...segments];
+	while (
+		keptSegments.length > 1 &&
+		isPointInsideBox(segmentStartPoint(keptSegments[keptSegments.length - 1]), box)
+	) {
+		keptSegments.pop();
+	}
+	const finalSegment = keptSegments[keptSegments.length - 1];
+	if (!isPointInsideBox(segmentEndPoint(finalSegment), box)) return keptSegments;
+	if (isPointInsideBox(segmentStartPoint(finalSegment), box)) return keptSegments;
+	let outsideT = 0;
+	let insideT = 1;
+	for (let iteration = 0; iteration < CLIP_BISECTION_ITERATIONS; iteration++) {
+		const middleT = (outsideT + insideT) / 2;
+		if (isPointInsideBox(segmentPointAt(finalSegment, middleT), box)) {
+			insideT = middleT;
+		} else {
+			outsideT = middleT;
+		}
+	}
+	keptSegments[keptSegments.length - 1] = truncateSegment(finalSegment, insideT);
+	return keptSegments;
+}
+
+export type RoutedConnection = {
+	segments: PathSegment[];
+	path: string;
+};
+
+export function routeConnection(
+	source: Point,
+	target: Point,
+	box: Box | null,
+	hints: ConnectionRoutingHints,
+): RoutedConnection | null {
+	const segments = connectionRoutedSegments(source, target, hints);
+	if (!segments) return null;
+	const clippedSegments = box ? clipSegmentsEndToBox(segments, box) : segments;
+	return {
+		segments: clippedSegments,
+		path: svgPathFromSegments(clippedSegments),
+	};
+}
