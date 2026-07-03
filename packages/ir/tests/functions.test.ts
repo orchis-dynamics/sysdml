@@ -188,6 +188,18 @@ describe("misc / memory functions", () => {
 			createFunctionCallNode("SELF"),
 		);
 	});
+	test("SELF bare ident compiles to FunctionCall", () => {
+		expect(getResultExpression("SELF")).toEqual(createFunctionCallNode("SELF"));
+	});
+	test("PREVIOUS with bare SELF compiles clean", () => {
+		expect(getResultExpression("PREVIOUS(s, SELF)")).toEqual(
+			createFunctionCallNode(
+				"PREVIOUS",
+				createRefNode("s"),
+				createFunctionCallNode("SELF"),
+			),
+		);
+	});
 });
 
 describe("delay and smoothing functions", () => {

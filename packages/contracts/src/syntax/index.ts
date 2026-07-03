@@ -110,8 +110,6 @@ export interface NumberListNode {
 	span: Span;
 }
 
-export type GraphicalFunctionKind = "linear" | "extra" | "step";
-
 export type GraphicalFunctionPropertyNode =
 	| {
 			type: "GraphicalFunctionProperty";
@@ -265,21 +263,6 @@ export interface FileNode {
 	decls: DeclarationNode[];
 	span: Span;
 }
-
-export type ASTNode =
-	| FileNode
-	| ModelDeclarationNode
-	| DeclarationNode
-	| ExpressionNode
-	| TimePropertyNode
-	| FlowPropertyNode
-	| StockPropertyNode
-	| EndpointNode
-	| GraphicalFunctionBodyNode
-	| GraphicalFunctionPropertyNode
-	| NumberListNode
-	| SignedNumberNode
-	| PositionNode;
 
 export interface ParseResult {
 	ast: FileNode | null;

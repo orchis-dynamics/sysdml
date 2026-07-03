@@ -197,6 +197,13 @@ describe("IDENTIFIER_SHADOWS_BUILTIN (B4.1)", () => {
 		expectShadowsBuiltin(`sfd m\n${TIME_BLOCK}\nstock DT { init: 0 }`, "DT");
 	});
 
+	test("gf id matching a builtin function name is rejected", () => {
+		expectShadowsBuiltin(
+			`sfd m\n${TIME_BLOCK}\nstock s { init: 0 }\ngf abs { xscale: [0, 1] ypts: [0, 1] }`,
+			"abs",
+		);
+	});
+
 	test("non-builtin identifiers are accepted (sanity)", () => {
 		const { ast } = parseSource(
 			`sfd m\n${TIME_BLOCK}\nstock population { init: 100 }\naux birth_rate = 0.02`,
