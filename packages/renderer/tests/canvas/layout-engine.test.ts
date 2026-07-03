@@ -70,6 +70,42 @@ describe("computeLayout — SFD auxiliaries", () => {
 	});
 });
 
+describe("computeLayout — explicit SFD positions", () => {
+	test("places a stock at its explicit IR position", () => {
+		const result = computeLayout(
+			ir({
+				stocks: [stock("anchored", { x: 300, y: 200 })],
+			}),
+		);
+
+		const stockNode = result.nodes.find((node) => node.id === "anchored");
+		expect(stockNode?.position).toEqual({ x: 300, y: 200 });
+	});
+
+	test("places a flow at its explicit IR position", () => {
+		const result = computeLayout(
+			ir({
+				stocks: [stock("a"), stock("b")],
+				flows: [flow("drain", "a", "b", { x: 500, y: 50 })],
+			}),
+		);
+
+		const flowNode = result.nodes.find((node) => node.id === "drain");
+		expect(flowNode?.position).toEqual({ x: 500, y: 50 });
+	});
+
+	test("auto-places stocks without an explicit position", () => {
+		const result = computeLayout(
+			ir({
+				stocks: [stock("free")],
+			}),
+		);
+
+		const stockNode = result.nodes.find((node) => node.id === "free");
+		expect(stockNode?.position).toEqual({ x: 0, y: 0 });
+	});
+});
+
 describe("computeLayout — CLD", () => {
 	test("renders a node for each unique connection endpoint", () => {
 		const result = computeLayout(
@@ -108,6 +144,36 @@ describe("computeLayout — CLD", () => {
 			(node) => `${Math.round(node.position.x)},${Math.round(node.position.y)}`,
 		);
 		expect(new Set(positionKeys).size).toBe(result.nodes.length);
+	});
+
+	test("includes a positioned aux with no connections", () => {
+		const result = computeLayout(
+			ir({
+				model: { id: "test", kind: "cld" },
+				auxiliaries: [aux("island", { x: 10, y: 20 })],
+				connections: [connection("a", "b")],
+			}),
+		);
+
+		expect(result.nodes.map((node) => node.id).sort()).toEqual([
+			"a",
+			"b",
+			"island",
+		]);
+		const islandNode = result.nodes.find((node) => node.id === "island");
+		expect(islandNode?.position).toEqual({ x: 10, y: 20 });
+	});
+
+	test("includes an unpositioned aux with no connections", () => {
+		const result = computeLayout(
+			ir({
+				model: { id: "test", kind: "cld" },
+				auxiliaries: [aux("floating")],
+				connections: [connection("a", "b")],
+			}),
+		);
+
+		expect(result.nodes.map((node) => node.id)).toContain("floating");
 	});
 
 	test("emits a connection edge with polarity for each CLD link", () => {

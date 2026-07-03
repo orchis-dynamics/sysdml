@@ -332,6 +332,7 @@ useResizeObserver(containerRef, ([entry]) => {
 		@pointerdown="onPointerDown"
 		@pointermove="onPointerMove"
 		@pointerup="onPointerUp"
+		@pointercancel="onPointerUp"
 		@wheel.prevent="onWheel"
 	>
 		<div
@@ -339,6 +340,7 @@ useResizeObserver(containerRef, ([entry]) => {
 			:style="{ transform }"
 			@pointermove="onNodePointerMove"
 			@pointerup="onNodePointerUp"
+			@pointercancel="onNodePointerUp"
 		>
 			<svg
 				class="absolute inset-0 pointer-events-none overflow-visible"
@@ -349,6 +351,7 @@ useResizeObserver(containerRef, ([entry]) => {
 					<ArrowTip
 						v-for="kind in VisualEdgeKindEnum"
 						:id="edgeArrowTipId[kind]"
+						:key="kind"
 						:class="edgeArrowTipClassList[kind]"
 					/>
 				</defs>

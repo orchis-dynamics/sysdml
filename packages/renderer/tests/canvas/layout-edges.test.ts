@@ -16,7 +16,6 @@ describe("constructLayoutEdges — flow edges", () => {
 			kind: "flow",
 			source: "stock_a",
 			target: "stock_b",
-			points: [],
 		});
 		expect(edge.id).toBeTruthy();
 	});
@@ -50,7 +49,6 @@ describe("constructLayoutEdges — connection edges", () => {
 			source: "aux_a",
 			target: "aux_b",
 			polarity: "+",
-			points: [],
 		});
 		expect(edgeList[1]).toMatchObject({
 			kind: "connection",

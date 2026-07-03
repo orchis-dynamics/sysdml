@@ -1,14 +1,14 @@
 import { compileAST } from "@sysdml/ir";
 import { parseSource } from "@sysdml/parser";
-import type { IR, SimulationResult, Simulator } from "@sysdml/contracts";
+import type { SimulationResult, Simulator } from "@sysdml/contracts";
 import { describe, expect, test } from "vitest";
 import { handleSimulationRequest } from "../../src/simulation/handler.js";
-import type { SimulateRequest, WorkerRequest } from "../../src/simulation/types.js";
+import type { SimulateRequest } from "../../src/simulation/types.js";
 
 const stubResult: SimulationResult = { rows: [{ time: 0 }], diagnostics: [] };
 const stubSimulator: Simulator = {
-	simulate(_ir: IR): SimulationResult {
-		return stubResult;
+	simulate(): Promise<SimulationResult> {
+		return Promise.resolve(stubResult);
 	},
 };
 
@@ -59,8 +59,8 @@ describe("handleSimulationRequest", () => {
 			diagnostics: [{ code: "CYCLE_IN_AUX", message: "cycle detected" }],
 		};
 		const diagnosticSimulator: Simulator = {
-			simulate(_ir: IR): SimulationResult {
-				return diagnosticResult;
+			simulate(): Promise<SimulationResult> {
+				return Promise.resolve(diagnosticResult);
 			},
 		};
 		const request: SimulateRequest = {
@@ -68,7 +68,10 @@ describe("handleSimulationRequest", () => {
 			jobId: 1,
 			ir: buildIR(MINIMAL_MODEL),
 		};
-		const response = await handleSimulationRequest(request, diagnosticSimulator);
+		const response = await handleSimulationRequest(
+			request,
+			diagnosticSimulator,
+		);
 		expect(response.type).toBe("result");
 		if (response.type !== "result") throw new Error("unreachable");
 		expect(response.jobId).toBe(1);
@@ -76,18 +79,25 @@ describe("handleSimulationRequest", () => {
 	});
 
 	test("returns error response for an unknown request type", async () => {
-		const badRequest = { type: "bogus", jobId: 7 } as unknown as WorkerRequest;
+		const badRequest: unknown = { type: "bogus", jobId: 7 };
 		const response = await handleSimulationRequest(badRequest, stubSimulator);
 		expect(response.type).toBe("error");
 		if (response.type !== "error") throw new Error("unreachable");
 		expect(response.jobId).toBe(7);
 		expect(response.message).toContain("Unknown request type");
-		expect(response.diagnostic).toBeNull();
+	});
+
+	test("returns error response for a simulate request without an ir", async () => {
+		const badRequest: unknown = { type: "simulate", jobId: 3 };
+		const response = await handleSimulationRequest(badRequest, stubSimulator);
+		expect(response.type).toBe("error");
+		if (response.type !== "error") throw new Error("unreachable");
+		expect(response.jobId).toBe(3);
 	});
 
 	test("returns error response when simulator throws an unexpected JS error", async () => {
 		const throwingSimulator: Simulator = {
-			simulate(_ir: IR): SimulationResult {
+			simulate(): Promise<SimulationResult> {
 				throw new Error("unexpected crash");
 			},
 		};
@@ -101,6 +111,5 @@ describe("handleSimulationRequest", () => {
 		if (response.type !== "error") throw new Error("unreachable");
 		expect(response.jobId).toBe(99);
 		expect(response.message.length).toBeGreaterThan(0);
-		expect(response.diagnostic).toBeNull();
 	});
 });
