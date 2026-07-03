@@ -1,6 +1,10 @@
 import { describe, expect, test } from "vitest";
 
 import { computeLayout } from "../../src/canvas/layout-engine.js";
+import {
+	orthogonalPipePoints,
+	polylineMidpoint,
+} from "../../src/canvas/edge-geometry.js";
 import { aux, connection, flow, ir, stock } from "../helpers/ir-builders.js";
 
 describe("computeLayout — SFD edges", () => {
@@ -193,5 +197,75 @@ describe("computeLayout — CLD", () => {
 			target: "b",
 			polarity: "-",
 		});
+	});
+});
+
+describe("computeLayout — valve placement for flows with via", () => {
+	test("flow with via and no explicit position gets its valve at the pipe midpoint", () => {
+		const layout = computeLayout(
+			ir({
+				stocks: [stock("a", { x: 0, y: 0 }), stock("b", { x: 400, y: 0 })],
+				flows: [
+					flow("transfer", "a", "b", undefined, [{ x: 200, y: 200 }]),
+				],
+			}),
+		);
+		const valve = layout.nodes.find((node) => node.id === "transfer");
+		if (!valve) throw new Error("expected the flow node");
+		const stockA = layout.nodes.find((node) => node.id === "a");
+		const stockB = layout.nodes.find((node) => node.id === "b");
+		if (!stockA || !stockB) throw new Error("expected both stocks");
+		const sourceCenter = {
+			x: stockA.position.x + stockA.size.width / 2,
+			y: stockA.position.y + stockA.size.height / 2,
+		};
+		const targetCenter = {
+			x: stockB.position.x + stockB.size.width / 2,
+			y: stockB.position.y + stockB.size.height / 2,
+		};
+		const expectedMidpoint = polylineMidpoint(
+			orthogonalPipePoints(sourceCenter, [{ x: 200, y: 200 }], targetCenter),
+		);
+		expect(valve.position.x + valve.size.width / 2).toBeCloseTo(
+			expectedMidpoint.x,
+			4,
+		);
+		expect(valve.position.y + valve.size.height / 2).toBeCloseTo(
+			expectedMidpoint.y,
+			4,
+		);
+	});
+
+	test("flow with via AND explicit position keeps the explicit position", () => {
+		const layout = computeLayout(
+			ir({
+				stocks: [stock("a", { x: 0, y: 0 }), stock("b", { x: 400, y: 0 })],
+				flows: [
+					flow("transfer", "a", "b", { x: 33, y: 44 }, [{ x: 200, y: 200 }]),
+				],
+			}),
+		);
+		const valve = layout.nodes.find((node) => node.id === "transfer");
+		expect(valve?.position).toEqual({ x: 33, y: 44 });
+	});
+
+	test("flow without via keeps its skeleton placement", () => {
+		const withoutVia = computeLayout(
+			ir({
+				stocks: [stock("a"), stock("b")],
+				flows: [flow("transfer", "a", "b")],
+			}),
+		);
+		const withEmptyVia = computeLayout(
+			ir({
+				stocks: [stock("a"), stock("b")],
+				flows: [flow("transfer", "a", "b", undefined, [])],
+			}),
+		);
+		expect(
+			withoutVia.nodes.find((node) => node.id === "transfer")?.position,
+		).toEqual(
+			withEmptyVia.nodes.find((node) => node.id === "transfer")?.position,
+		);
 	});
 });
