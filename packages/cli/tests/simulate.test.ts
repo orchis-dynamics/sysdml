@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { runSimulateCommand } from "../src/simulate.js";
+import { isErrorSimDiagnostic, runSimulateCommand } from "../src/simulate.js";
 
 const minimalModel = `sfd Test
 
@@ -73,5 +73,53 @@ aux a = RANDOM(0, 1)
 		expect(result.exitCode).toBe(1);
 		expect(result.stdout).toBe("");
 		expect(result.stderr).toContain("[error]");
+	});
+
+	it("rejects cld models with exit code 1 and a clear message", async () => {
+		const cldModel = `cld loops
+
+population ->+ births
+births ->- population
+`;
+		const result = await runSimulateCommand(cldModel, { format: "json" });
+
+		expect(result.exitCode).toBe(1);
+		expect(result.stdout).toBe("");
+		expect(result.stderr).toContain("Cannot simulate 'loops'");
+		expect(result.stderr).toContain("sfd");
+	});
+
+	it("prints non-fatal compile diagnostics on stderr while still simulating", async () => {
+		const multiModel = `sfd main
+sfd sub
+time { start: 0 end: 2 step: 1 }
+stock population { init: 100 }
+`;
+		const result = await runSimulateCommand(multiModel, { format: "json" });
+
+		expect(result.exitCode).toBe(0);
+		expect(result.stderr).toContain("MULTI_MODEL_NOT_SUPPORTED");
+		const parsed = JSON.parse(result.stdout);
+		expect(parsed.rows).toHaveLength(3);
+	});
+});
+
+describe("isErrorSimDiagnostic", () => {
+	it("treats severity as authoritative when present", () => {
+		expect(
+			isErrorSimDiagnostic({
+				code: "engine_failure",
+				message: "m",
+				severity: "error",
+			}),
+		).toBe(true);
+		expect(
+			isErrorSimDiagnostic({ code: "error", message: "m", severity: "warning" }),
+		).toBe(false);
+	});
+
+	it("falls back to code when severity is absent", () => {
+		expect(isErrorSimDiagnostic({ code: "error", message: "m" })).toBe(true);
+		expect(isErrorSimDiagnostic({ code: "warning", message: "m" })).toBe(false);
 	});
 });

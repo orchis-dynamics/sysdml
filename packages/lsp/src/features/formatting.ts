@@ -7,6 +7,7 @@ import type {
 	StockDeclarationNode,
 	AuxiliaryDeclarationNode,
 	FlowDeclarationNode,
+	FlowPropertyNode,
 	ConnectionDeclarationNode,
 	GraphicalFunctionDeclarationNode,
 	GraphicalFunctionBodyNode,
@@ -15,13 +16,23 @@ import type {
 } from "@sysdml/contracts";
 
 export function formatSource(source: string): string | null {
+	if (containsComments(source)) return null;
 	const { ast, diagnostics } = parseSource(source);
 	if (!ast || diagnostics.length > 0) return null;
 	return printFile(ast);
 }
 
+function containsComments(source: string): boolean {
+	return (
+		source.includes("#") || source.includes("//") || source.includes("/*")
+	);
+}
+
 function printFile(file: FileNode): string {
-	const parts: string[] = [`${file.model.kind} ${file.model.id}`];
+	const modelHeaders = [file.model, ...file.submodels].map(
+		(model) => `${model.kind} ${model.id}`,
+	);
+	const parts: string[] = [modelHeaders.join("\n")];
 	for (const decl of file.decls) {
 		parts.push("");
 		parts.push(printDecl(decl));
@@ -56,11 +67,10 @@ function printTimeDeclaration(decl: TimeDeclarationNode): string {
 }
 
 function printStockDeclaration(decl: StockDeclarationNode): string {
-	const initProp = decl.props[0];
-	const lines = [
-		`stock ${decl.id} {`,
-		`  init: ${initProp ? printExpr(initProp.init) : "0"}`,
-	];
+	const lines = [`stock ${decl.id} {`];
+	for (const prop of decl.props) {
+		lines.push(`  init: ${printExpr(prop.init)}`);
+	}
 	if (decl.position) lines.push(`  position: ${printPos(decl.position)}`);
 	lines.push("}");
 	return lines.join("\n");
@@ -73,19 +83,26 @@ function printAuxiliaryDeclaration(decl: AuxiliaryDeclarationNode): string {
 }
 
 function printFlowDeclaration(decl: FlowDeclarationNode): string {
-	const order = ["from", "to", "rate"] as const;
-	const lines: string[] = [];
-	for (const key of order) {
-		const prop = decl.props.find((p) => p.key === key);
-		if (!prop) continue;
-		if (key === "from" || key === "to") {
-			const endpointProp = prop as Extract<typeof prop, { key: "from" | "to" }>;
-			lines.push(`  ${key}: ${endpointProp.value.value ?? "null"}`);
-		} else {
-			const rateProp = prop as Extract<typeof prop, { key: "rate" }>;
-			lines.push(`  ${key}: ${printExpr(rateProp.value)}`);
+	const linesByKey = new Map<FlowPropertyNode["key"], string>();
+	for (const prop of decl.props) {
+		switch (prop.key) {
+			case "from":
+			case "to":
+				linesByKey.set(
+					prop.key,
+					`  ${prop.key}: ${prop.value.value ?? "null"}`,
+				);
+				break;
+			case "rate":
+				linesByKey.set(prop.key, `  rate: ${printExpr(prop.value)}`);
+				break;
 		}
 	}
+	const order: FlowPropertyNode["key"][] = ["from", "to", "rate"];
+	const lines = order.flatMap((key) => {
+		const line = linesByKey.get(key);
+		return line === undefined ? [] : [line];
+	});
 	if (decl.position) lines.push(`  position: ${printPos(decl.position)}`);
 	if (decl.via?.length) lines.push(`  via: ${printPosArray(decl.via)}`);
 	return `flow ${decl.id} {\n${lines.join("\n")}\n}`;

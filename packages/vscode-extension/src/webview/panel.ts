@@ -1,26 +1,40 @@
 import * as fs from "fs";
 import * as path from "path";
 
-import type { ExtensionToWebviewMessage, IR } from "@sysdml/contracts";
+import type {
+	ExtensionToWebviewMessage,
+	GetIRParams,
+	GetIRResult,
+	WebviewToExtensionMessage,
+} from "@sysdml/contracts";
 import * as vscode from "vscode";
 import { type LanguageClient, State } from "vscode-languageclient/node";
-
-interface GetIRResult {
-	ir: IR | null;
-}
 
 export class DiagramPanel {
 	private static instance: DiagramPanel | undefined;
 	private readonly panel: vscode.WebviewPanel;
+	private hasBeenDisposed = false;
+	private readonly disposeListeners: Array<() => void> = [];
 
-	private constructor(
-		private readonly context: vscode.ExtensionContext,
-		panel: vscode.WebviewPanel,
-	) {
+	private constructor(panel: vscode.WebviewPanel) {
 		this.panel = panel;
 		this.panel.onDidDispose(() => {
+			this.hasBeenDisposed = true;
 			DiagramPanel.instance = undefined;
+			for (const listener of this.disposeListeners) listener();
 		});
+	}
+
+	get isDisposed(): boolean {
+		return this.hasBeenDisposed;
+	}
+
+	onDidDispose(listener: () => void): void {
+		if (this.hasBeenDisposed) {
+			listener();
+			return;
+		}
+		this.disposeListeners.push(listener);
 	}
 
 	static createOrShow(
@@ -49,40 +63,53 @@ export class DiagramPanel {
 		);
 
 		panel.webview.html = buildWebViewHtml(panel.webview, rendererDistPath);
-		DiagramPanel.instance = new DiagramPanel(context, panel);
+		const diagramPanel = new DiagramPanel(panel);
+		DiagramPanel.instance = diagramPanel;
 
-		panel.webview.onDidReceiveMessage(async (msg: { type: string }) => {
-			if (msg.type === "ready" && DiagramPanel.instance) {
-				await DiagramPanel.instance.refresh(client);
-			}
-		});
+		panel.webview.onDidReceiveMessage(
+			async (message: WebviewToExtensionMessage) => {
+				if (message.type === "ready") {
+					await diagramPanel.refresh(client);
+				}
+			},
+		);
 
-		return DiagramPanel.instance;
+		return diagramPanel;
 	}
 
 	async refresh(client: LanguageClient): Promise<void> {
+		if (this.hasBeenDisposed) return;
 		if (client.state !== State.Running) return;
 
 		const activeEditor = vscode.window.activeTextEditor;
 		if (!activeEditor || activeEditor.document.languageId !== "sysdml") return;
 
-		try {
-			const result = await client.sendRequest<GetIRResult>("sysdml/getIR", {
-				uri: activeEditor.document.uri.toString(),
-			});
+		const params: GetIRParams = {
+			uri: activeEditor.document.uri.toString(),
+		};
 
+		try {
+			const result = await client.sendRequest<GetIRResult>(
+				"sysdml/getIR",
+				params,
+			);
 			const message: ExtensionToWebviewMessage = result.ir
 				? { type: "update", ir: result.ir }
 				: { type: "error", message: "No IR available — check for diagnostics" };
-
-			await this.panel.webview.postMessage(message);
-		} catch (err) {
-			const message: ExtensionToWebviewMessage = {
+			await this.postMessageIfAlive(message);
+		} catch (error) {
+			await this.postMessageIfAlive({
 				type: "error",
-				message: String(err),
-			};
-			await this.panel.webview.postMessage(message);
+				message: String(error),
+			});
 		}
+	}
+
+	private async postMessageIfAlive(
+		message: ExtensionToWebviewMessage,
+	): Promise<void> {
+		if (this.hasBeenDisposed) return;
+		await this.panel.webview.postMessage(message);
 	}
 }
 
@@ -104,7 +131,7 @@ function buildWebViewHtml(
 	const cspSource = webview.cspSource;
 	const csp = [
 		"default-src 'none'",
-		`img-src ${cspSource} https: data:`,
+		`img-src ${cspSource} data:`,
 		`style-src ${cspSource} 'unsafe-inline'`,
 		`script-src ${cspSource} 'wasm-unsafe-eval'`,
 		`font-src ${cspSource}`,

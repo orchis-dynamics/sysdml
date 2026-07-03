@@ -79,6 +79,16 @@ describe("sysdml CLI (built binary)", () => {
 		expect(stderr).toContain("--- Diagnostics ---");
 	});
 
+	it("exits 1 with a clear message when simulating a cld model", () => {
+		const { stdout, stderr, status } = runCli(
+			"simulate",
+			`${fixtures}/cld.sysdml`,
+		);
+		expect(status).toBe(1);
+		expect(stdout).toBe("");
+		expect(stderr).toContain("Cannot simulate 'feedback'");
+	});
+
 	it("exits 1 with USAGE on stderr when no args are given", () => {
 		const { stdout, stderr, status } = runCli();
 		expect(status).toBe(1);

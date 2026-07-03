@@ -4,7 +4,6 @@ import { parseSource } from "../src/index.js";
 import type {
 	BinaryExpressionNode,
 	FunctionCallNode,
-	NumberLiteralNode,
 } from "../src/index.js";
 
 // Span contract: line and col are both 1-based, end-inclusive.
@@ -88,13 +87,17 @@ describe("spans — 1-based, end-inclusive", () => {
 			start: { line: 2, col: 9 },
 			end: { line: 2, col: 15 },
 		});
-		const left = expr.left as NumberLiteralNode;
-		const right = expr.right as NumberLiteralNode;
-		expect(left.span).toEqual({
+		if (
+			expr.left.type !== "NumberLiteral" ||
+			expr.right.type !== "NumberLiteral"
+		) {
+			throw new Error("expected NumberLiteral operands");
+		}
+		expect(expr.left.span).toEqual({
 			start: { line: 2, col: 9 },
 			end: { line: 2, col: 10 },
 		});
-		expect(right.span).toEqual({
+		expect(expr.right.span).toEqual({
 			start: { line: 2, col: 14 },
 			end: { line: 2, col: 15 },
 		});
@@ -115,6 +118,17 @@ describe("spans — 1-based, end-inclusive", () => {
 		expect(aux.idSpan.start.line).toBe(3);
 		expect(aux.idSpan.start.col).toBe(5);
 		expect(aux.idSpan.end.col).toBe(5);
+	});
+
+	test("file span ends at the last real column, not past EOF", () => {
+		// line 2: a  u  x     x     =     1
+		//         1  2  3  4  5  6  7  8  9
+		const { ast } = parseSource(`sfd m\naux x = 1`);
+		if (ast === null) throw new Error("expected non-null ast");
+		expect(ast.span).toEqual({
+			start: { line: 1, col: 1 },
+			end: { line: 2, col: 9 },
+		});
 	});
 
 	// ── diagnostics ──────────────────────────────────────────────────────────
@@ -142,6 +156,18 @@ describe("spans — 1-based, end-inclusive", () => {
 		expect(first.span.start.line).toBe(1);
 		// EOF sits at col 4 (1-based, just past the last 'd').
 		expect(first.span.start.col).toBe(4);
+	});
+
+	test("parser diagnostic on a multi-char token covers its full width", () => {
+		//  s  f  d     1  2  3
+		//  1  2  3  4  5  6  7
+		const { ast, diagnostics } = parseSource(`sfd 123`);
+		expect(ast).toBeNull();
+		const first = diagnostics[0];
+		if (first === undefined) throw new Error("expected at least one diagnostic");
+		expect(first.span.start).toEqual({ line: 1, col: 5 });
+		expect(first.span.end.col).toBeGreaterThan(first.span.start.col);
+		expect(first.span.end).toEqual({ line: 1, col: 7 });
 	});
 
 	test("aux with metadata block — decl span covers the whole declaration", () => {

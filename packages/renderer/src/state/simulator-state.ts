@@ -9,33 +9,18 @@ function createVariableSelection() {
 		return selectedVariableIds.value.has(variableId);
 	}
 
-	function selectVariable(variableId: string): void {
-		selectedVariableIds.value.add(variableId);
-	}
-
-	function deselectVariable(variableId: string): void {
-		selectedVariableIds.value.delete(variableId);
-	}
-
 	function toggleVariable(variableId: string): void {
 		if (isVariableSelected(variableId)) {
-			deselectVariable(variableId);
+			selectedVariableIds.value.delete(variableId);
 		} else {
-			selectVariable(variableId);
+			selectedVariableIds.value.add(variableId);
 		}
-	}
-
-	function clearSelection(): void {
-		selectedVariableIds.value.clear();
 	}
 
 	return {
 		selectedVariableIds,
 		isVariableSelected,
-		selectVariable,
-		deselectVariable,
 		toggleVariable,
-		clearSelection,
 	};
 }
 

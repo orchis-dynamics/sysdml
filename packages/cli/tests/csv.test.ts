@@ -56,4 +56,25 @@ aux e = 4
 		const headerLine = csv.split("\n")[0];
 		expect(headerLine).toBe("time,a,c,b,e,d");
 	});
+
+	it("emits an empty cell when a series is missing from a row", async () => {
+		const source = `sfd Test
+
+time {
+	start: 0
+	end: 1
+	step: 1
+}
+
+stock population {
+	init: 100
+}
+`;
+		const { ir } = await runPipeline(source);
+		if (ir === null) throw new Error("expected ir");
+
+		const csv = formatCsv(ir, { rows: [{ time: 0 }], diagnostics: [] });
+
+		expect(csv).toBe("time,population\n0,\n");
+	});
 });

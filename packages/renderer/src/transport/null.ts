@@ -10,6 +10,10 @@ export class NullAdapter implements IRTransport {
 		// intentionally empty — no transport, canvas stays blank
 	}
 
+	stop(): void {
+		// intentionally empty — start() registered nothing
+	}
+
 	onIR(cb: (ir: IR) => void): void {
 		this.irCallbacks.push(cb);
 	}

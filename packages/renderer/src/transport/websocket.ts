@@ -1,17 +1,21 @@
 import type { IR } from "@sysdml/contracts";
 
-import type { IRTransport, InboundMessage } from "./types.js";
+import type { IRTransport } from "./types.js";
 import { isInboundMessage } from "./types.js";
 
-declare const __SYSDML_WS_PATH__: string | undefined;
 declare const window: Window & { SYSDML_WS_URL?: string };
+
+const INITIAL_RETRY_DELAY_MILLISECONDS = 1000;
+const MAX_RETRY_DELAY_MILLISECONDS = 30000;
 
 export class WebSocketAdapter implements IRTransport {
 	private readonly url: string;
-	private ws: WebSocket | null = null;
+	private webSocket: WebSocket | null = null;
 	private irCallbacks: Array<(ir: IR) => void> = [];
 	private errorCallbacks: Array<(message: string) => void> = [];
-	private retryDelay = 1000;
+	private retryDelayMilliseconds = INITIAL_RETRY_DELAY_MILLISECONDS;
+	private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+	private isStopped = false;
 
 	constructor(url: string) {
 		this.url = url;
@@ -19,6 +23,16 @@ export class WebSocketAdapter implements IRTransport {
 
 	start(): void {
 		this.connect();
+	}
+
+	stop(): void {
+		this.isStopped = true;
+		if (this.reconnectTimer !== null) {
+			clearTimeout(this.reconnectTimer);
+			this.reconnectTimer = null;
+		}
+		this.webSocket?.close();
+		this.webSocket = null;
 	}
 
 	onIR(cb: (ir: IR) => void): void {
@@ -30,9 +44,15 @@ export class WebSocketAdapter implements IRTransport {
 	}
 
 	private connect(): void {
-		this.ws = new WebSocket(this.url);
+		if (this.isStopped) return;
+		const webSocket = new WebSocket(this.url);
+		this.webSocket = webSocket;
 
-		this.ws.addEventListener("message", (event: MessageEvent<string>) => {
+		webSocket.addEventListener("open", () => {
+			this.retryDelayMilliseconds = INITIAL_RETRY_DELAY_MILLISECONDS;
+		});
+
+		webSocket.addEventListener("message", (event: MessageEvent<string>) => {
 			let parsed: unknown;
 			try {
 				parsed = JSON.parse(event.data);
@@ -42,26 +62,30 @@ export class WebSocketAdapter implements IRTransport {
 			if (!isInboundMessage(parsed)) return;
 			const message = parsed;
 			if (message.type === "update") {
-				this.retryDelay = 1000;
 				this.irCallbacks.forEach((cb) => cb(message.ir));
 			} else if (message.type === "error") {
 				this.errorCallbacks.forEach((cb) => cb(message.message));
 			}
 		});
 
-		this.ws.addEventListener("close", () => {
-			setTimeout(() => {
-				this.retryDelay = Math.min(this.retryDelay * 2, 30000);
-				this.connect();
-			}, this.retryDelay);
+		webSocket.addEventListener("close", () => {
+			this.scheduleReconnect();
 		});
 	}
 
+	private scheduleReconnect(): void {
+		if (this.isStopped || this.reconnectTimer !== null) return;
+		this.reconnectTimer = setTimeout(() => {
+			this.reconnectTimer = null;
+			this.retryDelayMilliseconds = Math.min(
+				this.retryDelayMilliseconds * 2,
+				MAX_RETRY_DELAY_MILLISECONDS,
+			);
+			this.connect();
+		}, this.retryDelayMilliseconds);
+	}
+
 	static resolveUrl(): string | null {
-		if (typeof __SYSDML_WS_PATH__ !== "undefined" && __SYSDML_WS_PATH__) {
-			const protocol = location.protocol === "https:" ? "wss:" : "ws:";
-			return `${protocol}//${location.host}${__SYSDML_WS_PATH__}`;
-		}
 		if (window.SYSDML_WS_URL) {
 			return window.SYSDML_WS_URL;
 		}

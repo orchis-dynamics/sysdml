@@ -1,4 +1,4 @@
-import { ParserRuleContext, TerminalNode } from "antlr4ng";
+import { ParserRuleContext, TerminalNode, Token } from "antlr4ng";
 
 import {
 	AddExprContext,
@@ -90,21 +90,28 @@ import type {
 
 // Spans are 1-based for both line and col, end-inclusive.
 // ANTLR gives line as 1-based but column as 0-based, so we shift columns by +1.
+function tokenEndColumn(token: Token): number {
+	if (token.type === Token.EOF) return Math.max(token.column, 1);
+	return token.column + (token.text?.length ?? 1);
+}
+
 function spanOf(ctx: ParserRuleContext): Span {
-	const start = ctx.start!;
-	const stop = ctx.stop ?? ctx.start!;
+	const start = ctx.start;
+	if (start === null) {
+		throw new Error("spanOf: rule context has no start token");
+	}
+	const stop = ctx.stop ?? start;
 	return {
 		start: { line: start.line, col: start.column + 1 },
-		end: { line: stop.line, col: stop.column + (stop.text?.length ?? 0) },
+		end: { line: stop.line, col: tokenEndColumn(stop) },
 	};
 }
 
 function tokenSpan(tok: TerminalNode): Span {
 	const t = tok.symbol;
-	const len = t.text?.length ?? 1;
 	return {
 		start: { line: t.line, col: t.column + 1 },
-		end: { line: t.line, col: t.column + len },
+		end: { line: t.line, col: tokenEndColumn(t) },
 	};
 }
 
@@ -140,6 +147,20 @@ export class ASTBuilder {
 
 	private reportError(message: string, span: Span): void {
 		this.diagnostics.push({ message, span });
+	}
+
+	private registerKeyOnce(
+		seenKeys: Set<string>,
+		key: string,
+		blockLabel: string,
+		span: Span,
+	): boolean {
+		if (seenKeys.has(key)) {
+			this.reportError(`duplicate '${key}' in ${blockLabel}`, span);
+			return false;
+		}
+		seenKeys.add(key);
+		return true;
 	}
 
 	build(ctx: FileContext): { ast: FileNode; diagnostics: Diagnostic[] } {
@@ -192,7 +213,12 @@ export class ASTBuilder {
 		const graphicalFunctionDecl = ctx.gfDecl();
 		if (graphicalFunctionDecl) return this.gfDecl(graphicalFunctionDecl);
 
-		const connectionDecl = ctx.connectionDecl()!;
+		const connectionDecl = ctx.connectionDecl();
+		if (!connectionDecl) {
+			throw new Error(
+				"Grammar invariant violated: decl matched none of its alternatives",
+			);
+		}
 		if (connectionDecl instanceof PositiveCausalContext)
 			return this.positiveCausal(connectionDecl);
 		if (connectionDecl instanceof NegativeCausalContext)
@@ -206,11 +232,17 @@ export class ASTBuilder {
 	}
 
 	private timeDecl(ctx: TimeDeclContext): TimeDeclarationNode {
+		const seenKeys = new Set<string>();
+		const props: TimePropertyNode[] = [];
+		for (const timePropContext of ctx.timeProp()) {
+			const node = this.timeProp(timePropContext);
+			if (this.registerKeyOnce(seenKeys, node.key, "time block", node.span)) {
+				props.push(node);
+			}
+		}
 		return {
 			type: "TimeDeclaration",
-			props: ctx
-				.timeProp()
-				.map((timePropContext) => this.timeProp(timePropContext)),
+			props,
 			span: spanOf(ctx),
 		};
 	}
@@ -230,15 +262,21 @@ export class ASTBuilder {
 	}
 
 	private stockDecl(ctx: StockDeclContext): StockDeclarationNode {
-		const allProps = ctx.stockProp();
-		const initProps = allProps.filter((p) => p.INIT() !== null);
-		const posProp = allProps.find((p) => p.POSITION() !== null);
-
+		const seenKeys = new Set<string>();
+		const initProps: StockPropContext[] = [];
 		let position: PositionNode | undefined;
-		if (posProp) {
-			const posLit = posProp.posLiteral();
-			if (!posLit)
-				throw new Error("stockDecl: POSITION prop has no posLiteral");
+
+		for (const prop of ctx.stockProp()) {
+			const key = prop.INIT() !== null ? "init" : "position";
+			if (!this.registerKeyOnce(seenKeys, key, "stock block", spanOf(prop))) {
+				continue;
+			}
+			if (key === "init") {
+				initProps.push(prop);
+				continue;
+			}
+			const posLit = prop.posLiteral();
+			if (!posLit) throw new Error("stockDecl: POSITION prop has no posLiteral");
 			position = this.buildPosLiteral(posLit) ?? undefined;
 		}
 
@@ -260,26 +298,40 @@ export class ASTBuilder {
 		};
 	}
 
+	private flowPropKey(
+		ctx: FlowPropContext,
+	): "from" | "to" | "rate" | "position" | "via" {
+		if (ctx.FROM() !== null) return "from";
+		if (ctx.TO() !== null) return "to";
+		if (ctx.RATE() !== null) return "rate";
+		if (ctx.POSITION() !== null) return "position";
+		return "via";
+	}
+
 	private flowDecl(ctx: FlowDeclContext): FlowDeclarationNode {
-		const allProps = ctx.flowProp();
-		const regularProps = allProps.filter(
-			(p) => p.FROM() !== null || p.TO() !== null || p.RATE() !== null,
-		);
-		const posProp = allProps.find((p) => p.POSITION() !== null);
-		const viaProp = allProps.find((p) => p.VIA() !== null);
-
+		const seenKeys = new Set<string>();
+		const regularProps: FlowPropContext[] = [];
 		let position: PositionNode | undefined;
-		if (posProp) {
-			const posLit = posProp.posLiteral();
-			if (!posLit) throw new Error("flowDecl: POSITION prop has no posLiteral");
-			position = this.buildPosLiteral(posLit) ?? undefined;
-		}
-
 		let via: PositionNode[] | undefined;
-		if (viaProp) {
-			const posArr = viaProp.posArray();
-			if (!posArr) throw new Error("flowDecl: VIA prop has no posArray");
-			via = this.buildPosArray(posArr);
+
+		for (const prop of ctx.flowProp()) {
+			const key = this.flowPropKey(prop);
+			if (!this.registerKeyOnce(seenKeys, key, "flow block", spanOf(prop))) {
+				continue;
+			}
+			if (key === "position") {
+				const posLit = prop.posLiteral();
+				if (!posLit) throw new Error("flowDecl: POSITION prop has no posLiteral");
+				position = this.buildPosLiteral(posLit) ?? undefined;
+				continue;
+			}
+			if (key === "via") {
+				const posArr = prop.posArray();
+				if (!posArr) throw new Error("flowDecl: VIA prop has no posArray");
+				via = this.buildPosArray(posArr);
+				continue;
+			}
+			regularProps.push(prop);
 		}
 
 		return {
@@ -327,13 +379,14 @@ export class ASTBuilder {
 		const seenKeys = new Set<string>();
 		for (const prop of ctx.auxMetaProp()) {
 			if (prop instanceof AuxMetaPosContext) {
-				if (seenKeys.has("position")) {
-					this.reportError(
-						"duplicate 'position' in aux metadata block",
+				if (
+					this.registerKeyOnce(
+						seenKeys,
+						"position",
+						"aux metadata block",
 						spanOf(prop),
-					);
-				} else {
-					seenKeys.add("position");
+					)
+				) {
 					position = this.buildPosLiteral(prop.posLiteral()) ?? undefined;
 				}
 			}
@@ -460,19 +513,26 @@ export class ASTBuilder {
 		angle?: number;
 		via?: PositionNode;
 	} {
+		const seenKeys = new Set<string>();
 		let angle: number | undefined;
 		let via: PositionNode | undefined;
 		for (const prop of props) {
-			if (prop.ANGLE() !== null) {
+			const key = prop.ANGLE() !== null ? "angle" : "via";
+			if (
+				!this.registerKeyOnce(seenKeys, key, "connection block", spanOf(prop))
+			) {
+				continue;
+			}
+			if (key === "angle") {
 				const signedNum = prop.signedNumber();
 				if (!signedNum)
 					throw new Error("connProp: ANGLE present but no signedNumber");
 				angle = signedNumberToFloat(signedNum);
-			} else {
-				const pos = prop.posLiteral();
-				if (!pos) throw new Error("connProp: VIA present but no posLiteral");
-				via = this.buildPosLiteral(pos) ?? undefined;
+				continue;
 			}
+			const pos = prop.posLiteral();
+			if (!pos) throw new Error("connProp: VIA present but no posLiteral");
+			via = this.buildPosLiteral(pos) ?? undefined;
 		}
 		return { angle, via };
 	}
@@ -731,7 +791,7 @@ function buildMulExpr(ctx: MulExprContext): ExpressionNode {
 function buildPowExpr(ctx: PowExprContext): ExpressionNode {
 	if (ctx instanceof PowerExprContext) {
 		const left = buildPrimary(ctx.primary());
-		const right = buildPowExpr(ctx.powExpr());
+		const right = buildUnaryExpression(ctx.unaryExpr());
 		return {
 			type: "BinaryExpression",
 			op: "^",

@@ -46,10 +46,11 @@ Every file must begin with a model declaration. All other declarations follow in
 ### Model declaration
 
 ```
-model <id>
+sfd <id>
+cld <id>
 ```
 
-A file may contain multiple `model` declarations. The first is the entry model (`ast.model`); any subsequent ones land in `ast.submodels`, reserved for a future `module` instantiation construct. Only one model is supported at the moment.
+`sfd` declares a stock-and-flow model; `cld` declares a causal loop model. A file may contain multiple model declarations. The first is the entry model (`ast.model`); any subsequent ones land in `ast.submodels`, reserved for a future `module` instantiation construct. Only one model is supported at the moment.
 
 ### Time block
 
@@ -239,17 +240,20 @@ IF a THEN (IF b THEN c ELSE d) ELSE e
 
 ### Precedence (high to low)
 
-| Level        | Operators               |
-| ------------ | ----------------------- |
-| 1 (tightest) | Unary `-` `+` `NOT` `!` |
-| 2            | `^`                     |
-| 3            | `*` `/` `MOD`           |
-| 4            | `+` `-`                 |
-| 5            | `<` `<=` `>` `>=`       |
-| 6            | `=` `<>` `==` `!=`      |
-| 7            | `AND` `&&`              |
-| 8            | `OR` `\|\|`             |
-| 9 (loosest)  | `IF … THEN … ELSE`      |
+| Level        | Operators          |
+| ------------ | ------------------ |
+| 1 (tightest) | `^`                |
+| 2            | Unary `-` `+`      |
+| 3            | `*` `/` `MOD`      |
+| 4            | `+` `-`            |
+| 5            | `<` `<=` `>` `>=`  |
+| 6            | `=` `<>` `==` `!=` |
+| 7            | `NOT` `!`          |
+| 8            | `AND` `&&`         |
+| 9            | `OR` `\|\|`        |
+| 10 (loosest) | `IF … THEN … ELSE` |
+
+`^` binds tighter than unary minus (`-a^2` is `-(a^2)`) and is right-associative (`a^b^c` is `a^(b^c)`); its right operand accepts a leading sign (`2*10^-6`). `NOT` binds looser than comparisons (`NOT a = b` is `NOT (a = b)`).
 
 ---
 
@@ -275,7 +279,7 @@ Function names are case-insensitive at the IR level (`SQRT`, `sqrt`, `Sqrt` all 
 ## Full example
 
 ```
-model population_growth
+sfd population_growth
 
 time {
   start: 0

@@ -1,25 +1,14 @@
-@import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&family=Oswald:wght@200..700&family=Roboto+Flex:opsz,wght,XOPQ,XTRA,YOPQ,YTDE,YTFI,YTLC,YTUC@8..144,100..1000,96,468,79,-203,738,514,712&display=swap");
 @import "tailwindcss";
-
-.sysdml-decl {
-	color: #7c3aed !important;
-	font-weight: bold;
-}
-
-.sysdml-ref {
-	color: #6d28d9 !important;
-}
 
 @theme {
 	--shadow-brutal-2: 2px 2px 0px 0px rgba(0, 0, 0, 1);
 	--shadow-brutal-4: 4px 4px 0px 0px rgba(0, 0, 0, 1);
 	--inset-shadow-brutal-2: inset 0px 0px 0px 2px rgba(0, 0, 0, 1);
 	--inset-shadow-brutal-4: inset 0px 0px 0px 4px rgba(0, 0, 0, 1);
-	--font-display: "Oswald", sans-serif;
-	--font-sans: "Roboto Flex", sans-serif;
-	--font-mono: "JetBrains Mono", monospace;
-}
-
-.container {
-	@apply px-4 py-8 md:px-16 lg:px-24 xl:px-16 2xl:px-0 xl:max-w-7xl;
+	--font-display: "Oswald", "Avenir Next Condensed", "Arial Narrow",
+		ui-sans-serif, sans-serif;
+	--font-sans: "Roboto Flex", ui-sans-serif, system-ui, -apple-system,
+		"Segoe UI", Roboto, Arial, sans-serif;
+	--font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas,
+		"Liberation Mono", monospace;
 }

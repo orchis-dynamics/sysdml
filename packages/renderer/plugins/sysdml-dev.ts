@@ -1,4 +1,5 @@
 import { readFileSync } from "node:fs";
+import type { IncomingMessage } from "node:http";
 
 import type { IR } from "@sysdml/contracts";
 import { compileAST } from "@sysdml/ir";
@@ -9,7 +10,17 @@ import { WebSocketServer, WebSocket } from "ws";
 
 import type { InboundMessage } from "../src/transport/types.js";
 
-export const SYSDML_WS_PATH = "/__sysdml_ws__";
+const SYSDML_WS_PATH = "/__sysdml_ws__";
+
+function isUpgradeOriginAllowed(request: IncomingMessage): boolean {
+	const originHeader = request.headers.origin;
+	if (originHeader === undefined) return true;
+	try {
+		return new URL(originHeader).host === request.headers.host;
+	} catch {
+		return false;
+	}
+}
 
 interface SysdmlDevOptions {
 	file: string | undefined;
@@ -94,15 +105,19 @@ export function sysdmlDev(options: SysdmlDevOptions): Plugin {
 
 			const httpServer = server.httpServer;
 			const handleUpgrade = (
-				request: import("node:http").IncomingMessage,
+				request: IncomingMessage,
 				socket: import("node:stream").Duplex,
 				head: Buffer,
 			) => {
-				if (request.url === SYSDML_WS_PATH) {
-					wss.handleUpgrade(request, socket, head, (ws) => {
-						wss.emit("connection", ws, request);
-					});
+				if (request.url !== SYSDML_WS_PATH) return;
+				if (!isUpgradeOriginAllowed(request)) {
+					socket.write("HTTP/1.1 403 Forbidden\r\n\r\n");
+					socket.destroy();
+					return;
 				}
+				wss.handleUpgrade(request, socket, head, (ws) => {
+					wss.emit("connection", ws, request);
+				});
 			};
 
 			wss.on("connection", (ws: WebSocket) => {

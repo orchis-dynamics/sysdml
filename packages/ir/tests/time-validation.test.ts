@@ -122,4 +122,38 @@ describe("time block validation — XMILE §2.3 mappings (B6.4)", () => {
 		const { ir } = compileAST(ast);
 		expect(ir).toBeNull();
 	});
+
+	test("time block with only step → MISSING_TIME_PROPERTY for start and end", () => {
+		const { ast, parseDiagnostics } = compile(
+			`sfd m\ntime { step: 1 }\n${ONE_STOCK}`,
+		);
+		expect(parseDiagnostics).toHaveLength(0);
+		const { ir, diagnostics } = compileAST(ast!);
+		expect(ir).toBeNull();
+		const missing = diagnostics.filter(
+			(d) => d.code === DiagnosticCode.MISSING_TIME_PROPERTY,
+		);
+		expect(missing).toHaveLength(2);
+		const messages = missing.map((d) => d.message).join(" ");
+		expect(messages).toContain("'start'");
+		expect(messages).toContain("'end'");
+		expect(missing.every((d) => d.span !== undefined)).toBe(true);
+	});
+
+	test("missing step → MISSING_TIME_PROPERTY, not INVALID_TIME_STEP", () => {
+		const { ast, parseDiagnostics } = compile(
+			`sfd m\ntime { start: 0 end: 10 }\n${ONE_STOCK}`,
+		);
+		expect(parseDiagnostics).toHaveLength(0);
+		const { ir, diagnostics } = compileAST(ast!);
+		expect(ir).toBeNull();
+		const missing = diagnostics.find(
+			(d) => d.code === DiagnosticCode.MISSING_TIME_PROPERTY,
+		);
+		expect(missing).toBeDefined();
+		expect(missing!.message).toContain("'step'");
+		expect(
+			diagnostics.find((d) => d.code === DiagnosticCode.INVALID_TIME_STEP),
+		).toBeUndefined();
+	});
 });

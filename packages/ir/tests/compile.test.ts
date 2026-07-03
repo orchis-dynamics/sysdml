@@ -224,6 +224,38 @@ describe("validation", () => {
 	});
 });
 
+// ── Flow references in expressions ────────────────────────────────────────────
+
+describe("flow references in expressions", () => {
+	test("aux referencing a declared flow compiles clean", () => {
+		const ast = parse(
+			`sfd m\ntime { start:0 end:1 step:1 }\nstock s { init: 0 }\nflow births { from: null to: s rate: 1 }\naux net_change = births * 2`,
+		);
+		const { ir, diagnostics } = compileAST(ast);
+		expect(diagnostics).toHaveLength(0);
+		expect(ir).not.toBeNull();
+		const netChange = ir!.auxiliaries.find(
+			(auxiliaryVariable) => auxiliaryVariable.id === "net_change",
+		);
+		expect(netChange!.expr).toEqual({
+			type: "BinaryOperation",
+			op: "*",
+			left: { type: "Reference", id: "births" },
+			right: { type: "Number", value: 2 },
+		});
+	});
+
+	test("stock init referencing a declared flow compiles clean", () => {
+		const ast = parse(
+			`sfd m\ntime { start:0 end:1 step:1 }\nstock s { init: births }\nflow births { from: null to: s rate: 1 }`,
+		);
+		const { ir, diagnostics } = compileAST(ast);
+		expect(diagnostics).toHaveLength(0);
+		expect(ir).not.toBeNull();
+		expect(ir!.stocks[0].init).toEqual({ type: "Reference", id: "births" });
+	});
+});
+
 // ── CLD connections ───────────────────────────────────────────────────────────
 
 describe("CLD connections", () => {

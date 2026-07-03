@@ -6,8 +6,6 @@
 		"sysdml": "./dist/src/index.js"
 	},
 	"type": "module",
-	"main": "./dist/src/index.js",
-	"types": "./dist/src/index.d.ts",
 	"exports": {
 		"./pipeline": {
 			"types": "./dist/src/pipeline.d.ts",

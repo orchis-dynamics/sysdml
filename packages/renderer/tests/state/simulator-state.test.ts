@@ -35,20 +35,12 @@ describe("simulator state — variable selection", () => {
 		expect(state.isVariableSelected("stock_a")).toBe(false);
 	});
 
-	test("selectVariable and deselectVariable update membership", () => {
+	test("toggleVariable tracks each variable independently", () => {
 		const state = runInSetup(() => useProvideSimulatorState());
-		state.selectVariable("aux_b");
-		expect(state.isVariableSelected("aux_b")).toBe(true);
-		state.deselectVariable("aux_b");
-		expect(state.isVariableSelected("aux_b")).toBe(false);
-	});
-
-	test("clearSelection removes every selected variable", () => {
-		const state = runInSetup(() => useProvideSimulatorState());
-		state.selectVariable("a");
-		state.selectVariable("b");
-		state.clearSelection();
-		expect(state.isVariableSelected("a")).toBe(false);
+		state.toggleVariable("a");
+		state.toggleVariable("b");
+		state.toggleVariable("b");
+		expect(state.isVariableSelected("a")).toBe(true);
 		expect(state.isVariableSelected("b")).toBe(false);
 	});
 });

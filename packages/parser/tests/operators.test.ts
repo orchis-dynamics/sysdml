@@ -4,6 +4,7 @@ import { parseSource } from "../src/index.js";
 import type {
 	AuxiliaryDeclarationNode,
 	BinaryExpressionNode,
+	DeclarationNode,
 	ExpressionNode,
 	IfThenElseNode,
 	UnaryExpressionNode,
@@ -11,13 +12,19 @@ import type {
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
+function isAuxiliaryDeclaration(
+	n: DeclarationNode,
+): n is AuxiliaryDeclarationNode {
+	return n.type === "AuxiliaryDeclaration";
+}
+
 function auxExpr(src: string): ExpressionNode {
 	const { ast, diagnostics } = parseSource(`sfd m\naux x = ${src}`);
 	expect(diagnostics, `parse errors for ${src}`).toHaveLength(0);
 	if (ast === null) throw new Error(`expected non-null ast for: ${src}`);
-	const decl = ast.decls[0] as AuxiliaryDeclarationNode;
-	expect(decl.type).toBe("AuxiliaryDeclaration");
-	if (decl.expr === null) throw new Error(`expected non-null expr for: ${src}`);
+	const decl = ast.decls[0];
+	if (decl === undefined || !isAuxiliaryDeclaration(decl))
+		throw new Error(`expected AuxiliaryDeclaration for: ${src}`);
 	return decl.expr;
 }
 
@@ -179,6 +186,53 @@ describe("mixed precedence", () => {
 		expect(isBinaryExpression(e) && e.op === "<").toBe(true);
 		if (isBinaryExpression(e)) {
 			expect(isUnaryExpression(e.left) && e.left.op === "-").toBe(true);
+		}
+	});
+});
+
+// ── Exponentiation ───────────────────────────────────────────────────────────
+
+describe("exponentiation", () => {
+	test("2*10^-6 → 2 * (10 ^ (-6))", () => {
+		const e = auxExpr("2*10^-6");
+		expect(isBinaryExpression(e) && e.op === "*").toBe(true);
+		if (isBinaryExpression(e)) {
+			expect(isBinaryExpression(e.right) && e.right.op === "^").toBe(true);
+			if (isBinaryExpression(e.right)) {
+				expect(
+					isUnaryExpression(e.right.right) && e.right.right.op === "-",
+				).toBe(true);
+			}
+		}
+	});
+
+	test("2^-3 → 2 ^ (-3)", () => {
+		const e = auxExpr("2^-3");
+		expect(isBinaryExpression(e) && e.op === "^").toBe(true);
+		if (isBinaryExpression(e)) {
+			expect(e.left.type).toBe("NumberLiteral");
+			expect(isUnaryExpression(e.right) && e.right.op === "-").toBe(true);
+		}
+	});
+
+	test("-a^2 → -(a^2) (^ binds tighter than unary minus)", () => {
+		const e = auxExpr("-a^2");
+		expect(isUnaryExpression(e) && e.op === "-").toBe(true);
+		if (isUnaryExpression(e)) {
+			expect(isBinaryExpression(e.operand) && e.operand.op === "^").toBe(true);
+		}
+	});
+
+	test("a^b^c → a^(b^c) (right-associative)", () => {
+		const e = auxExpr("a^b^c");
+		expect(isBinaryExpression(e) && e.op === "^").toBe(true);
+		if (isBinaryExpression(e)) {
+			expect(e.left.type).toBe("IdentifierReference");
+			expect(isBinaryExpression(e.right) && e.right.op === "^").toBe(true);
+			if (isBinaryExpression(e.right)) {
+				expect(e.right.left.type).toBe("IdentifierReference");
+				expect(e.right.right.type).toBe("IdentifierReference");
+			}
 		}
 	});
 });

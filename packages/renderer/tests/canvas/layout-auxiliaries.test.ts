@@ -188,6 +188,14 @@ describe("constructAuxiliaryLayoutNodes", () => {
 		expect(result.get("p")!.position).toEqual({ x: 42, y: 84 });
 	});
 
+	test("converts the solver's center coordinates to a top-left position", () => {
+		const result = constructAuxiliaryLayoutNodes([aux("solo")], [], new Map());
+		const node = result.get("solo");
+		if (!node) throw new Error("missing solo node");
+		expect(node.position.x).toBeCloseTo(-node.size.width / 2, 6);
+		expect(node.position.y).toBeCloseTo(-node.size.height / 2, 6);
+	});
+
 	test("produces a LayoutNode with kind=aux and a non-zero size", () => {
 		const result = constructAuxiliaryLayoutNodes(
 			[aux("birth_rate")],

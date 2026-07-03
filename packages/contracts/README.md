@@ -35,6 +35,7 @@ graph TD
   model --> diagnostics
   simulation --> model
   simulation --> diagnostics
+  protocol --> diagnostics
   protocol --> model
 ```
 <!-- /generated:domain-dag -->

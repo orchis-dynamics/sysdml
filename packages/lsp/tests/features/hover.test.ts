@@ -52,6 +52,26 @@ describe("getHoverContent", () => {
 		const result = getHoverContent(ast, ir, { line: 13, character: 23 });
 		expect(result).not.toBeNull();
 	});
+
+	it("returns stock info when hovering over the stock declaration id", () => {
+		const { ast, ir } = analyze(SOURCE);
+		// 'population' in 'stock population {' — line 6 (0-indexed), col 6
+		const result = getHoverContent(ast, ir, { line: 6, character: 6 });
+		expect(result).not.toBeNull();
+		if (result === null) return;
+		expect(hoverValue(result)).toContain("stock");
+		expect(hoverValue(result)).toContain("population");
+	});
+
+	it("returns aux info when hovering over a connection endpoint", () => {
+		const src = `${SOURCE}birth_rate ->+ births\n`;
+		const { ast, ir } = analyze(src);
+		// 'birth_rate' in 'birth_rate ->+ births' — line 15 (0-indexed), col 0
+		const result = getHoverContent(ast, ir, { line: 15, character: 0 });
+		expect(result).not.toBeNull();
+		if (result === null) return;
+		expect(hoverValue(result)).toContain("birth_rate");
+	});
 });
 
 const POSITION_SOURCE = [
