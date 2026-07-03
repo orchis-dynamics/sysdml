@@ -556,15 +556,28 @@ export function compileAST(ast: FileNode): CompileResult {
 
 	// ── Connections ───────────────────────────────────────────────────────────
 
-	const connections = connectionDecls.map((connectionDecl) => ({
-		from: connectionDecl.from,
-		polarity: connectionDecl.polarity,
-		to: connectionDecl.to,
-		angle: connectionDecl.angle,
-		via: connectionDecl.via
-			? { x: connectionDecl.via.x, y: connectionDecl.via.y }
-			: undefined,
-	}));
+	const connections = connectionDecls.map((connectionDecl) => {
+		if (
+			connectionDecl.angle !== undefined &&
+			Math.abs(connectionDecl.angle) > 180
+		) {
+			nonFatalDiagnostics.push({
+				code: DiagnosticCode.CONNECTION_ANGLE_OUT_OF_RANGE,
+				message: `Connection '${connectionDecl.from}' -> '${connectionDecl.to}' has angle ${connectionDecl.angle}, outside -180..180; the renderer clamps it`,
+				span: connectionDecl.span,
+				severity: "warning",
+			});
+		}
+		return {
+			from: connectionDecl.from,
+			polarity: connectionDecl.polarity,
+			to: connectionDecl.to,
+			angle: connectionDecl.angle,
+			via: connectionDecl.via
+				? { x: connectionDecl.via.x, y: connectionDecl.via.y }
+				: undefined,
+		};
+	});
 
 	// ── Emit ──────────────────────────────────────────────────────────────────
 
