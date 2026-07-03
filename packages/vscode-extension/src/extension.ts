@@ -40,7 +40,7 @@ export function activate(context: vscode.ExtensionContext): void {
 	);
 
 	void client.start().then(() => {
-		if (diagramPanel && client) {
+		if (diagramPanel && !diagramPanel.isDisposed && client) {
 			void diagramPanel.refresh(client);
 		}
 	});
@@ -48,20 +48,25 @@ export function activate(context: vscode.ExtensionContext): void {
 	context.subscriptions.push(
 		vscode.commands.registerCommand("sysdml.openDiagram", () => {
 			if (!client) return;
-			diagramPanel = DiagramPanel.createOrShow(context, client);
+			const panel = DiagramPanel.createOrShow(context, client);
+			if (panel === diagramPanel) return;
+			diagramPanel = panel;
+			panel.onDidDispose(() => {
+				if (diagramPanel === panel) diagramPanel = undefined;
+			});
 		}),
 		vscode.commands.registerCommand("sysdml.refreshDiagram", async () => {
-			if (!client || !diagramPanel) return;
+			if (!client || !diagramPanel || diagramPanel.isDisposed) return;
 			await diagramPanel.refresh(client);
 		}),
 		vscode.workspace.onDidSaveTextDocument(async (doc) => {
 			if (doc.languageId !== "sysdml") return;
-			if (!client || !diagramPanel) return;
+			if (!client || !diagramPanel || diagramPanel.isDisposed) return;
 			await diagramPanel.refresh(client);
 		}),
 		vscode.window.onDidChangeActiveTextEditor(async (editor) => {
 			if (!editor || editor.document.languageId !== "sysdml") return;
-			if (!client || !diagramPanel) return;
+			if (!client || !diagramPanel || diagramPanel.isDisposed) return;
 			await diagramPanel.refresh(client);
 		}),
 	);

@@ -1,10 +1,4 @@
-import * as net from "node:net";
-
-import type { IR, IRDiagnostic } from "@sysdml/contracts";
-import {
-	SocketMessageReader,
-	SocketMessageWriter,
-} from "vscode-jsonrpc/node.js";
+import type { GetIRParams, GetIRResult } from "@sysdml/contracts";
 import { TextDocument } from "vscode-languageserver-textdocument";
 import {
 	createConnection,
@@ -27,15 +21,6 @@ import { getDefinitionLocation } from "./features/definition.js";
 import { formatSource } from "./features/formatting.js";
 import { getHoverContent } from "./features/hover.js";
 import { getDocumentSymbols } from "./features/symbols.js";
-
-interface GetIRParams {
-	uri: string;
-}
-
-interface GetIRResult {
-	ir: IR | null;
-	diagnostics: IRDiagnostic[];
-}
 
 function startServer(connection: ReturnType<typeof createConnection>): void {
 	const documents = new TextDocuments(TextDocument);
@@ -124,19 +109,4 @@ function startServer(connection: ReturnType<typeof createConnection>): void {
 	connection.listen();
 }
 
-const portArgIndex = process.argv.indexOf("--port");
-if (portArgIndex !== -1) {
-	const port = parseInt(process.argv[portArgIndex + 1], 10);
-	const server = net.createServer((socket) => {
-		const reader = new SocketMessageReader(socket);
-		const writer = new SocketMessageWriter(socket);
-		const conn = createConnection(ProposedFeatures.all, reader, writer);
-		startServer(conn);
-	});
-	server.listen(port, () => {
-		process.stderr.write(`sysdml-lsp listening on port ${port}\n`);
-	});
-} else {
-	const conn = createConnection(ProposedFeatures.all);
-	startServer(conn);
-}
+startServer(createConnection(ProposedFeatures.all));

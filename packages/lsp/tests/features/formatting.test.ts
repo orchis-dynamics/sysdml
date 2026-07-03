@@ -90,6 +90,45 @@ aux birth_rate = 0.02
 		expect(result).toContain("workload ->+ fatigue");
 		expect(result).toContain("fatigue ->- energy");
 	});
+
+	it("returns null when the source contains a line comment", () => {
+		const result = formatSource(
+			"sfd m\n// growth model\ntime{start:0\nend:10\nstep:1}\nstock s{init:0}",
+		);
+		expect(result).toBeNull();
+	});
+
+	it("returns null when the source contains a hash comment", () => {
+		const result = formatSource(
+			"sfd m\n# growth model\ntime{start:0\nend:10\nstep:1}\nstock s{init:0}",
+		);
+		expect(result).toBeNull();
+	});
+
+	it("returns null when the source contains a block comment", () => {
+		const result = formatSource(
+			"sfd m\n/* growth model */\ntime{start:0\nend:10\nstep:1}\nstock s{init:0}",
+		);
+		expect(result).toBeNull();
+	});
+
+	it("omits init for a stock declared without one", () => {
+		const result = formatSource(
+			"sfd m\ntime{start:0\nend:10\nstep:1}\nstock s{position:{x:400,y:300}}",
+		);
+		expect(result).not.toBeNull();
+		expect(result).not.toContain("init:");
+		expect(result).toContain("stock s {\n  position: { x: 400, y: 300 }\n}");
+	});
+
+	it("preserves additional model headers", () => {
+		const result = formatSource(
+			"sfd main\ncld secondary\ntime{start:0\nend:10\nstep:1}\nstock s{init:0}",
+		);
+		expect(result).not.toBeNull();
+		expect(result).toContain("sfd main");
+		expect(result).toContain("cld secondary");
+	});
 });
 
 describe("layout formatting", () => {

@@ -9,7 +9,6 @@ import type { Position } from "vscode-languageserver/node.js";
 
 const TOP_LEVEL_KEYWORDS = ["sfd", "cld", "stock", "aux", "flow", "time", "gf"];
 const GF_KIND_VALUES = ["linear", "extra", "step"];
-const LAYOUT_KEYWORDS = ["position", "via", "angle"];
 
 type CompletionContext =
 	| "flow-endpoint"
@@ -17,6 +16,17 @@ type CompletionContext =
 	| "expression"
 	| "block-key"
 	| "top-level";
+
+type BlockKind = "stock" | "flow" | "aux" | "time" | "gf" | "connection";
+
+const BLOCK_KEYS: Record<BlockKind, readonly string[]> = {
+	stock: ["init", "position"],
+	flow: ["from", "to", "rate", "position", "via"],
+	aux: ["position"],
+	time: ["start", "end", "step"],
+	gf: ["kind", "xscale", "xpts", "ypts", "yscale"],
+	connection: ["angle", "via"],
+};
 
 function replaceCommentsWithSpaces(source: string): string {
 	const characters = source.split("");
@@ -80,7 +90,17 @@ function detectContext(source: string, position: Position): CompletionContext {
 	return "top-level";
 }
 
-function findEnclosingFlowId(
+function findLastUnmatchedOpenBraceIndex(text: string): number | null {
+	const openBraceIndices: number[] = [];
+	for (let index = 0; index < text.length; index += 1) {
+		if (text[index] === "{") openBraceIndices.push(index);
+		else if (text[index] === "}") openBraceIndices.pop();
+	}
+	const lastUnmatchedIndex = openBraceIndices.at(-1);
+	return lastUnmatchedIndex === undefined ? null : lastUnmatchedIndex;
+}
+
+function headerBeforeEnclosingBlock(
 	source: string,
 	position: Position,
 ): string | null {
@@ -89,17 +109,36 @@ function findEnclosingFlowId(
 		.slice(0, position.line)
 		.concat(lines[position.line]?.slice(0, position.character) ?? "")
 		.join("\n");
+	const braceIndex = findLastUnmatchedOpenBraceIndex(sourceUpToCursor);
+	if (braceIndex === null) return null;
+	return sourceUpToCursor.slice(0, braceIndex);
+}
 
-	const openBraces = (sourceUpToCursor.match(/{/g) ?? []).length;
-	const closeBraces = (sourceUpToCursor.match(/}/g) ?? []).length;
-	if (openBraces <= closeBraces) return null;
-
-	const lastOpenBraceIndex = sourceUpToCursor.lastIndexOf("{");
-	const headerBeforeBrace = sourceUpToCursor.slice(0, lastOpenBraceIndex);
-	const flowHeaderMatch = /\bflow\s+([A-Za-z_][A-Za-z0-9_]*)\s*$/.exec(
-		headerBeforeBrace,
-	);
+function findEnclosingFlowId(
+	source: string,
+	position: Position,
+): string | null {
+	const header = headerBeforeEnclosingBlock(source, position);
+	if (header === null) return null;
+	const flowHeaderMatch = /\bflow\s+([A-Za-z_][A-Za-z0-9_]*)\s*$/.exec(header);
 	return flowHeaderMatch ? flowHeaderMatch[1] : null;
+}
+
+function findEnclosingBlockKind(
+	source: string,
+	position: Position,
+): BlockKind | null {
+	const header = headerBeforeEnclosingBlock(source, position);
+	if (header === null) return null;
+	if (/\bstock\s+[A-Za-z_][A-Za-z0-9_]*\s*$/.test(header)) return "stock";
+	if (/\bflow\s+[A-Za-z_][A-Za-z0-9_]*\s*$/.test(header)) return "flow";
+	if (/\bgf\s+[A-Za-z_][A-Za-z0-9_]*\s*$/.test(header)) return "gf";
+	if (/\btime\s*$/.test(header)) return "time";
+	if (/(->\+|->-|=>)\s*[A-Za-z_][A-Za-z0-9_]*\s*$/.test(header)) {
+		return "connection";
+	}
+	if (/\baux\s+[A-Za-z_][A-Za-z0-9_]*\s*=[^{}]*$/.test(header)) return "aux";
+	return null;
 }
 
 function getStockIds(ast: FileNode | null): string[] {
@@ -108,16 +147,6 @@ function getStockIds(ast: FileNode | null): string[] {
 		.filter(
 			(d): d is Extract<typeof d, { type: "StockDeclaration" }> =>
 				d.type === "StockDeclaration",
-		)
-		.map((d) => d.id);
-}
-
-function getFlowIds(ast: FileNode | null): string[] {
-	if (!ast) return [];
-	return ast.decls
-		.filter(
-			(d): d is Extract<typeof d, { type: "FlowDeclaration" }> =>
-				d.type === "FlowDeclaration",
 		)
 		.map((d) => d.id);
 }
@@ -177,12 +206,7 @@ export function getCompletionItems(
 				item.kind = CompletionItemKind.Variable;
 				return item;
 			});
-			const flows = getFlowIds(ast).map((id) => {
-				const item = CompletionItem.create(id);
-				item.kind = CompletionItemKind.Variable;
-				return item;
-			});
-			return [nullItem, ...stocks, ...flows];
+			return [nullItem, ...stocks];
 		}
 		case "gf-kind":
 			return GF_KIND_VALUES.map((v) => {
@@ -190,12 +214,15 @@ export function getCompletionItems(
 				item.kind = CompletionItemKind.EnumMember;
 				return item;
 			});
-		case "block-key":
-			return LAYOUT_KEYWORDS.map((kw) => {
-				const item = CompletionItem.create(kw);
+		case "block-key": {
+			const blockKind = findEnclosingBlockKind(maskedSource, position);
+			if (blockKind === null) return [];
+			return BLOCK_KEYS[blockKind].map((key) => {
+				const item = CompletionItem.create(key);
 				item.kind = CompletionItemKind.Keyword;
 				return item;
 			});
+		}
 		case "expression": {
 			const enclosingFlowId = findEnclosingFlowId(maskedSource, position);
 			const connectedIds = enclosingFlowId

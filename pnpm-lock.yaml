@@ -95,9 +95,6 @@ importers:
       '@sysdml/parser':
         specifier: workspace:*
         version: link:../parser
-      vscode-jsonrpc:
-        specifier: ^8.2.0
-        version: 8.2.0
       vscode-languageserver:
         specifier: ^9.0.0
         version: 9.0.1

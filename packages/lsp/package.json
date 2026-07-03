@@ -18,7 +18,6 @@
 		"@sysdml/contracts": "workspace:*",
 		"@sysdml/ir": "workspace:*",
 		"@sysdml/parser": "workspace:*",
-		"vscode-jsonrpc": "^8.2.0",
 		"vscode-languageserver": "^9.0.0",
 		"vscode-languageserver-textdocument": "^1.0.0"
 	},

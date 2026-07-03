@@ -1,4 +1,10 @@
-import type { Span, FileNode, DeclarationNode, ExpressionNode } from "@sysdml/contracts";
+import type {
+	Span,
+	FileNode,
+	DeclarationNode,
+	ExpressionNode,
+	FlowDeclarationNode,
+} from "@sysdml/contracts";
 import type { Position } from "vscode-languageserver/node.js";
 
 export function isPositionInSpan(position: Position, span: Span): boolean {
@@ -7,7 +13,7 @@ export function isPositionInSpan(position: Position, span: Span): boolean {
 	const col = position.character + 1;
 	if (line < span.start.line || line > span.end.line) return false;
 	if (line === span.start.line && col < span.start.col) return false;
-	if (line === span.end.line && col >= span.end.col) return false;
+	if (line === span.end.line && col > span.end.col) return false;
 	return true;
 }
 
@@ -28,24 +34,46 @@ function findIdentInDecl(
 ): string | null {
 	switch (decl.type) {
 		case "StockDeclaration":
+			if (isPositionInSpan(position, decl.idSpan)) return decl.id;
 			for (const prop of decl.props) {
 				const found = findIdentInExpr(prop.init, position);
 				if (found !== null) return found;
 			}
 			return null;
 		case "AuxiliaryDeclaration":
+			if (isPositionInSpan(position, decl.idSpan)) return decl.id;
 			return findIdentInExpr(decl.expr, position);
 		case "FlowDeclaration":
-			for (const prop of decl.props) {
-				if (prop.key === "rate") {
-					const found = findIdentInExpr(prop.value, position);
-					if (found !== null) return found;
-				}
-			}
+			if (isPositionInSpan(position, decl.idSpan)) return decl.id;
+			return findIdentInFlowProps(decl, position);
+		case "ConnectionDeclaration":
+			if (isPositionInSpan(position, decl.fromSpan)) return decl.from;
+			if (isPositionInSpan(position, decl.toSpan)) return decl.to;
+			return null;
+		case "GraphicalFunctionDeclaration":
+			if (isPositionInSpan(position, decl.idSpan)) return decl.id;
 			return null;
 		default:
 			return null;
 	}
+}
+
+function findIdentInFlowProps(
+	decl: FlowDeclarationNode,
+	position: Position,
+): string | null {
+	for (const prop of decl.props) {
+		if (prop.key === "rate") {
+			const found = findIdentInExpr(prop.value, position);
+			if (found !== null) return found;
+		} else if (
+			prop.value.value !== null &&
+			isPositionInSpan(position, prop.value.span)
+		) {
+			return prop.value.value;
+		}
+	}
+	return null;
 }
 
 function findIdentInExpr(
