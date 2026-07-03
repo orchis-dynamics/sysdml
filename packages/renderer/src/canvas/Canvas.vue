@@ -133,7 +133,9 @@ function targetBox(id: string): LayoutNode | null {
 	return resolvedNodes.value.find((n) => n.id === id) ?? null;
 }
 
-function routedConnectionFor(edge: LayoutConnectionEdge): RoutedConnection | null {
+function routedConnectionFor(
+	edge: LayoutConnectionEdge,
+): RoutedConnection | null {
 	if (edge.angle === undefined && edge.via === undefined) return null;
 	return routeConnection(
 		nodeCenter(edge.source),

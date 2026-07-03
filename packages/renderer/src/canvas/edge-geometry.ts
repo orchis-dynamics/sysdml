@@ -111,7 +111,8 @@ export function segmentTangentAt(segment: PathSegment, t: number): Point {
 			y: segment.end.y - segment.start.y,
 		};
 	}
-	const angleRadians = segment.startAngleRadians + t * segment.deltaAngleRadians;
+	const angleRadians =
+		segment.startAngleRadians + t * segment.deltaAngleRadians;
 	const sweepSign = Math.sign(segment.deltaAngleRadians) || 1;
 	return {
 		x: -Math.sin(angleRadians) * sweepSign,
@@ -163,7 +164,10 @@ export function arcFromChordAndCentralAngle(
 		x: (source.x + target.x) / 2 - bulgeSign * leftUnitX * centerDistance,
 		y: (source.y + target.y) / 2 - bulgeSign * leftUnitY * centerDistance,
 	};
-	const startAngleRadians = Math.atan2(source.y - center.y, source.x - center.x);
+	const startAngleRadians = Math.atan2(
+		source.y - center.y,
+		source.x - center.x,
+	);
 	return { kind: "arc", center, radius, startAngleRadians, deltaAngleRadians };
 }
 
@@ -203,10 +207,14 @@ function circumcenter(a: Point, b: Point, c: Point): Point {
 	const cSquared = c.x * c.x + c.y * c.y;
 	return {
 		x:
-			(aSquared * (b.y - c.y) + bSquared * (c.y - a.y) + cSquared * (a.y - b.y)) /
+			(aSquared * (b.y - c.y) +
+				bSquared * (c.y - a.y) +
+				cSquared * (a.y - b.y)) /
 			doubledSignedArea,
 		y:
-			(aSquared * (c.x - b.x) + bSquared * (a.x - c.x) + cSquared * (b.x - a.x)) /
+			(aSquared * (c.x - b.x) +
+				bSquared * (a.x - c.x) +
+				cSquared * (b.x - a.x)) /
 			doubledSignedArea,
 	};
 }
@@ -228,13 +236,20 @@ export function arcThroughThreePoints(
 	}
 	const center = circumcenter(source, via, target);
 	const radius = Math.hypot(source.x - center.x, source.y - center.y);
-	const startAngleRadians = Math.atan2(source.y - center.y, source.x - center.x);
+	const startAngleRadians = Math.atan2(
+		source.y - center.y,
+		source.x - center.x,
+	);
 	const endAngleRadians = Math.atan2(target.y - center.y, target.x - center.x);
 	const viaAngleRadians = Math.atan2(via.y - center.y, via.x - center.x);
-	const positiveSweep = normalizeAnglePositive(endAngleRadians - startAngleRadians);
+	const positiveSweep = normalizeAnglePositive(
+		endAngleRadians - startAngleRadians,
+	);
 	const viaOffset = normalizeAnglePositive(viaAngleRadians - startAngleRadians);
 	const deltaAngleRadians =
-		viaOffset <= positiveSweep ? positiveSweep : positiveSweep - FULL_TURN_RADIANS;
+		viaOffset <= positiveSweep
+			? positiveSweep
+			: positiveSweep - FULL_TURN_RADIANS;
 	return { kind: "arc", center, radius, startAngleRadians, deltaAngleRadians };
 }
 
@@ -271,10 +286,14 @@ export function tangentContinuationArc(
 	const positiveSweepTangentX = -radiusUnitY;
 	const positiveSweepTangentY = radiusUnitX;
 	const sweepSign =
-		tangentUnitX * positiveSweepTangentX + tangentUnitY * positiveSweepTangentY >= 0
+		tangentUnitX * positiveSweepTangentX +
+			tangentUnitY * positiveSweepTangentY >=
+		0
 			? 1
 			: -1;
-	const positiveSweep = normalizeAnglePositive(endAngleRadians - startAngleRadians);
+	const positiveSweep = normalizeAnglePositive(
+		endAngleRadians - startAngleRadians,
+	);
 	const deltaAngleRadians =
 		sweepSign > 0 ? positiveSweep : positiveSweep - FULL_TURN_RADIANS;
 	return { kind: "arc", center, radius, startAngleRadians, deltaAngleRadians };
@@ -336,7 +355,11 @@ function isPointInsideBox(point: Point, box: Box): boolean {
 
 function truncateSegment(segment: PathSegment, t: number): PathSegment {
 	if (segment.kind === "line") {
-		return { kind: "line", start: segment.start, end: segmentPointAt(segment, t) };
+		return {
+			kind: "line",
+			start: segment.start,
+			end: segmentPointAt(segment, t),
+		};
 	}
 	return { ...segment, deltaAngleRadians: segment.deltaAngleRadians * t };
 }
@@ -348,13 +371,18 @@ export function clipSegmentsEndToBox(
 	const keptSegments = [...segments];
 	while (
 		keptSegments.length > 1 &&
-		isPointInsideBox(segmentStartPoint(keptSegments[keptSegments.length - 1]), box)
+		isPointInsideBox(
+			segmentStartPoint(keptSegments[keptSegments.length - 1]),
+			box,
+		)
 	) {
 		keptSegments.pop();
 	}
 	const finalSegment = keptSegments[keptSegments.length - 1];
-	if (!isPointInsideBox(segmentEndPoint(finalSegment), box)) return keptSegments;
-	if (isPointInsideBox(segmentStartPoint(finalSegment), box)) return keptSegments;
+	if (!isPointInsideBox(segmentEndPoint(finalSegment), box))
+		return keptSegments;
+	if (isPointInsideBox(segmentStartPoint(finalSegment), box))
+		return keptSegments;
 	let outsideT = 0;
 	let insideT = 1;
 	for (let iteration = 0; iteration < CLIP_BISECTION_ITERATIONS; iteration++) {
@@ -365,7 +393,10 @@ export function clipSegmentsEndToBox(
 			outsideT = middleT;
 		}
 	}
-	keptSegments[keptSegments.length - 1] = truncateSegment(finalSegment, insideT);
+	keptSegments[keptSegments.length - 1] = truncateSegment(
+		finalSegment,
+		insideT,
+	);
 	return keptSegments;
 }
 
@@ -391,7 +422,8 @@ export function routeConnection(
 
 function arePointsEqual(a: Point, b: Point): boolean {
 	return (
-		Math.abs(a.x - b.x) < ROUTING_EPSILON && Math.abs(a.y - b.y) < ROUTING_EPSILON
+		Math.abs(a.x - b.x) < ROUTING_EPSILON &&
+		Math.abs(a.y - b.y) < ROUTING_EPSILON
 	);
 }
 
