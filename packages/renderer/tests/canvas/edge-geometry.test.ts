@@ -71,7 +71,11 @@ describe("connectionControlPoint", () => {
 	});
 
 	test("negative sign (CLD) bulges a left-to-right link to the opposite side", () => {
-		const control = connectionControlPoint({ x: 0, y: 0 }, { x: 100, y: 0 }, -1);
+		const control = connectionControlPoint(
+			{ x: 0, y: 0 },
+			{ x: 100, y: 0 },
+			-1,
+		);
 		expect(control.x).toBeCloseTo(50);
 		expect(control.y).toBeCloseTo(60);
 	});
@@ -113,7 +117,10 @@ describe("arcFromChordAndCentralAngle", () => {
 			-90,
 		);
 		if (segment.kind !== "arc") throw new Error("expected an arc");
-		expect(segmentPointAt(segment, 0.5).y).toBeCloseTo(50 * (Math.SQRT2 - 1), 6);
+		expect(segmentPointAt(segment, 0.5).y).toBeCloseTo(
+			50 * (Math.SQRT2 - 1),
+			6,
+		);
 	});
 
 	test("arc endpoints land exactly on source and target", () => {
@@ -441,16 +448,15 @@ describe("routeConnection", () => {
 		);
 		if (!routed) throw new Error("expected a routed connection");
 		expect(routed.path).toContain(" A ");
-		expect(segmentEndPoint(routed.segments[routed.segments.length - 1]).x)
-			.toBeCloseTo(80, 1);
+		expect(
+			segmentEndPoint(routed.segments[routed.segments.length - 1]).x,
+		).toBeCloseTo(80, 1);
 	});
 });
 
 describe("orthogonalPipePoints", () => {
 	test("no via and same Y yields a straight two-point pipe", () => {
-		expect(
-			orthogonalPipePoints({ x: 0, y: 0 }, [], { x: 100, y: 0 }),
-		).toEqual([
+		expect(orthogonalPipePoints({ x: 0, y: 0 }, [], { x: 100, y: 0 })).toEqual([
 			{ x: 0, y: 0 },
 			{ x: 100, y: 0 },
 		]);
@@ -468,11 +474,10 @@ describe("orthogonalPipePoints", () => {
 
 	test("via knees are followed with elbows inserted between diagonal neighbors", () => {
 		expect(
-			orthogonalPipePoints(
-				{ x: 0, y: 0 },
-				[{ x: 50, y: 40 }],
-				{ x: 100, y: 40 },
-			),
+			orthogonalPipePoints({ x: 0, y: 0 }, [{ x: 50, y: 40 }], {
+				x: 100,
+				y: 40,
+			}),
 		).toEqual([
 			{ x: 0, y: 0 },
 			{ x: 50, y: 0 },

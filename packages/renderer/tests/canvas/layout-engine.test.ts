@@ -1,10 +1,10 @@
 import { describe, expect, test } from "vitest";
 
-import { computeLayout } from "../../src/canvas/layout-engine.js";
 import {
 	orthogonalPipePoints,
 	polylineMidpoint,
 } from "../../src/canvas/edge-geometry.js";
+import { computeLayout } from "../../src/canvas/layout-engine.js";
 import { aux, connection, flow, ir, stock } from "../helpers/ir-builders.js";
 
 describe("computeLayout — SFD edges", () => {
@@ -123,11 +123,7 @@ describe("computeLayout — CLD", () => {
 			}),
 		);
 
-		expect(result.nodes.map((node) => node.id).sort()).toEqual([
-			"a",
-			"b",
-			"c",
-		]);
+		expect(result.nodes.map((node) => node.id).sort()).toEqual(["a", "b", "c"]);
 		expect(result.nodes.every((node) => node.kind === "aux")).toBe(true);
 	});
 
@@ -205,9 +201,7 @@ describe("computeLayout — valve placement for flows with via", () => {
 		const layout = computeLayout(
 			ir({
 				stocks: [stock("a", { x: 0, y: 0 }), stock("b", { x: 400, y: 0 })],
-				flows: [
-					flow("transfer", "a", "b", undefined, [{ x: 200, y: 200 }]),
-				],
+				flows: [flow("transfer", "a", "b", undefined, [{ x: 200, y: 200 }])],
 			}),
 		);
 		const valve = layout.nodes.find((node) => node.id === "transfer");
