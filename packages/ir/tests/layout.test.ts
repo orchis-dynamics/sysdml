@@ -103,3 +103,35 @@ describe("IR layout — connection", () => {
 		expect(ir.connections[0].via).toBeUndefined();
 	});
 });
+
+describe("IR layout — connection angle range", () => {
+	test("angle above 180 emits CONNECTION_ANGLE_OUT_OF_RANGE warning and keeps the IR", () => {
+		const result = compileAST(
+			parse(`${BASE}\nstock s { init: 0 }\naux a = 1\na ->+ s { angle: 181 }`),
+		);
+		expect(result.ir).not.toBeNull();
+		expect(result.diagnostics).toHaveLength(1);
+		expect(result.diagnostics[0]).toMatchObject({
+			code: "CONNECTION_ANGLE_OUT_OF_RANGE",
+			severity: "warning",
+		});
+		expect(result.ir?.connections[0].angle).toBe(181);
+	});
+
+	test("angle below -180 emits the warning", () => {
+		const result = compileAST(
+			parse(`${BASE}\nstock s { init: 0 }\naux a = 1\na ->+ s { angle: -181 }`),
+		);
+		expect(result.ir).not.toBeNull();
+		expect(result.diagnostics[0]?.code).toBe("CONNECTION_ANGLE_OUT_OF_RANGE");
+	});
+
+	test("angles of exactly 180 and -180 emit no diagnostics", () => {
+		const result = compileAST(
+			parse(
+				`${BASE}\nstock s { init: 0 }\naux a = 1\naux b = 2\na ->+ s { angle: 180 }\nb ->- s { angle: -180 }`,
+			),
+		);
+		expect(result.diagnostics).toHaveLength(0);
+	});
+});

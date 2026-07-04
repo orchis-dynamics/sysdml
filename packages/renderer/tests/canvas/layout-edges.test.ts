@@ -64,6 +64,45 @@ describe("constructLayoutEdges — connection edges", () => {
 
 	test("flow-style connection (=>) is preserved", () => {
 		const edges = constructLayoutEdges([], [connection("a", "b", "=>")]);
-		expect([...edges.values()][0].polarity).toBe("=>");
+		const edge = [...edges.values()][0];
+		expect(edge.kind).toBe("connection");
+		if (edge.kind === "connection") {
+			expect(edge.polarity).toBe("=>");
+		}
+	});
+});
+
+describe("constructLayoutEdges — routing hints", () => {
+	test("connection angle and via propagate to the edge", () => {
+		const edges = constructLayoutEdges(
+			[],
+			[connection("a", "b", "+", { angle: 45, via: { x: 150, y: 80 } })],
+		);
+		expect([...edges.values()][0]).toMatchObject({
+			kind: "connection",
+			angle: 45,
+			via: { x: 150, y: 80 },
+		});
+	});
+
+	test("connection without hints has undefined angle and via", () => {
+		const edges = constructLayoutEdges([], [connection("a", "b")]);
+		const edge = [...edges.values()][0];
+		expect(edge.kind).toBe("connection");
+		if (edge.kind === "connection") {
+			expect(edge.angle).toBeUndefined();
+			expect(edge.via).toBeUndefined();
+		}
+	});
+
+	test("flow via waypoints propagate to the edge", () => {
+		const edges = constructLayoutEdges(
+			[flow("drain", "stock_a", "stock_b", undefined, [{ x: 200, y: 100 }])],
+			[],
+		);
+		expect([...edges.values()][0]).toMatchObject({
+			kind: "flow",
+			via: [{ x: 200, y: 100 }],
+		});
 	});
 });

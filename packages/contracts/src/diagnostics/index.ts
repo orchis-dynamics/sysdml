@@ -33,6 +33,7 @@ export const DiagnosticCode = {
 	MULTI_MODEL_NOT_SUPPORTED: "MULTI_MODEL_NOT_SUPPORTED",
 	IDENTIFIER_SHADOWS_BUILTIN: "IDENTIFIER_SHADOWS_BUILTIN",
 	RESERVED_IDENTIFIER: "RESERVED_IDENTIFIER",
+	CONNECTION_ANGLE_OUT_OF_RANGE: "CONNECTION_ANGLE_OUT_OF_RANGE",
 } as const;
 
 export type DiagnosticCode =
@@ -42,6 +43,7 @@ export interface IRDiagnostic {
 	code: DiagnosticCode;
 	message: string;
 	span?: Span;
+	severity?: "error" | "warning";
 }
 
 export interface SimDiagnostic {
