@@ -52,7 +52,24 @@ describe("error handling", () => {
 		expect(ast).toBeNull();
 		expect(diagnostics).toHaveLength(1);
 		expect(diagnostics[0]?.message).toMatch(/nesting too deep/);
-		expect(diagnostics[0]?.span.start).toEqual({ line: 1, col: 1 });
+		expect(diagnostics[0]?.span.start).toEqual({ line: 2, col: 109 });
+	});
+
+	test("nesting at the limit parses without diagnostics", () => {
+		const src = `sfd m\naux x = ${"(".repeat(100)}1${")".repeat(100)}`;
+		const { ast, diagnostics } = parseSource(src);
+		expect(diagnostics).toHaveLength(0);
+		expect(ast).not.toBeNull();
+	});
+
+	test("nesting one past the limit produces the diagnostic at the offending paren", () => {
+		const src = `sfd m\naux x = ${"(".repeat(101)}1${")".repeat(101)}`;
+		const { ast, diagnostics } = parseSource(src);
+		expect(ast).toBeNull();
+		expect(diagnostics).toHaveLength(1);
+		expect(diagnostics[0]?.message).toMatch(/nesting too deep/);
+		expect(diagnostics[0]?.span.start).toEqual({ line: 2, col: 109 });
+		expect(diagnostics[0]?.span.end).toEqual({ line: 2, col: 109 });
 	});
 });
 

@@ -47,21 +47,55 @@ class CollectingErrorListener extends BaseErrorListener {
 	}
 }
 
+const MAXIMUM_EXPRESSION_NESTING_DEPTH = 100;
+
+function nestingTooDeepDiagnostic(offendingToken: Token): Diagnostic {
+	const col = offendingToken.column + 1;
+	return {
+		message: "expression nesting too deep for the parser",
+		span: {
+			start: { line: offendingToken.line, col },
+			end: { line: offendingToken.line, col },
+		},
+	};
+}
+
+function findNestingLimitToken(tokenStream: CommonTokenStream): Token | null {
+	tokenStream.fill();
+	let depth = 0;
+	for (const token of tokenStream.getTokens()) {
+		if (token.type === SYSDMLLexer.LPAREN) {
+			depth += 1;
+			if (depth > MAXIMUM_EXPRESSION_NESTING_DEPTH) return token;
+		} else if (token.type === SYSDMLLexer.RPAREN && depth > 0) {
+			depth -= 1;
+		}
+	}
+	return null;
+}
+
 function runParser(
 	source: string,
 	errorListener: CollectingErrorListener,
-): FileContext {
+): { tree: FileContext | null; nestingDiagnostic: Diagnostic | null } {
 	const inputStream = CharStream.fromString(source);
 	const lexer = new SYSDMLLexer(inputStream);
 	const tokenStream = new CommonTokenStream(lexer);
-	const parser = new SYSDMLParser(tokenStream);
 
 	lexer.removeErrorListeners();
 	lexer.addErrorListener(errorListener);
+
+	const limitToken = findNestingLimitToken(tokenStream);
+	if (limitToken !== null) {
+		return { tree: null, nestingDiagnostic: nestingTooDeepDiagnostic(limitToken) };
+	}
+	tokenStream.seek(0);
+
+	const parser = new SYSDMLParser(tokenStream);
 	parser.removeErrorListeners();
 	parser.addErrorListener(errorListener);
 
-	return parser.file();
+	return { tree: parser.file(), nestingDiagnostic: null };
 }
 
 function internalErrorDiagnostic(thrown: unknown): Diagnostic {
@@ -81,9 +115,12 @@ function internalErrorDiagnostic(thrown: unknown): Diagnostic {
 export function parseSource(source: string): ParseResult {
 	try {
 		const errorListener = new CollectingErrorListener();
-		const tree = runParser(source, errorListener);
+		const { tree, nestingDiagnostic } = runParser(source, errorListener);
 
-		if (errorListener.diagnostics.length > 0) {
+		if (nestingDiagnostic !== null) {
+			return { ast: null, diagnostics: [nestingDiagnostic] };
+		}
+		if (tree === null || errorListener.diagnostics.length > 0) {
 			return { ast: null, diagnostics: errorListener.diagnostics };
 		}
 
