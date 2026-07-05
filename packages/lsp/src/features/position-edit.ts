@@ -78,7 +78,13 @@ function blockInsertEdit(
 			`${propertyText} `,
 		);
 	}
-	const indent = lineLeadingWhitespace(sourceText, decl.props[0].span.start.line);
+	const indentSourceLine =
+		decl.props[0]?.span.start.line ??
+		(decl.type === "FlowDeclaration"
+			? decl.via?.[0]?.span.start.line
+			: undefined) ??
+		decl.span.start.line;
+	const indent = lineLeadingWhitespace(sourceText, indentSourceLine);
 	return TextEdit.insert(
 		Position.create(decl.span.end.line - 1, 0),
 		`${indent}${propertyText}\n`,

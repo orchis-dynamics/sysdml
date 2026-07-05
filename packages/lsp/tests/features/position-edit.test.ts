@@ -65,6 +65,13 @@ describe("computeElementPositionEdits", () => {
 		);
 	});
 
+	it("inserts a position line into a via-only flow block", () => {
+		const source = `sfd m\nflow f {\n  via: [{ x: 1, y: 2 }]\n}`;
+		expect(applyPositions(source, [{ id: "f", position: { x: 3, y: 4 } }])).toBe(
+			`sfd m\nflow f {\n  via: [{ x: 1, y: 2 }]\n  position: { x: 3, y: 4 }\n}`,
+		);
+	});
+
 	it("appends a meta block to an aux with an expression", () => {
 		const source = `sfd m\naux r = 0.5`;
 		expect(applyPositions(source, [{ id: "r", position: { x: 7, y: 8 } }])).toBe(
