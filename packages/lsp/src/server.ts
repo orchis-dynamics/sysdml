@@ -13,6 +13,8 @@ import {
 	Range,
 	TextDocumentEdit,
 	OptionalVersionedTextDocumentIdentifier,
+	ShowMessageNotification,
+	MessageType,
 } from "vscode-languageserver/node.js";
 
 import { analyzeDocument } from "./analysis.js";
@@ -118,9 +120,11 @@ function startServer(connection: ReturnType<typeof createConnection>): void {
 			const document = documents.get(params.uri);
 			const analysis = getAnalysis(params.uri);
 			if (!document || !analysis?.ast) {
-				void connection.window.showWarningMessage(
-					"SysDML: cannot apply routing edit while the file has parse errors",
-				);
+				void connection.sendNotification(ShowMessageNotification.type, {
+					type: MessageType.Warning,
+					message:
+						"SysDML: cannot apply routing edit while the file has parse errors",
+				});
 				return;
 			}
 			const result = computeConnectionRoutingEdits(
@@ -129,7 +133,10 @@ function startServer(connection: ReturnType<typeof createConnection>): void {
 				params,
 			);
 			if ("error" in result) {
-				void connection.window.showWarningMessage(`SysDML: ${result.error}`);
+				void connection.sendNotification(ShowMessageNotification.type, {
+					type: MessageType.Warning,
+					message: `SysDML: ${result.error}`,
+				});
 				return;
 			}
 			const response = await connection.workspace.applyEdit({
@@ -146,9 +153,11 @@ function startServer(connection: ReturnType<typeof createConnection>): void {
 				},
 			});
 			if (!response.applied) {
-				void connection.window.showWarningMessage(
-					"SysDML: routing edit was not applied (document changed during the drag)",
-				);
+				void connection.sendNotification(ShowMessageNotification.type, {
+					type: MessageType.Warning,
+					message:
+						"SysDML: routing edit was not applied (document changed during the drag)",
+				});
 			}
 		},
 	);
