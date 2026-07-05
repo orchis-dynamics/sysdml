@@ -3,11 +3,13 @@ import type {
 	ElementPositionEdit,
 	FileNode,
 	FlowDeclarationNode,
+	IR,
 	IRPosition,
 	Span,
 	StockDeclarationNode,
 	UpdateElementPositionsParams,
 } from "@sysdml/contracts";
+import { computeMissingPositions } from "@sysdml/layout";
 import { Position, TextEdit } from "vscode-languageserver/node.js";
 
 import { spanToRange } from "../analysis.js";
@@ -154,4 +156,18 @@ export function computeElementPositionEdits(
 	}
 	if (creations.length > 0) edits.push(creationInsertEdit(ast, creations));
 	return { edits };
+}
+
+export function computeMissingPositionEdits(
+	ast: FileNode,
+	ir: IR,
+	sourceText: string,
+	uri: string,
+): PositionEditResult {
+	const missing = computeMissingPositions(ir);
+	if (missing.length === 0) return { edits: [] };
+	return computeElementPositionEdits(ast, sourceText, {
+		uri,
+		positions: missing,
+	});
 }

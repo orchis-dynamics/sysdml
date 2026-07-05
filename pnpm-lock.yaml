@@ -108,6 +108,9 @@ importers:
       '@sysdml/ir':
         specifier: workspace:*
         version: link:../ir
+      '@sysdml/layout':
+        specifier: workspace:*
+        version: link:../layout
       '@sysdml/parser':
         specifier: workspace:*
         version: link:../parser

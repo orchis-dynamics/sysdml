@@ -17,6 +17,7 @@
 	"dependencies": {
 		"@sysdml/contracts": "workspace:*",
 		"@sysdml/ir": "workspace:*",
+		"@sysdml/layout": "workspace:*",
 		"@sysdml/parser": "workspace:*",
 		"vscode-languageserver": "^9.0.0",
 		"vscode-languageserver-textdocument": "^1.0.0"

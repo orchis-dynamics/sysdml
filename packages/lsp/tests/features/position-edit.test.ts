@@ -3,7 +3,10 @@ import { describe, expect, it } from "vitest";
 import { TextDocument } from "vscode-languageserver-textdocument";
 
 import { analyzeDocument } from "../../src/analysis.js";
-import { computeElementPositionEdits } from "../../src/features/position-edit.js";
+import {
+	computeElementPositionEdits,
+	computeMissingPositionEdits,
+} from "../../src/features/position-edit.js";
 
 const URI = "file:///m.sysdml";
 
@@ -132,5 +135,43 @@ describe("computeElementPositionEdits", () => {
 				{ id: "a", position: { x: 3, y: 4 } },
 			]),
 		).toBe("duplicate element id 'a' in positions");
+	});
+});
+
+describe("computeMissingPositionEdits", () => {
+	it("pins every missing element of a cld in one edit batch", () => {
+		const source = `cld m\n\na ->+ b`;
+		const analysis = analyzeDocument(source);
+		if (!analysis.ast || !analysis.ir) throw new Error("analysis failed");
+		const result = computeMissingPositionEdits(
+			analysis.ast,
+			analysis.ir,
+			source,
+			URI,
+		);
+		if ("error" in result) throw new Error(result.error);
+		const doc = TextDocument.create(URI, "sysdml", 1, source);
+		const applied = TextDocument.applyEdits(doc, result.edits);
+		expect(applied).toMatch(/aux a \{ position: \{ x: -?\d+, y: -?\d+ \} \}/);
+		expect(applied).toMatch(/aux b \{ position: \{ x: -?\d+, y: -?\d+ \} \}/);
+		const reanalysis = analyzeDocument(applied);
+		expect(reanalysis.ir).not.toBeNull();
+		expect(
+			computeMissingPositionEdits(
+				reanalysis.ast!,
+				reanalysis.ir!,
+				applied,
+				URI,
+			),
+		).toEqual({ edits: [] });
+	});
+
+	it("returns no edits when everything is positioned", () => {
+		const source = `cld m\naux a { position: { x: 1, y: 2 } }\naux b { position: { x: 3, y: 4 } }\n\na ->+ b`;
+		const analysis = analyzeDocument(source);
+		if (!analysis.ast || !analysis.ir) throw new Error("analysis failed");
+		expect(
+			computeMissingPositionEdits(analysis.ast, analysis.ir, source, URI),
+		).toEqual({ edits: [] });
 	});
 });

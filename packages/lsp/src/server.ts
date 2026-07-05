@@ -1,7 +1,9 @@
 import type {
 	GetIRParams,
 	GetIRResult,
+	PinMissingPositionsParams,
 	UpdateConnectionRoutingParams,
+	UpdateElementPositionsParams,
 } from "@sysdml/contracts";
 import { TextDocument } from "vscode-languageserver-textdocument";
 import {
@@ -28,6 +30,10 @@ import { getCompletionItems } from "./features/completion.js";
 import { getDefinitionLocation } from "./features/definition.js";
 import { formatSource } from "./features/formatting.js";
 import { getHoverContent } from "./features/hover.js";
+import {
+	computeElementPositionEdits,
+	computeMissingPositionEdits,
+} from "./features/position-edit.js";
 import { computeConnectionRoutingEdits } from "./features/routing-edit.js";
 import { getDocumentSymbols } from "./features/symbols.js";
 
@@ -114,6 +120,30 @@ function startServer(connection: ReturnType<typeof createConnection>): void {
 		};
 	});
 
+	async function applyServerEdit(
+		uri: string,
+		version: number,
+		edits: TextEdit[],
+		failureMessage: string,
+	): Promise<void> {
+		const response = await connection.workspace.applyEdit({
+			edit: {
+				documentChanges: [
+					TextDocumentEdit.create(
+						OptionalVersionedTextDocumentIdentifier.create(uri, version),
+						edits,
+					),
+				],
+			},
+		});
+		if (!response.applied) {
+			void connection.sendNotification(ShowMessageNotification.type, {
+				type: MessageType.Warning,
+				message: failureMessage,
+			});
+		}
+	}
+
 	connection.onNotification(
 		"sysdml/updateConnectionRouting",
 		async (params: UpdateConnectionRoutingParams) => {
@@ -139,26 +169,68 @@ function startServer(connection: ReturnType<typeof createConnection>): void {
 				});
 				return;
 			}
-			const response = await connection.workspace.applyEdit({
-				edit: {
-					documentChanges: [
-						TextDocumentEdit.create(
-							OptionalVersionedTextDocumentIdentifier.create(
-								params.uri,
-								document.version,
-							),
-							result.edits,
-						),
-					],
-				},
-			});
-			if (!response.applied) {
+			await applyServerEdit(
+				params.uri,
+				document.version,
+				result.edits,
+				"SysDML: routing edit was not applied (document changed during the drag)",
+			);
+		},
+	);
+
+	connection.onNotification(
+		"sysdml/updateElementPositions",
+		async (params: UpdateElementPositionsParams) => {
+			const document = documents.get(params.uri);
+			const analysis = getAnalysis(params.uri);
+			if (!document || !analysis?.ast) {
 				void connection.sendNotification(ShowMessageNotification.type, {
 					type: MessageType.Warning,
 					message:
-						"SysDML: routing edit was not applied (document changed during the drag)",
+						"SysDML: cannot apply position edit while the file has parse errors",
 				});
+				return;
 			}
+			const result = computeElementPositionEdits(
+				analysis.ast,
+				document.getText(),
+				params,
+			);
+			if ("error" in result) {
+				void connection.sendNotification(ShowMessageNotification.type, {
+					type: MessageType.Warning,
+					message: `SysDML: ${result.error}`,
+				});
+				return;
+			}
+			await applyServerEdit(
+				params.uri,
+				document.version,
+				result.edits,
+				"SysDML: position edit was not applied (document changed during the drag)",
+			);
+		},
+	);
+
+	connection.onNotification(
+		"sysdml/pinMissingPositions",
+		async (params: PinMissingPositionsParams) => {
+			const document = documents.get(params.uri);
+			const analysis = getAnalysis(params.uri);
+			if (!document || !analysis?.ast || !analysis.ir) return;
+			const result = computeMissingPositionEdits(
+				analysis.ast,
+				analysis.ir,
+				document.getText(),
+				params.uri,
+			);
+			if ("error" in result || result.edits.length === 0) return;
+			await applyServerEdit(
+				params.uri,
+				document.version,
+				result.edits,
+				"SysDML: automatic position pinning was not applied (document changed)",
+			);
 		},
 	);
 
