@@ -18,9 +18,16 @@ export interface ConnectionRoutingEdit {
 	via?: IRPosition;
 }
 
+export interface ElementPositionEdit {
+	id: string;
+	position: IRPosition;
+}
+
 export type WebviewToExtensionMessage =
 	| { type: "ready" }
-	| ({ type: "editConnectionRouting" } & ConnectionRoutingEdit);
+	| ({ type: "editConnectionRouting" } & ConnectionRoutingEdit)
+	| { type: "editElementPositions"; positions: ElementPositionEdit[] }
+	| { type: "pinMissingPositions" };
 
 export interface GetIRParams {
 	uri: string;
@@ -32,5 +39,14 @@ export interface GetIRResult {
 }
 
 export interface UpdateConnectionRoutingParams extends ConnectionRoutingEdit {
+	uri: string;
+}
+
+export interface UpdateElementPositionsParams {
+	uri: string;
+	positions: ElementPositionEdit[];
+}
+
+export interface PinMissingPositionsParams {
 	uri: string;
 }
