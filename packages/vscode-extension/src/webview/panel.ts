@@ -5,6 +5,7 @@ import type {
 	ExtensionToWebviewMessage,
 	GetIRParams,
 	GetIRResult,
+	UpdateConnectionRoutingParams,
 	WebviewToExtensionMessage,
 } from "@sysdml/contracts";
 import * as vscode from "vscode";
@@ -15,6 +16,7 @@ export class DiagramPanel {
 	private readonly panel: vscode.WebviewPanel;
 	private hasBeenDisposed = false;
 	private readonly disposeListeners: Array<() => void> = [];
+	private lastRenderedUri: string | null = null;
 
 	private constructor(panel: vscode.WebviewPanel) {
 		this.panel = panel;
@@ -70,6 +72,10 @@ export class DiagramPanel {
 			async (message: WebviewToExtensionMessage) => {
 				if (message.type === "ready") {
 					await diagramPanel.refresh(client);
+					return;
+				}
+				if (message.type === "editConnectionRouting") {
+					diagramPanel.relayRoutingEdit(client, message);
 				}
 			},
 		);
@@ -77,16 +83,37 @@ export class DiagramPanel {
 		return diagramPanel;
 	}
 
+	relayRoutingEdit(
+		client: LanguageClient,
+		message: Extract<
+			WebviewToExtensionMessage,
+			{ type: "editConnectionRouting" }
+		>,
+	): void {
+		if (this.lastRenderedUri === null) return;
+		if (client.state !== State.Running) return;
+		const params: UpdateConnectionRoutingParams = {
+			uri: this.lastRenderedUri,
+			connection: message.connection,
+			angle: message.angle,
+			via: message.via,
+		};
+		void client.sendNotification("sysdml/updateConnectionRouting", params);
+	}
+
 	async refresh(client: LanguageClient): Promise<void> {
 		if (this.hasBeenDisposed) return;
 		if (client.state !== State.Running) return;
 
 		const activeEditor = vscode.window.activeTextEditor;
-		if (!activeEditor || activeEditor.document.languageId !== "sysdml") return;
+		const uri =
+			activeEditor && activeEditor.document.languageId === "sysdml"
+				? activeEditor.document.uri.toString()
+				: this.lastRenderedUri;
+		if (!uri) return;
+		this.lastRenderedUri = uri;
 
-		const params: GetIRParams = {
-			uri: activeEditor.document.uri.toString(),
-		};
+		const params: GetIRParams = { uri };
 
 		try {
 			const result = await client.sendRequest<GetIRResult>(
