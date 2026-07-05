@@ -21,4 +21,8 @@ export class NullAdapter implements IRTransport {
 	onError(cb: (message: string) => void): void {
 		this.errorCallbacks.push(cb);
 	}
+
+	sendRoutingEdit(): void {
+		// intentionally empty — this transport does not persist routing edits
+	}
 }
