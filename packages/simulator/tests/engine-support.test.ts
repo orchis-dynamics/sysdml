@@ -32,6 +32,7 @@ describe("collectUnsupportedBuiltinDiagnostics", () => {
 			{
 				code: "error",
 				message: "FORCST is not supported by the simulation engine",
+				severity: "error",
 			},
 		]);
 	});

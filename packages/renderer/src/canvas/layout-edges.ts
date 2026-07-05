@@ -12,7 +12,7 @@ export function constructLayoutEdges(
 		const source = flow.from ?? flow.id;
 		const target = flow.to ?? flow.id;
 		const id = `flow-${flow.id}`;
-		edges.set(id, { id, kind: "flow", source, target, points: [] });
+		edges.set(id, { id, kind: "flow", source, target, via: flow.via });
 	});
 
 	connections.forEach((connection) => {
@@ -23,7 +23,8 @@ export function constructLayoutEdges(
 			source: connection.from,
 			target: connection.to,
 			polarity: connection.polarity,
-			points: [],
+			angle: connection.angle,
+			via: connection.via,
 		});
 	});
 

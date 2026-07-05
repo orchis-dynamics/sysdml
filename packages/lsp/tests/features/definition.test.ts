@@ -55,4 +55,31 @@ describe("getDefinitionLocation", () => {
 		});
 		expect(result).toBeNull();
 	});
+
+	it("resolves a flow endpoint to the stock declaration", () => {
+		const { ast } = parseSource(SOURCE);
+		if (ast === null) throw new Error("parseSource returned null");
+		// 'population' in 'to: population' — line 12 (0-indexed), col 6
+		const result = getDefinitionLocation(ast, "file:///test.sysdml", {
+			line: 12,
+			character: 6,
+		});
+		expect(result).not.toBeNull();
+		// stock population is declared on line 6 (0-indexed)
+		expect(result?.range.start.line).toBe(6);
+	});
+
+	it("resolves a connection endpoint to its declaration", () => {
+		const src = `${SOURCE}birth_rate ->+ births\n`;
+		const { ast } = parseSource(src);
+		if (ast === null) throw new Error("parseSource returned null");
+		// 'birth_rate' in 'birth_rate ->+ births' — line 15 (0-indexed), col 0
+		const result = getDefinitionLocation(ast, "file:///test.sysdml", {
+			line: 15,
+			character: 0,
+		});
+		expect(result).not.toBeNull();
+		// aux birth_rate is declared on line 9 (0-indexed)
+		expect(result?.range.start.line).toBe(9);
+	});
 });

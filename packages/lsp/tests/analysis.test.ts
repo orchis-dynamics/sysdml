@@ -72,4 +72,24 @@ stock s { init: ghost }
 		expect(undef!.range.end.line).toBe(6);
 		expect(undef!.range.end.character).toBe(21);
 	});
+
+	it("maps warning-severity IR diagnostics to DiagnosticSeverity.Warning", () => {
+		const result = analyzeDocument(`sfd test
+time {
+  start: 0
+  end: 10
+  step: 1
+}
+stock s {
+  init: 0
+}
+aux a = 1
+a ->+ s { angle: 999 }
+`);
+		expect(result.ir).not.toBeNull();
+		const warningDiagnostic = result.diagnostics.find(
+			(diagnostic) => diagnostic.severity === DiagnosticSeverity.Warning,
+		);
+		expect(warningDiagnostic?.code).toBe("CONNECTION_ANGLE_OUT_OF_RANGE");
+	});
 });

@@ -26,6 +26,9 @@ export async function runPipeline(source: string): Promise<PipelineResult> {
 	if (ir === null) {
 		return { ast, parseDiagnostics, ir: null, compileDiagnostics, simulation: null };
 	}
+	if (ir.model.kind === "cld") {
+		return { ast, parseDiagnostics, ir, compileDiagnostics, simulation: null };
+	}
 	const simulation = await new SimlinSimulator().simulate(ir);
 	return { ast, parseDiagnostics, ir, compileDiagnostics, simulation };
 }

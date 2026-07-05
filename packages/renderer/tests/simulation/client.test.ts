@@ -1,21 +1,26 @@
-import type { IR, SimulationResult } from "@sysdml/contracts";
-import { describe, expect, test, vi, beforeEach, afterEach } from "vitest";
+import type { SimulationResult } from "@sysdml/contracts";
+import { describe, expect, test, vi, beforeEach } from "vitest";
 
 import { SimulatorClient } from "../../src/simulation/client.js";
+import type {
+	SimulationWorker,
+	SimulationWorkerEventMap,
+} from "../../src/simulation/client.js";
 import type {
 	WorkerRequest,
 	WorkerResponse,
 } from "../../src/simulation/types.js";
+import { ir } from "../helpers/ir-builders.js";
 
-class FakeWorker {
+class FakeWorker implements SimulationWorker {
 	static instances: FakeWorker[] = [];
 	postedMessages: WorkerRequest[] = [];
 	terminated = false;
-	private messageListeners: Array<
-		(event: MessageEvent<WorkerResponse>) => void
-	> = [];
-	private errorListeners: Array<(event: ErrorEvent) => void> = [];
-	private messageErrorListeners: Array<(event: MessageEvent) => void> = [];
+	private listeners: {
+		[EventName in keyof SimulationWorkerEventMap]: Array<
+			(event: SimulationWorkerEventMap[EventName]) => void
+		>;
+	} = { message: [], error: [], messageerror: [] };
 
 	constructor() {
 		FakeWorker.instances.push(this);
@@ -25,25 +30,11 @@ class FakeWorker {
 		this.postedMessages.push(message);
 	}
 
-	addEventListener(
-		type: "message",
-		cb: (event: MessageEvent<WorkerResponse>) => void,
-	): void;
-	addEventListener(type: "error", cb: (event: ErrorEvent) => void): void;
-	addEventListener(
-		type: "messageerror",
-		cb: (event: MessageEvent) => void,
-	): void;
-	addEventListener(type: string, cb: (event: never) => void): void {
-		if (type === "message") {
-			this.messageListeners.push(
-				cb as (event: MessageEvent<WorkerResponse>) => void,
-			);
-		} else if (type === "error") {
-			this.errorListeners.push(cb as (event: ErrorEvent) => void);
-		} else if (type === "messageerror") {
-			this.messageErrorListeners.push(cb as (event: MessageEvent) => void);
-		}
+	addEventListener<EventName extends keyof SimulationWorkerEventMap>(
+		type: EventName,
+		listener: (event: SimulationWorkerEventMap[EventName]) => void,
+	): void {
+		this.listeners[type].push(listener);
 	}
 
 	terminate(): void {
@@ -51,46 +42,45 @@ class FakeWorker {
 	}
 
 	fire(response: WorkerResponse): void {
-		const event = { data: response } as MessageEvent<WorkerResponse>;
-		for (const cb of this.messageListeners) cb(event);
+		this.listeners.message.forEach((listener) => listener({ data: response }));
 	}
 
 	fireError(message: string): void {
-		const event = { message } as ErrorEvent;
-		for (const cb of this.errorListeners) cb(event);
+		this.listeners.error.forEach((listener) =>
+			listener({ message, filename: "", lineno: 0 }),
+		);
 	}
 
 	fireMessageError(): void {
-		const event = {} as MessageEvent;
-		for (const cb of this.messageErrorListeners) cb(event);
+		this.listeners.messageerror.forEach((listener) => listener(undefined));
 	}
 }
 
-const stubIR = {
-	stocks: [],
-	flows: [],
-	auxiliaries: [],
-	graphicalFunctions: [],
-	time: { start: 0, stop: 5, step: 1 },
-} as unknown as IR;
+function createClient(): SimulatorClient {
+	return new SimulatorClient(() => new FakeWorker());
+}
+
+function fakeWorkerAt(index: number): FakeWorker {
+	const instance = FakeWorker.instances[index];
+	if (!instance) {
+		throw new Error(`No FakeWorker instance at index ${index}`);
+	}
+	return instance;
+}
+
+const stubIR = ir();
 const stubResult: SimulationResult = { rows: [{ time: 0 }], diagnostics: [] };
 
 beforeEach(() => {
 	FakeWorker.instances = [];
 });
 
-afterEach(() => {
-	vi.unstubAllGlobals();
-});
-
 describe("SimulatorClient", () => {
 	test("posts a simulate request with an auto-incrementing jobId", () => {
-		const client = new SimulatorClient(
-			() => new FakeWorker() as unknown as Worker,
-		);
+		const client = createClient();
 		client.simulate(stubIR);
 		client.simulate(stubIR);
-		const worker = FakeWorker.instances[0]!;
+		const worker = fakeWorkerAt(0);
 		expect(worker.postedMessages.length).toBe(2);
 		expect(worker.postedMessages[0]?.type).toBe("simulate");
 		expect(worker.postedMessages[0]?.jobId).toBe(1);
@@ -98,27 +88,22 @@ describe("SimulatorClient", () => {
 	});
 
 	test("invokes onResult with the result when the latest jobId responds", () => {
-		const client = new SimulatorClient(
-			() => new FakeWorker() as unknown as Worker,
-		);
+		const client = createClient();
 		const onResult = vi.fn();
 		client.onResult(onResult);
 		client.simulate(stubIR);
-		const worker = FakeWorker.instances[0]!;
-		worker.fire({ type: "result", jobId: 1, result: stubResult });
+		fakeWorkerAt(0).fire({ type: "result", jobId: 1, result: stubResult });
 		expect(onResult).toHaveBeenCalledTimes(1);
 		expect(onResult).toHaveBeenCalledWith(stubResult);
 	});
 
 	test("discards stale results with non-latest jobId", () => {
-		const client = new SimulatorClient(
-			() => new FakeWorker() as unknown as Worker,
-		);
+		const client = createClient();
 		const onResult = vi.fn();
 		client.onResult(onResult);
 		client.simulate(stubIR);
 		client.simulate(stubIR);
-		const worker = FakeWorker.instances[0]!;
+		const worker = fakeWorkerAt(0);
 		worker.fire({ type: "result", jobId: 1, result: stubResult });
 		expect(onResult).not.toHaveBeenCalled();
 		worker.fire({ type: "result", jobId: 2, result: stubResult });
@@ -126,78 +111,55 @@ describe("SimulatorClient", () => {
 	});
 
 	test("invokes onError with the message when the latest jobId errors", () => {
-		const client = new SimulatorClient(
-			() => new FakeWorker() as unknown as Worker,
-		);
+		const client = createClient();
 		const onError = vi.fn();
 		client.onError(onError);
 		client.simulate(stubIR);
-		const worker = FakeWorker.instances[0]!;
-		worker.fire({ type: "error", jobId: 1, message: "boom", diagnostic: null });
+		fakeWorkerAt(0).fire({ type: "error", jobId: 1, message: "boom" });
 		expect(onError).toHaveBeenCalledWith("boom");
 	});
 
 	test("discards stale errors with non-latest jobId", () => {
-		const client = new SimulatorClient(
-			() => new FakeWorker() as unknown as Worker,
-		);
+		const client = createClient();
 		const onError = vi.fn();
 		client.onError(onError);
 		client.simulate(stubIR);
 		client.simulate(stubIR);
-		const worker = FakeWorker.instances[0]!;
-		worker.fire({
-			type: "error",
-			jobId: 1,
-			message: "stale",
-			diagnostic: null,
-		});
+		fakeWorkerAt(0).fire({ type: "error", jobId: 1, message: "stale" });
 		expect(onError).not.toHaveBeenCalled();
 	});
 
 	test("surfaces a worker error event through onError", () => {
-		const client = new SimulatorClient(
-			() => new FakeWorker() as unknown as Worker,
-		);
+		const client = createClient();
 		const onError = vi.fn();
 		client.onError(onError);
-		const worker = FakeWorker.instances[0]!;
-		worker.fireError("ReferenceError: process is not defined");
+		fakeWorkerAt(0).fireError("ReferenceError: process is not defined");
 		expect(onError).toHaveBeenCalledTimes(1);
-		expect(onError.mock.calls[0]![0]).toContain(
-			"ReferenceError: process is not defined",
+		expect(onError).toHaveBeenCalledWith(
+			expect.stringContaining("ReferenceError: process is not defined"),
 		);
 	});
 
 	test("surfaces a worker messageerror through onError", () => {
-		const client = new SimulatorClient(
-			() => new FakeWorker() as unknown as Worker,
-		);
+		const client = createClient();
 		const onError = vi.fn();
 		client.onError(onError);
-		const worker = FakeWorker.instances[0]!;
-		worker.fireMessageError();
+		fakeWorkerAt(0).fireMessageError();
 		expect(onError).toHaveBeenCalledTimes(1);
 	});
 
 	test("ignores worker error events after dispose", () => {
-		const client = new SimulatorClient(
-			() => new FakeWorker() as unknown as Worker,
-		);
+		const client = createClient();
 		const onError = vi.fn();
 		client.onError(onError);
 		client.dispose();
-		const worker = FakeWorker.instances[0]!;
-		worker.fireError("too late");
+		fakeWorkerAt(0).fireError("too late");
 		expect(onError).not.toHaveBeenCalled();
 	});
 
 	test("dispose() terminates the worker", () => {
-		const client = new SimulatorClient(
-			() => new FakeWorker() as unknown as Worker,
-		);
+		const client = createClient();
 		client.dispose();
-		const worker = FakeWorker.instances[0]!;
-		expect(worker.terminated).toBe(true);
+		expect(fakeWorkerAt(0).terminated).toBe(true);
 	});
 });

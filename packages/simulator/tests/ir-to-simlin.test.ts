@@ -7,10 +7,14 @@ import { irToSimlinProject } from "../src/ir-to-simlin.js";
 
 function buildIR(source: string): IR {
 	const { ast, diagnostics: parseDiagnostics } = parseSource(source);
-	if (parseDiagnostics.length > 0) throw new Error(parseDiagnostics[0].message);
-	const { ir, diagnostics } = compileAST(ast!);
-	if (diagnostics.length > 0) throw new Error(diagnostics[0].message);
-	return ir!;
+	if (ast === null || parseDiagnostics.length > 0) {
+		throw new Error(parseDiagnostics[0]?.message ?? "parse produced no AST");
+	}
+	const { ir, diagnostics } = compileAST(ast);
+	if (ir === null || diagnostics.length > 0) {
+		throw new Error(diagnostics[0]?.message ?? "compile produced no IR");
+	}
+	return ir;
 }
 
 const growthModel = `

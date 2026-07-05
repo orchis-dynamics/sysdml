@@ -1,16 +1,21 @@
+import { Project, Sim } from "@simlin/engine";
 import type { IR } from "@sysdml/contracts";
 import { compileAST } from "@sysdml/ir";
 import { parseSource } from "@sysdml/parser";
-import { describe, expect, test } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vitest";
 
 import { SimlinSimulator } from "../src/simlin-simulator.js";
 
 function buildIR(source: string): IR {
 	const { ast, diagnostics: parseDiagnostics } = parseSource(source);
-	if (parseDiagnostics.length > 0) throw new Error(parseDiagnostics[0].message);
-	const { ir, diagnostics } = compileAST(ast!);
-	if (diagnostics.length > 0) throw new Error(diagnostics[0].message);
-	return ir!;
+	if (ast === null || parseDiagnostics.length > 0) {
+		throw new Error(parseDiagnostics[0]?.message ?? "parse produced no AST");
+	}
+	const { ir, diagnostics } = compileAST(ast);
+	if (ir === null || diagnostics.length > 0) {
+		throw new Error(diagnostics[0]?.message ?? "compile produced no IR");
+	}
+	return ir;
 }
 
 const growthModel = `
@@ -64,7 +69,17 @@ aux direct = response(level)
 aux scaled = 2 * response(level)
 `.trim();
 
+function buildIRWithUnknownReference(): IR {
+	const ir = buildIR(growthModel);
+	ir.auxiliaries[0].expr = { type: "Reference", id: "ghost" };
+	return ir;
+}
+
 describe("SimlinSimulator", () => {
+	afterEach(() => {
+		vi.restoreAllMocks();
+	});
+
 	test("runs a model and returns rows keyed by variable id", async () => {
 		const result = await new SimlinSimulator().simulate(buildIR(growthModel));
 		expect(result.rows.length).toBe(11);
@@ -129,6 +144,7 @@ aux y = outer(inner(x))
 		expect(result.rows).toEqual([]);
 		expect(result.diagnostics).toHaveLength(1);
 		expect(result.diagnostics[0].code).toBe("error");
+		expect(result.diagnostics[0].severity).toBe("error");
 		expect(result.diagnostics[0].message).toContain("RANDOM");
 	});
 
@@ -146,5 +162,48 @@ aux y = outer(inner(x))
 		);
 		expect(result.diagnostics).toEqual([]);
 		expect(result.rows.length).toBe(4);
+	});
+
+	test("disposes the engine project and sim after a successful run and can simulate again", async () => {
+		const projectDisposeSpy = vi.spyOn(Project.prototype, "dispose");
+		const simDisposeSpy = vi.spyOn(Sim.prototype, "dispose");
+
+		const first = await new SimlinSimulator().simulate(buildIR(growthModel));
+		expect(first.diagnostics).toEqual([]);
+		expect(projectDisposeSpy).toHaveBeenCalledTimes(1);
+		expect(simDisposeSpy).toHaveBeenCalledTimes(1);
+
+		const second = await new SimlinSimulator().simulate(buildIR(growthModel));
+		expect(second.rows.length).toBe(11);
+		expect(projectDisposeSpy).toHaveBeenCalledTimes(2);
+		expect(simDisposeSpy).toHaveBeenCalledTimes(2);
+	});
+
+	test("disposes the engine project even when the run fails", async () => {
+		const projectDisposeSpy = vi.spyOn(Project.prototype, "dispose");
+
+		const result = await new SimlinSimulator().simulate(
+			buildIRWithUnknownReference(),
+		);
+		expect(result.rows).toEqual([]);
+		expect(projectDisposeSpy).toHaveBeenCalledTimes(1);
+	});
+
+	test("returns check() diagnostics together with the run-failure diagnostic when the run throws", async () => {
+		const result = await new SimlinSimulator().simulate(
+			buildIRWithUnknownReference(),
+		);
+		expect(result.rows).toEqual([]);
+		expect(result.diagnostics.length).toBeGreaterThanOrEqual(2);
+		const messages = result.diagnostics.map(
+			(diagnostic) => diagnostic.message,
+		);
+		expect(
+			messages.some((message) => message.includes("unknown_dependency")),
+		).toBe(true);
+		for (const diagnostic of result.diagnostics) {
+			expect(diagnostic.code).toBe("error");
+			expect(diagnostic.severity).toBe("error");
+		}
 	});
 });

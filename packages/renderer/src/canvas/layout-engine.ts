@@ -1,5 +1,10 @@
 import type { IR, IRStock, IRFlow, IRPosition, IRConnection } from "@sysdml/contracts";
 
+import {
+	orthogonalPipePoints,
+	polylineMidpoint,
+	type Point,
+} from "./edge-geometry";
 import { constructAuxiliaryLayoutNodes } from "./layout-auxiliaries";
 import { constructLayoutEdges } from "./layout-edges";
 import { THEME } from "./layout-theme";
@@ -54,6 +59,7 @@ type DirectionalSet = {
 	inputs: Array<string>;
 	outputs: Array<string>;
 	kind: NodeKind;
+	position?: IRPosition;
 };
 function buildDirectionalAdjacencyMap(
 	stocks: IRStock[],
@@ -66,6 +72,7 @@ function buildDirectionalAdjacencyMap(
 			inputs: [],
 			outputs: [],
 			kind: NodeKindEnum.Stock,
+			position: stock.position,
 		}),
 	);
 
@@ -75,6 +82,7 @@ function buildDirectionalAdjacencyMap(
 				inputs: flow.from ? [flow.from] : [],
 				outputs: flow.to ? [flow.to] : [],
 				kind: NodeKindEnum.Flow,
+				position: flow.position,
 			};
 
 			directionalAdjacencyMap.set(flow.id, set);
@@ -101,11 +109,19 @@ function constructSkeletonLayoutNodes(
 			const node = directionalAdjacencyMap.get(nodeId);
 
 			if (node) {
-				const constructedNode = constructLayoutNode(nodeId, node.kind, {
+				const autoPlacedPosition = {
 					x,
-					y: 0 + branchIterator * THEME.SPACING,
-				});
-				x += constructedNode.size.width + THEME.SPACING;
+					y: branchIterator * THEME.SPACING,
+				};
+				const constructedNode = constructLayoutNode(
+					nodeId,
+					node.kind,
+					node.position ?? autoPlacedPosition,
+				);
+				x =
+					constructedNode.position.x +
+					constructedNode.size.width +
+					THEME.SPACING;
 
 				layoutNodes.set(nodeId, constructedNode);
 			}
@@ -148,8 +164,42 @@ function buildSkeleton(stocks: IRStock[], flows: IRFlow[]) {
 	return constructSkeletonLayoutNodes(directionalAdjacencyMap, branches);
 }
 
+function nodeCenterPoint(node: LayoutNode): Point {
+	return {
+		x: node.position.x + node.size.width / 2,
+		y: node.position.y + node.size.height / 2,
+	};
+}
+
+function repositionValvesOnPipePath(
+	skeleton: Map<string, LayoutNode>,
+	flows: IRFlow[],
+): void {
+	flows.forEach((flow) => {
+		if (!flow.via || flow.via.length === 0 || flow.position) return;
+		const valveNode = skeleton.get(flow.id);
+		if (!valveNode) return;
+		const sourceNode = flow.from ? skeleton.get(flow.from) : undefined;
+		const targetNode = flow.to ? skeleton.get(flow.to) : undefined;
+		const sourceCenter = sourceNode
+			? nodeCenterPoint(sourceNode)
+			: nodeCenterPoint(valveNode);
+		const targetCenter = targetNode
+			? nodeCenterPoint(targetNode)
+			: nodeCenterPoint(valveNode);
+		const pipeMidpoint = polylineMidpoint(
+			orthogonalPipePoints(sourceCenter, flow.via, targetCenter),
+		);
+		valveNode.position = {
+			x: pipeMidpoint.x - valveNode.size.width / 2,
+			y: pipeMidpoint.y - valveNode.size.height / 2,
+		};
+	});
+}
+
 function buildLayoutSFD(ir: IR): LayoutResult {
 	const skeleton = buildSkeleton(ir.stocks, ir.flows);
+	repositionValvesOnPipePath(skeleton, ir.flows);
 	const auxiliaryNodes = constructAuxiliaryLayoutNodes(
 		ir.auxiliaries,
 		ir.connections,
@@ -176,13 +226,22 @@ function collectConnectionEndpoints(connections: IRConnection[]): string[] {
 }
 
 function buildLayoutCLD(ir: IR): LayoutResult {
-	const endpointNodes: LayoutInputNode[] = collectConnectionEndpoints(
-		ir.connections,
-	).map((id) => ({ id }));
+	const inputNodesById = new Map<string, LayoutInputNode>();
+	ir.auxiliaries.forEach((auxiliary) =>
+		inputNodesById.set(auxiliary.id, {
+			id: auxiliary.id,
+			position: auxiliary.position,
+		}),
+	);
+	collectConnectionEndpoints(ir.connections).forEach((endpointId) => {
+		if (!inputNodesById.has(endpointId)) {
+			inputNodesById.set(endpointId, { id: endpointId });
+		}
+	});
 
 	const emptySkeleton = new Map<string, LayoutNode>();
 	const auxiliaryNodes = constructAuxiliaryLayoutNodes(
-		endpointNodes,
+		[...inputNodesById.values()],
 		ir.connections,
 		emptySkeleton,
 	);

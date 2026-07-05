@@ -1,4 +1,4 @@
-import type { IR, SimulationResult, SimDiagnostic } from "@sysdml/contracts";
+import type { IR, SimulationResult } from "@sysdml/contracts";
 
 export interface SimulateRequest {
 	type: "simulate";
@@ -18,7 +18,6 @@ export interface SimulateErrorResponse {
 	type: "error";
 	jobId: number;
 	message: string;
-	diagnostic: SimDiagnostic | null;
 }
 
 export type WorkerResponse = SimulateResultResponse | SimulateErrorResponse;

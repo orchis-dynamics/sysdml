@@ -56,7 +56,9 @@ export function analyzeDocument(source: string): DocumentAnalysis {
 			Diagnostic.create(
 				range,
 				d.message,
-				DiagnosticSeverity.Error,
+				d.severity === "warning"
+					? DiagnosticSeverity.Warning
+					: DiagnosticSeverity.Error,
 				d.code,
 				"sysdml",
 			),

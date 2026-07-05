@@ -45,6 +45,32 @@ describe("error handling", () => {
 		const { diagnostics } = parseSource(src);
 		expect(diagnostics).toHaveLength(0);
 	});
+
+	test("deeply nested expression returns a diagnostic instead of throwing", () => {
+		const src = `sfd m\naux x = ${"(".repeat(500)}1${")".repeat(500)}`;
+		const { ast, diagnostics } = parseSource(src);
+		expect(ast).toBeNull();
+		expect(diagnostics).toHaveLength(1);
+		expect(diagnostics[0]?.message).toMatch(/nesting too deep/);
+		expect(diagnostics[0]?.span.start).toEqual({ line: 2, col: 109 });
+	});
+
+	test("nesting at the limit parses without diagnostics", () => {
+		const src = `sfd m\naux x = ${"(".repeat(100)}1${")".repeat(100)}`;
+		const { ast, diagnostics } = parseSource(src);
+		expect(diagnostics).toHaveLength(0);
+		expect(ast).not.toBeNull();
+	});
+
+	test("nesting one past the limit produces the diagnostic at the offending paren", () => {
+		const src = `sfd m\naux x = ${"(".repeat(101)}1${")".repeat(101)}`;
+		const { ast, diagnostics } = parseSource(src);
+		expect(ast).toBeNull();
+		expect(diagnostics).toHaveLength(1);
+		expect(diagnostics[0]?.message).toMatch(/nesting too deep/);
+		expect(diagnostics[0]?.span.start).toEqual({ line: 2, col: 109 });
+		expect(diagnostics[0]?.span.end).toEqual({ line: 2, col: 109 });
+	});
 });
 
 describe("builder diagnostics — position literal", () => {
@@ -196,5 +222,45 @@ describe("builder diagnostics — aux metadata block", () => {
 		expect(diag.message).toMatch(/duplicate 'position'/);
 		// Second position is on line 3 — diagnostic should point there, not at the first.
 		expect(diag.span.start.line).toBe(3);
+	});
+});
+
+describe("builder diagnostics — duplicate block properties", () => {
+	test("duplicate 'init' in stock produces diagnostic on second occurrence", () => {
+		const src = `sfd m\nstock s {\n  init: 1\n  init: 2\n}`;
+		const { ast, diagnostics } = parseSource(src);
+		expect(ast).toBeNull();
+		expect(diagnostics).toHaveLength(1);
+		expect(diagnostics[0]?.message).toMatch(/duplicate 'init' in stock block/);
+		expect(diagnostics[0]?.span.start.line).toBe(4);
+	});
+
+	test("duplicate 'from' in flow produces diagnostic on second occurrence", () => {
+		const src = `sfd m\nflow f {\n  from: null\n  from: null\n  to: null\n  rate: 1\n}`;
+		const { ast, diagnostics } = parseSource(src);
+		expect(ast).toBeNull();
+		expect(diagnostics).toHaveLength(1);
+		expect(diagnostics[0]?.message).toMatch(/duplicate 'from' in flow block/);
+		expect(diagnostics[0]?.span.start.line).toBe(4);
+	});
+
+	test("duplicate 'angle' in connection produces diagnostic on second occurrence", () => {
+		const src = `sfd m\na ->+ b { angle: 10\n angle: 20 }`;
+		const { ast, diagnostics } = parseSource(src);
+		expect(ast).toBeNull();
+		expect(diagnostics).toHaveLength(1);
+		expect(diagnostics[0]?.message).toMatch(
+			/duplicate 'angle' in connection block/,
+		);
+		expect(diagnostics[0]?.span.start.line).toBe(3);
+	});
+
+	test("duplicate 'start' in time produces diagnostic on second occurrence", () => {
+		const src = `sfd m\ntime {\n  start: 0\n  start: 5\n  end: 10\n  step: 1\n}`;
+		const { ast, diagnostics } = parseSource(src);
+		expect(ast).toBeNull();
+		expect(diagnostics).toHaveLength(1);
+		expect(diagnostics[0]?.message).toMatch(/duplicate 'start' in time block/);
+		expect(diagnostics[0]?.span.start.line).toBe(4);
 	});
 });

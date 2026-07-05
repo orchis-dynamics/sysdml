@@ -22,14 +22,25 @@ export interface LayoutNode {
 
 export type EdgeKind = "flow" | "connection";
 
-export interface LayoutEdge {
+export interface LayoutFlowEdge {
 	id: string;
-	kind: EdgeKind;
+	kind: "flow";
 	source: string;
 	target: string;
-	polarity?: "+" | "-" | "=>";
-	points: { x: number; y: number }[];
+	via?: IRPosition[];
 }
+
+export interface LayoutConnectionEdge {
+	id: string;
+	kind: "connection";
+	source: string;
+	target: string;
+	polarity: "+" | "-" | "=>";
+	angle?: number;
+	via?: IRPosition;
+}
+
+export type LayoutEdge = LayoutFlowEdge | LayoutConnectionEdge;
 
 export interface LayoutResult {
 	nodes: LayoutNode[];

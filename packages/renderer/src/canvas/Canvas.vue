@@ -11,10 +11,22 @@ import {
 	clipToBox,
 	connectionControlPoint,
 	flowElbowCorner,
+	flowPipeGeometry,
+	orthogonalPipePoints,
+	routeConnection,
+	segmentConvexNormalAt,
+	segmentPointAt,
 	type Point,
+	type RoutedConnection,
 } from "./edge-geometry.js";
 import { computeLayout, isCausalLoopDiagram } from "./layout-engine.js";
-import type { LayoutNode, LayoutEdge, NodeKind } from "./layout-types.js";
+import type {
+	LayoutNode,
+	LayoutEdge,
+	LayoutConnectionEdge,
+	LayoutFlowEdge,
+	NodeKind,
+} from "./layout-types.js";
 import AuxNode from "./nodes/AuxNode.vue";
 import FlowNode from "./nodes/FlowNode.vue";
 import StockNode from "./nodes/StockNode.vue";
@@ -121,6 +133,18 @@ function targetBox(id: string): LayoutNode | null {
 	return resolvedNodes.value.find((n) => n.id === id) ?? null;
 }
 
+function routedConnectionFor(
+	edge: LayoutConnectionEdge,
+): RoutedConnection | null {
+	if (edge.angle === undefined && edge.via === undefined) return null;
+	return routeConnection(
+		nodeCenter(edge.source),
+		nodeCenter(edge.target),
+		targetBox(edge.target),
+		{ angle: edge.angle, via: edge.via },
+	);
+}
+
 function quadraticPoint(p0: Point, p1: Point, p2: Point, t: number): Point {
 	const a = (1 - t) * (1 - t);
 	const b = 2 * (1 - t) * t;
@@ -163,6 +187,10 @@ function edgeEndpoints(edge: LayoutEdge): {
 }
 
 function getEdgePath(edge: LayoutEdge): string {
+	if (edge.kind === "connection") {
+		const routedConnection = routedConnectionFor(edge);
+		if (routedConnection) return routedConnection.path;
+	}
 	const { source, controlPoint, corner, end } = edgeEndpoints(edge);
 	if (controlPoint !== null) {
 		return `M ${source.x} ${source.y} Q ${controlPoint.x} ${controlPoint.y} ${end.x} ${end.y}`;
@@ -186,6 +214,21 @@ const polarityLabels = computed<PolarityLabel[]>(() => {
 	for (const edge of layout.value.edges) {
 		if (edge.kind !== "connection") continue;
 		if (edge.polarity !== "+" && edge.polarity !== "-") continue;
+		const routedConnection = routedConnectionFor(edge);
+		if (routedConnection) {
+			const finalSegment =
+				routedConnection.segments[routedConnection.segments.length - 1];
+			const anchor = segmentPointAt(finalSegment, LABEL_PARAM);
+			const normal = segmentConvexNormalAt(finalSegment, LABEL_PARAM);
+			labels.push({
+				id: edge.id,
+				x: anchor.x + normal.x * LABEL_OFFSET,
+				y: anchor.y + normal.y * LABEL_OFFSET,
+				text: edge.polarity === "+" ? "+" : "−",
+				color: edge.polarity === "+" ? "#059669" : "#ef4444",
+			});
+			continue;
+		}
 		const { source, controlPoint, end } = edgeEndpoints(edge);
 		if (controlPoint === null) continue;
 		const point = quadraticPoint(source, controlPoint, end, LABEL_PARAM);
@@ -233,29 +276,23 @@ interface FlowEdgeGeometry {
 	arrowheadPoints: string;
 }
 
-function flowEdgeGeometry(edge: LayoutEdge): FlowEdgeGeometry {
-	const { source, corner, end } = edgeEndpoints(edge);
-	const previousPoint = corner ?? source;
-	const deltaX = end.x - previousPoint.x;
-	const deltaY = end.y - previousPoint.y;
-	const segmentLength = Math.hypot(deltaX, deltaY) || 1;
-	const directionX = deltaX / segmentLength;
-	const directionY = deltaY / segmentLength;
-	const pipeEndX = end.x - directionX * FLOW_ARROWHEAD_LENGTH;
-	const pipeEndY = end.y - directionY * FLOW_ARROWHEAD_LENGTH;
-	const pipePath = corner
-		? `M ${source.x} ${source.y} L ${corner.x} ${corner.y} L ${pipeEndX} ${pipeEndY}`
-		: `M ${source.x} ${source.y} L ${pipeEndX} ${pipeEndY}`;
-	const perpendicularX = -directionY;
-	const perpendicularY = directionX;
-	const baseLeftX = pipeEndX + perpendicularX * FLOW_ARROWHEAD_HALF_WIDTH;
-	const baseLeftY = pipeEndY + perpendicularY * FLOW_ARROWHEAD_HALF_WIDTH;
-	const baseRightX = pipeEndX - perpendicularX * FLOW_ARROWHEAD_HALF_WIDTH;
-	const baseRightY = pipeEndY - perpendicularY * FLOW_ARROWHEAD_HALF_WIDTH;
-	return {
-		pipePath,
-		arrowheadPoints: `${end.x},${end.y} ${baseLeftX},${baseLeftY} ${baseRightX},${baseRightY}`,
-	};
+function flowEdgeGeometry(edge: LayoutFlowEdge): FlowEdgeGeometry {
+	const source = nodeCenter(edge.source);
+	const targetCenter = nodeCenter(edge.target);
+	const box = targetBox(edge.target);
+	const unclippedPoints = orthogonalPipePoints(
+		source,
+		edge.via ?? [],
+		targetCenter,
+	);
+	const beforeEnd = unclippedPoints[unclippedPoints.length - 2] ?? source;
+	const end = box ? clipToBox(beforeEnd, targetCenter, box) : targetCenter;
+	const pipePoints = [...unclippedPoints.slice(0, -1), end];
+	return flowPipeGeometry(
+		pipePoints,
+		FLOW_ARROWHEAD_LENGTH,
+		FLOW_ARROWHEAD_HALF_WIDTH,
+	);
 }
 
 type EdgeRenderItem =
@@ -332,6 +369,7 @@ useResizeObserver(containerRef, ([entry]) => {
 		@pointerdown="onPointerDown"
 		@pointermove="onPointerMove"
 		@pointerup="onPointerUp"
+		@pointercancel="onPointerUp"
 		@wheel.prevent="onWheel"
 	>
 		<div
@@ -339,6 +377,7 @@ useResizeObserver(containerRef, ([entry]) => {
 			:style="{ transform }"
 			@pointermove="onNodePointerMove"
 			@pointerup="onNodePointerUp"
+			@pointercancel="onNodePointerUp"
 		>
 			<svg
 				class="absolute inset-0 pointer-events-none overflow-visible"
@@ -349,6 +388,7 @@ useResizeObserver(containerRef, ([entry]) => {
 					<ArrowTip
 						v-for="kind in VisualEdgeKindEnum"
 						:id="edgeArrowTipId[kind]"
+						:key="kind"
 						:class="edgeArrowTipClassList[kind]"
 					/>
 				</defs>

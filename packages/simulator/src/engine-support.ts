@@ -65,7 +65,7 @@ export function collectUnsupportedBuiltinDiagnostics(ir: IR): SimDiagnostic[] {
 	const diagnostics: SimDiagnostic[] = [];
 	for (const [name, reason] of UNSUPPORTED_ENGINE_BUILTINS) {
 		if (usedNames.has(name)) {
-			diagnostics.push({ code: "error", message: reason });
+			diagnostics.push({ code: "error", message: reason, severity: "error" });
 		}
 	}
 	return diagnostics;
