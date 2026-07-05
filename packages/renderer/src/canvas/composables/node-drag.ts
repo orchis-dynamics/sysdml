@@ -1,3 +1,4 @@
+import type { ElementPositionEdit } from "@sysdml/contracts";
 import type { LayoutNode } from "@sysdml/layout";
 import { ref, type Ref } from "vue";
 
@@ -8,11 +9,18 @@ interface DragOffset {
 	y: number;
 }
 
-export function useNodeDrag({ scale }: { scale: Ref<number> }) {
+export function useNodeDrag({
+	scale,
+	onCommit,
+}: {
+	scale: Ref<number>;
+	onCommit?: (edits: ElementPositionEdit[]) => void;
+}) {
 	const dragOffsets = ref(new Map<string, DragOffset>());
 	const hasMovedPastClickThreshold = ref(false);
 
 	let draggingId: string | null = null;
+	let dragNode: LayoutNode | null = null;
 	let dragBaseX = 0;
 	let dragBaseY = 0;
 	let dragPointerStartX = 0;
@@ -37,6 +45,7 @@ export function useNodeDrag({ scale }: { scale: Ref<number> }) {
 			event.currentTarget.setPointerCapture(event.pointerId);
 		}
 		draggingId = node.id;
+		dragNode = node;
 		hasMovedPastClickThreshold.value = false;
 		const existing = dragOffsets.value.get(node.id) ?? { x: 0, y: 0 };
 		dragBaseX = existing.x;
@@ -63,7 +72,24 @@ export function useNodeDrag({ scale }: { scale: Ref<number> }) {
 	}
 
 	function onNodePointerUp(): void {
+		if (
+			draggingId !== null &&
+			dragNode !== null &&
+			hasMovedPastClickThreshold.value
+		) {
+			const offset = dragOffsets.value.get(draggingId) ?? { x: 0, y: 0 };
+			onCommit?.([
+				{
+					id: dragNode.id,
+					position: {
+						x: Math.round(dragNode.position.x + offset.x - dragBaseX),
+						y: Math.round(dragNode.position.y + offset.y - dragBaseY),
+					},
+				},
+			]);
+		}
 		draggingId = null;
+		dragNode = null;
 	}
 
 	function reset(): void {

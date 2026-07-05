@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 import type { LayoutNode } from "@sysdml/layout";
-import { describe, expect, test } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 import { ref } from "vue";
 
 import { useNodeDrag } from "../../../src/canvas/composables/node-drag.js";
@@ -103,5 +103,76 @@ describe("useNodeDrag", () => {
 		drag.reset();
 
 		expect(drag.resolveNode(node)).toBe(node);
+	});
+
+	test("release after a real drag commits the rounded resolved position once", () => {
+		const onCommit = vi.fn();
+		const drag = useNodeDrag({ scale: ref(2), onCommit });
+		const node = {
+			id: "s",
+			kind: "stock",
+			position: { x: 10.4, y: 20.4 },
+			size: { width: 50, height: 20 },
+		} as const;
+		drag.onNodePointerDown(pointerDown(100, 100), node);
+		drag.onNodePointerMove(pointerMove(121, 141));
+		drag.onNodePointerUp();
+		expect(onCommit).toHaveBeenCalledTimes(1);
+		expect(onCommit).toHaveBeenCalledWith([
+			{ id: "s", position: { x: 21, y: 41 } },
+		]);
+	});
+
+	test("a click without movement commits nothing", () => {
+		const onCommit = vi.fn();
+		const drag = useNodeDrag({ scale: ref(1), onCommit });
+		const node = {
+			id: "s",
+			kind: "stock",
+			position: { x: 0, y: 0 },
+			size: { width: 50, height: 20 },
+		} as const;
+		drag.onNodePointerDown(pointerDown(100, 100), node);
+		drag.onNodePointerMove(pointerMove(101, 101));
+		drag.onNodePointerUp();
+		expect(onCommit).not.toHaveBeenCalled();
+	});
+
+	test("commit payload survives structured clone", () => {
+		const onCommit = vi.fn();
+		const drag = useNodeDrag({ scale: ref(1), onCommit });
+		const node = {
+			id: "s",
+			kind: "stock",
+			position: { x: 0, y: 0 },
+			size: { width: 50, height: 20 },
+		} as const;
+		drag.onNodePointerDown(pointerDown(0, 0), node);
+		drag.onNodePointerMove(pointerMove(30, 40));
+		drag.onNodePointerUp();
+		const payload = onCommit.mock.calls[0][0];
+		expect(() => structuredClone(payload)).not.toThrow();
+		expect(structuredClone(payload)).toEqual(payload);
+	});
+
+	test("a second drag on the same node commits its cumulative position", () => {
+		const onCommit = vi.fn();
+		const drag = useNodeDrag({ scale: ref(1), onCommit });
+		const node = {
+			id: "s",
+			kind: "stock",
+			position: { x: 0, y: 0 },
+			size: { width: 50, height: 20 },
+		} as const;
+		drag.onNodePointerDown(pointerDown(0, 0), node);
+		drag.onNodePointerMove(pointerMove(10, 0));
+		drag.onNodePointerUp();
+		const resolved = drag.resolveNode(node);
+		drag.onNodePointerDown(pointerDown(0, 0), resolved);
+		drag.onNodePointerMove(pointerMove(0, 10));
+		drag.onNodePointerUp();
+		expect(onCommit).toHaveBeenLastCalledWith([
+			{ id: "s", position: { x: 10, y: 10 } },
+		]);
 	});
 });
