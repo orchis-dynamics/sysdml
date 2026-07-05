@@ -4,6 +4,8 @@ import { parseSource } from "../src/index.js";
 import type {
 	BinaryExpressionNode,
 	FunctionCallNode,
+	ConnectionDeclarationNode,
+	Span,
 } from "../src/index.js";
 
 // Span contract: line and col are both 1-based, end-inclusive.
@@ -164,7 +166,8 @@ describe("spans — 1-based, end-inclusive", () => {
 		const { ast, diagnostics } = parseSource(`sfd 123`);
 		expect(ast).toBeNull();
 		const first = diagnostics[0];
-		if (first === undefined) throw new Error("expected at least one diagnostic");
+		if (first === undefined)
+			throw new Error("expected at least one diagnostic");
 		expect(first.span.start).toEqual({ line: 1, col: 5 });
 		expect(first.span.end.col).toBeGreaterThan(first.span.start.col);
 		expect(first.span.end).toEqual({ line: 1, col: 7 });
@@ -185,5 +188,58 @@ describe("spans — 1-based, end-inclusive", () => {
 		expect(aux.span.end.line).toBe(2);
 		expect(aux.span.end.col).toBe(38);
 		expect(aux.position).toBeDefined();
+	});
+});
+
+function sliceSpan(source: string, span: Span): string {
+	const lines = source.split("\n");
+	if (span.start.line === span.end.line) {
+		return lines[span.start.line - 1].slice(span.start.col - 1, span.end.col);
+	}
+	const first = lines[span.start.line - 1].slice(span.start.col - 1);
+	const middle = lines.slice(span.start.line, span.end.line - 1);
+	const last = lines[span.end.line - 1].slice(0, span.end.col);
+	return [first, ...middle, last].join("\n");
+}
+
+describe("connection property spans", () => {
+	function connectionDecl(source: string): ConnectionDeclarationNode {
+		const { ast, diagnostics } = parseSource(source);
+		if (!ast) throw new Error(`Parse failed: ${diagnostics[0]?.message}`);
+		const decl = ast.decls.find((d) => d.type === "ConnectionDeclaration");
+		if (!decl || decl.type !== "ConnectionDeclaration")
+			throw new Error("No ConnectionDeclaration found");
+		return decl;
+	}
+
+	test("angleSpan covers the whole angle property", () => {
+		const source = `sfd m\na ->+ b { angle: 45 }`;
+		const decl = connectionDecl(source);
+		expect(decl.angleSpan).toBeDefined();
+		expect(sliceSpan(source, decl.angleSpan!)).toBe("angle: 45");
+		expect(decl.viaSpan).toBeUndefined();
+	});
+
+	test("viaSpan covers the whole via property", () => {
+		const source = `sfd m\na ->- b { via: { x: 150, y: 100 } }`;
+		const decl = connectionDecl(source);
+		expect(decl.viaSpan).toBeDefined();
+		expect(sliceSpan(source, decl.viaSpan!)).toBe("via: { x: 150, y: 100 }");
+		expect(decl.angleSpan).toBeUndefined();
+	});
+
+	test("both spans coexist across multiple lines", () => {
+		const source = `sfd m\na => b {\n  angle: -30\n  via: { x: 1, y: 2 }\n}`;
+		const decl = connectionDecl(source);
+		expect(sliceSpan(source, decl.angleSpan!)).toBe("angle: -30");
+		expect(sliceSpan(source, decl.viaSpan!)).toBe("via: { x: 1, y: 2 }");
+		expect(decl.angleSpan!.start.line).toBe(3);
+		expect(decl.viaSpan!.start.line).toBe(4);
+	});
+
+	test("connection without a block has neither span", () => {
+		const decl = connectionDecl(`sfd m\na ->+ b`);
+		expect(decl.angleSpan).toBeUndefined();
+		expect(decl.viaSpan).toBeUndefined();
 	});
 });
