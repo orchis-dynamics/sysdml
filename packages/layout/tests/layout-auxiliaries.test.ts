@@ -1,9 +1,9 @@
 import { describe, expect, test } from "vitest";
 
-import { seedAuxiliaryPositions } from "../../src/canvas/layout-auxiliaries";
-import type { LayoutNode } from "../../src/canvas/layout-types";
-import { NodeKindEnum } from "../../src/canvas/layout-types";
-import { aux, connection } from "../helpers/ir-builders";
+import { seedAuxiliaryPositions } from "../src/layout-auxiliaries.js";
+import type { LayoutNode } from "../src/layout-types.js";
+import { NodeKindEnum } from "../src/layout-types.js";
+import { aux, connection } from "./helpers/ir-builders.js";
 
 function stockNode(id: string, x: number, y: number): LayoutNode {
 	return {
@@ -52,7 +52,7 @@ describe("seedAuxiliaryPositions", () => {
 	});
 });
 
-import { computeRepulsion } from "../../src/canvas/layout-auxiliaries";
+import { computeRepulsion } from "../src/layout-auxiliaries.js";
 
 describe("computeRepulsion", () => {
 	test("pushes two coincident nodes apart along an arbitrary unit vector", () => {
@@ -83,7 +83,7 @@ describe("computeRepulsion", () => {
 	});
 });
 
-import { computeAttraction } from "../../src/canvas/layout-auxiliaries";
+import { computeAttraction } from "../src/layout-auxiliaries.js";
 
 describe("computeAttraction", () => {
 	test("pulls two connected nodes together with magnitude dist^2 / k", () => {
@@ -123,7 +123,7 @@ describe("computeAttraction", () => {
 	});
 });
 
-import { applyDisplacement } from "../../src/canvas/layout-auxiliaries";
+import { applyDisplacement } from "../src/layout-auxiliaries.js";
 
 describe("applyDisplacement", () => {
 	test("does not move pinned ids", () => {
@@ -171,7 +171,7 @@ describe("applyDisplacement", () => {
 	});
 });
 
-import { constructAuxiliaryLayoutNodes } from "../../src/canvas/layout-auxiliaries";
+import { constructAuxiliaryLayoutNodes } from "../src/layout-auxiliaries.js";
 
 describe("constructAuxiliaryLayoutNodes", () => {
 	test("returns empty map when there are no auxiliaries", () => {

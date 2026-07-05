@@ -4,10 +4,10 @@ import {
 	orthogonalPipePoints,
 	polylineMidpoint,
 	type Point,
-} from "./edge-geometry";
-import { constructAuxiliaryLayoutNodes } from "./layout-auxiliaries";
-import { constructLayoutEdges } from "./layout-edges";
-import { THEME } from "./layout-theme";
+} from "./geometry.js";
+import { constructAuxiliaryLayoutNodes } from "./layout-auxiliaries.js";
+import { constructLayoutEdges } from "./layout-edges.js";
+import { THEME } from "./layout-theme.js";
 import {
 	LayoutInputNode,
 	LayoutNode,
@@ -15,7 +15,7 @@ import {
 	NodeKind,
 	NodeKindEnum,
 	NodeSize,
-} from "./layout-types";
+} from "./layout-types.js";
 
 export function isCausalLoopDiagram(ir: IR): boolean {
 	return ir.model.kind === "cld";

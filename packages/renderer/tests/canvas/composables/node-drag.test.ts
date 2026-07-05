@@ -1,9 +1,9 @@
 // @vitest-environment happy-dom
+import type { LayoutNode } from "@sysdml/layout";
 import { describe, expect, test } from "vitest";
 import { ref } from "vue";
 
 import { useNodeDrag } from "../../../src/canvas/composables/node-drag.js";
-import type { LayoutNode } from "../../../src/canvas/layout-types.js";
 
 function makeNode(id: string): LayoutNode {
 	return {

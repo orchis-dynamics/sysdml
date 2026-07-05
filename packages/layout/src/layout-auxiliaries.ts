@@ -1,12 +1,12 @@
 import type { IRConnection, IRPosition } from "@sysdml/contracts";
 
-import { FR, THEME } from "./layout-theme";
+import { FR, THEME } from "./layout-theme.js";
 import {
 	LayoutInputNode,
 	LayoutNode,
 	NodeKindEnum,
 	NodeSize,
-} from "./layout-types";
+} from "./layout-types.js";
 
 function getOrThrow<Value>(map: Map<string, Value>, key: string): Value {
 	const value = map.get(key);

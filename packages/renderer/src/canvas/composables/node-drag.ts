@@ -1,6 +1,5 @@
+import type { LayoutNode } from "@sysdml/layout";
 import { ref, type Ref } from "vue";
-
-import type { LayoutNode } from "../layout-types.js";
 
 const NODE_DRAG_CLICK_THRESHOLD_PX = 4;
 

@@ -14,6 +14,7 @@
 	},
 	"dependencies": {
 		"@sysdml/contracts": "workspace:*",
+		"@sysdml/layout": "workspace:*",
 		"@sysdml/simulator": "workspace:*",
 		"@unovis/ts": "^1.6.5",
 		"@unovis/vue": "^1.6.5",

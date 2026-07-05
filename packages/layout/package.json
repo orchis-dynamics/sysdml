@@ -1,0 +1,22 @@
+{
+	"name": "@sysdml/layout",
+	"version": "0.1.0",
+	"license": "AGPL-3.0-only",
+	"type": "module",
+	"main": "./dist/src/index.js",
+	"types": "./dist/src/index.d.ts",
+	"scripts": {
+		"clean": "rm -rf dist node_modules",
+		"build": "tsc",
+		"test": "vitest run",
+		"test:watch": "vitest"
+	},
+	"dependencies": {
+		"@sysdml/contracts": "workspace:*"
+	},
+	"devDependencies": {
+		"@types/node": "^24.12.4",
+		"typescript": "^5.4.5",
+		"vitest": "^4.1.5"
+	}
+}

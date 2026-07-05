@@ -1,5 +1,14 @@
 <script setup lang="ts">
 import type { ConnectionRoutingEdit, IR, IRPosition } from "@sysdml/contracts";
+import {
+	computeLayout,
+	isCausalLoopDiagram,
+	type LayoutNode,
+	type LayoutEdge,
+	type LayoutConnectionEdge,
+	type LayoutFlowEdge,
+	type NodeKind,
+} from "@sysdml/layout";
 import { useResizeObserver } from "@vueuse/core";
 import { ref, computed, watch, type Component } from "vue";
 
@@ -21,14 +30,6 @@ import {
 	type Point,
 	type RoutedConnection,
 } from "./edge-geometry.js";
-import { computeLayout, isCausalLoopDiagram } from "./layout-engine.js";
-import type {
-	LayoutNode,
-	LayoutEdge,
-	LayoutConnectionEdge,
-	LayoutFlowEdge,
-	NodeKind,
-} from "./layout-types.js";
 import AuxNode from "./nodes/AuxNode.vue";
 import FlowNode from "./nodes/FlowNode.vue";
 import StockNode from "./nodes/StockNode.vue";

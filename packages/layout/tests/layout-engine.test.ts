@@ -1,11 +1,8 @@
 import { describe, expect, test } from "vitest";
 
-import {
-	orthogonalPipePoints,
-	polylineMidpoint,
-} from "../../src/canvas/edge-geometry.js";
-import { computeLayout } from "../../src/canvas/layout-engine.js";
-import { aux, connection, flow, ir, stock } from "../helpers/ir-builders.js";
+import { orthogonalPipePoints, polylineMidpoint } from "../src/geometry.js";
+import { computeLayout } from "../src/layout-engine.js";
+import { aux, connection, flow, ir, stock } from "./helpers/ir-builders.js";
 
 describe("computeLayout — SFD edges", () => {
 	test("emits a flow edge for each flow", () => {
