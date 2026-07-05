@@ -238,7 +238,9 @@ export interface ConnectionDeclarationNode {
 	to: string;
 	toSpan: Span;
 	angle?: number;
+	angleSpan?: Span;
 	via?: PositionNode;
+	viaSpan?: Span;
 	span: Span;
 }
 

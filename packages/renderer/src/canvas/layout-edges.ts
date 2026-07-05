@@ -15,14 +15,19 @@ export function constructLayoutEdges(
 		edges.set(id, { id, kind: "flow", source, target, via: flow.via });
 	});
 
+	const occurrenceByTriple = new Map<string, number>();
 	connections.forEach((connection) => {
-		const id = `conn-${connection.from}-${connection.to}`;
+		const tripleKey = `${connection.from}|${connection.polarity}|${connection.to}`;
+		const occurrence = occurrenceByTriple.get(tripleKey) ?? 0;
+		occurrenceByTriple.set(tripleKey, occurrence + 1);
+		const id = `conn-${connection.from}-${connection.polarity}-${connection.to}-${occurrence}`;
 		edges.set(id, {
 			id,
 			kind: "connection",
 			source: connection.from,
 			target: connection.to,
 			polarity: connection.polarity,
+			occurrence,
 			angle: connection.angle,
 			via: connection.via,
 		});

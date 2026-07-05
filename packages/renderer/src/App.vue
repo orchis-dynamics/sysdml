@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { IR } from "@sysdml/contracts";
+import type { ConnectionRoutingEdit, IR } from "@sysdml/contracts";
 import { ref, computed, onMounted, onUnmounted } from "vue";
 
 import Canvas from "./canvas/Canvas.vue";
@@ -54,6 +54,10 @@ onUnmounted(() => {
 	transport?.stop();
 	transport = null;
 });
+
+function onRoutingEdit(edit: ConnectionRoutingEdit): void {
+	transport?.sendRoutingEdit(edit);
+}
 </script>
 
 <template>
@@ -71,7 +75,7 @@ onUnmounted(() => {
 			Simulation: {{ simulationError }}
 		</div>
 		<SimulationDiagnosticsBanner :diagnostics="simulationDiagnostics" />
-		<Canvas :ir="ir" class="flex-1 min-h-0" />
+		<Canvas :ir="ir" class="flex-1 min-h-0" @routing-edit="onRoutingEdit" />
 		<GraphPanel class="h-64 shrink-0">
 			<template #default="{ rows, variableIds }">
 				<TimeseriesLineChart :rows="rows" :variable-ids="variableIds" />

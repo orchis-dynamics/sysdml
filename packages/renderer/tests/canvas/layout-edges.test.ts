@@ -105,4 +105,25 @@ describe("constructLayoutEdges — routing hints", () => {
 			via: [{ x: 200, y: 100 }],
 		});
 	});
+
+	test("assigns occurrence indexes to duplicate connection triples and keeps both edges", () => {
+		const edges = constructLayoutEdges(
+			[],
+			[
+				{ from: "a", polarity: "+", to: "b" },
+				{ from: "a", polarity: "+", to: "b", angle: 45 },
+				{ from: "a", polarity: "-", to: "b" },
+			],
+		);
+		expect(edges.get("conn-a-+-b-0")).toMatchObject({ occurrence: 0 });
+		expect(edges.get("conn-a-+-b-1")).toMatchObject({
+			occurrence: 1,
+			angle: 45,
+		});
+		expect(edges.get("conn-a---b-0")).toMatchObject({
+			occurrence: 0,
+			polarity: "-",
+		});
+		expect(edges.size).toBe(3);
+	});
 });

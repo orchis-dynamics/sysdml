@@ -1,11 +1,26 @@
 import type { IRDiagnostic } from "../diagnostics/index.js";
-import type { IR } from "../model/index.js";
+import type { IR, IRPosition } from "../model/index.js";
 
 export type ExtensionToWebviewMessage =
 	| { type: "update"; ir: IR }
 	| { type: "error"; message: string };
 
-export type WebviewToExtensionMessage = { type: "ready" };
+export interface ConnectionIdentity {
+	from: string;
+	polarity: "+" | "-" | "=>";
+	to: string;
+	occurrence: number;
+}
+
+export interface ConnectionRoutingEdit {
+	connection: ConnectionIdentity;
+	angle?: number;
+	via?: IRPosition;
+}
+
+export type WebviewToExtensionMessage =
+	| { type: "ready" }
+	| ({ type: "editConnectionRouting" } & ConnectionRoutingEdit);
 
 export interface GetIRParams {
 	uri: string;
@@ -14,4 +29,8 @@ export interface GetIRParams {
 export interface GetIRResult {
 	ir: IR | null;
 	diagnostics: IRDiagnostic[];
+}
+
+export interface UpdateConnectionRoutingParams extends ConnectionRoutingEdit {
+	uri: string;
 }
