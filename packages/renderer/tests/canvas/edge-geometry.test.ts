@@ -18,6 +18,9 @@ import {
 	orthogonalPipePoints,
 	polylineMidpoint,
 	flowPipeGeometry,
+	centralAngleDegreesFromDragPoint,
+	clampDragAngleDegrees,
+	viaDerivedCentralAngleDegrees,
 	type PathSegment,
 	type Point,
 } from "../../src/canvas/edge-geometry.js";
@@ -555,5 +558,68 @@ describe("flowPipeGeometry", () => {
 		);
 		expect(geometry.pipePath).toBe("M 10 50 L 100 50 L 100 30");
 		expect(geometry.arrowheadPoints).toBe("100,20 106,30 94,30");
+	});
+});
+
+describe("routing drag geometry", () => {
+	test("drag point roundtrips through the rendered arc midpoint", () => {
+		const source = { x: 0, y: 0 };
+		const target = { x: 100, y: 0 };
+		const dragPoint = { x: 50, y: -20 };
+		const angle = centralAngleDegreesFromDragPoint(source, target, dragPoint);
+		const arc = arcFromChordAndCentralAngle(source, target, angle);
+		const midpoint = segmentPointAt(arc, 0.5);
+		expect(midpoint.x).toBeCloseTo(dragPoint.x, 6);
+		expect(midpoint.y).toBeCloseTo(dragPoint.y, 6);
+	});
+
+	test("crossing the chord flips the angle sign", () => {
+		const source = { x: 0, y: 0 };
+		const target = { x: 100, y: 0 };
+		const above = centralAngleDegreesFromDragPoint(source, target, {
+			x: 50,
+			y: -20,
+		});
+		const below = centralAngleDegreesFromDragPoint(source, target, {
+			x: 50,
+			y: 20,
+		});
+		expect(above).toBeGreaterThan(0);
+		expect(below).toBeLessThan(0);
+		expect(above).toBeCloseTo(-below, 6);
+	});
+
+	test("clamp enforces the 15-degree dead zone and 180 cap", () => {
+		expect(clampDragAngleDegrees(45.4)).toBe(45);
+		expect(clampDragAngleDegrees(3)).toBe(15);
+		expect(clampDragAngleDegrees(-3)).toBe(-15);
+		expect(clampDragAngleDegrees(0)).toBe(15);
+		expect(clampDragAngleDegrees(200)).toBe(180);
+		expect(clampDragAngleDegrees(-200)).toBe(-180);
+	});
+
+	test("via-derived angle reproduces the three-point arc's departure", () => {
+		const source = { x: 0, y: 0 };
+		const via = { x: 40, y: -30 };
+		const target = { x: 100, y: 0 };
+		const angle = viaDerivedCentralAngleDegrees(source, via, target);
+		const departure = arcFromChordAndCentralAngle(source, via, angle);
+		expect(departure.kind).toBe("arc");
+		if (departure.kind !== "arc") return;
+		const threePoint = arcThroughThreePoints(source, via, target);
+		expect(threePoint.kind).toBe("arc");
+		if (threePoint.kind !== "arc") return;
+		expect(departure.center.x).toBeCloseTo(threePoint.center.x, 0);
+		expect(departure.center.y).toBeCloseTo(threePoint.center.y, 0);
+	});
+
+	test("via-derived angle is zero when the via is collinear", () => {
+		expect(
+			viaDerivedCentralAngleDegrees(
+				{ x: 0, y: 0 },
+				{ x: 50, y: 0 },
+				{ x: 100, y: 0 },
+			),
+		).toBe(0);
 	});
 });

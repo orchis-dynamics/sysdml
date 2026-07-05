@@ -483,6 +483,62 @@ export type FlowPipeGeometry = {
 	arrowheadPoints: string;
 };
 
+const MIN_DRAG_ANGLE_DEGREES = 15;
+const MAX_DRAG_ANGLE_DEGREES = 180;
+
+export function centralAngleDegreesFromDragPoint(
+	source: Point,
+	target: Point,
+	dragPoint: Point,
+): number {
+	const chordX = target.x - source.x;
+	const chordY = target.y - source.y;
+	const chordLength = Math.hypot(chordX, chordY);
+	if (chordLength < ROUTING_EPSILON) return 0;
+	const crossProduct =
+		chordX * (dragPoint.y - source.y) - chordY * (dragPoint.x - source.x);
+	const signedSagitta = -crossProduct / chordLength;
+	return (4 * Math.atan((2 * signedSagitta) / chordLength) * 180) / Math.PI;
+}
+
+export function clampDragAngleDegrees(angleDegrees: number): number {
+	const sign = angleDegrees >= 0 ? 1 : -1;
+	const magnitude = Math.min(
+		MAX_DRAG_ANGLE_DEGREES,
+		Math.max(MIN_DRAG_ANGLE_DEGREES, Math.abs(Math.round(angleDegrees))),
+	);
+	return sign * magnitude;
+}
+
+export function viaDerivedCentralAngleDegrees(
+	source: Point,
+	via: Point,
+	target: Point,
+): number {
+	const chordX = target.x - source.x;
+	const chordY = target.y - source.y;
+	const chordLength = Math.hypot(chordX, chordY);
+	const crossProduct =
+		(via.x - source.x) * chordY - (via.y - source.y) * chordX;
+	const viaDistanceFromChord =
+		chordLength < ROUTING_EPSILON ? 0 : Math.abs(crossProduct) / chordLength;
+	if (viaDistanceFromChord < COLLINEARITY_TOLERANCE_PIXELS) return 0;
+	const center = circumcenter(source, via, target);
+	const startAngleRadians = Math.atan2(
+		source.y - center.y,
+		source.x - center.x,
+	);
+	const endAngleRadians = Math.atan2(target.y - center.y, target.x - center.x);
+	const viaAngleRadians = Math.atan2(via.y - center.y, via.x - center.x);
+	const positiveSweep = normalizeAnglePositive(
+		endAngleRadians - startAngleRadians,
+	);
+	const viaOffset = normalizeAnglePositive(viaAngleRadians - startAngleRadians);
+	const sourceToViaRadians =
+		viaOffset <= positiveSweep ? viaOffset : viaOffset - FULL_TURN_RADIANS;
+	return Math.round((sourceToViaRadians * 180) / Math.PI);
+}
+
 export function flowPipeGeometry(
 	pipePoints: Point[],
 	arrowheadLength: number,
