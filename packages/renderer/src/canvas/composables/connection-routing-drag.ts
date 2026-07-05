@@ -135,9 +135,19 @@ export function useConnectionRoutingDrag({
 				(event.clientY - dragPointerStartY) / scale.value,
 		};
 		if (dragConnection.hasVia) {
-			setPreview(dragConnection.id, {
-				via: { x: Math.round(dragPoint.x), y: Math.round(dragPoint.y) },
-			});
+			const via = { x: Math.round(dragPoint.x), y: Math.round(dragPoint.y) };
+			if (dragConnection.hasAngle) {
+				setPreview(dragConnection.id, {
+					via,
+					angle: viaDerivedCentralAngleDegrees(
+						dragGeometry.source,
+						via,
+						dragGeometry.target,
+					),
+				});
+				return;
+			}
+			setPreview(dragConnection.id, { via });
 			return;
 		}
 		setPreview(dragConnection.id, {
@@ -161,7 +171,6 @@ export function useConnectionRoutingDrag({
 		}
 		const edgeId = draggingEdgeId.value;
 		const connection = dragConnection;
-		const geometry = dragGeometry;
 		const preview = previews.value.get(edgeId);
 		draggingEdgeId.value = null;
 		dragConnection = null;
@@ -181,15 +190,7 @@ export function useConnectionRoutingDrag({
 			onCommit({
 				connection: identity,
 				via: preview.via,
-				...(connection.hasAngle
-					? {
-							angle: viaDerivedCentralAngleDegrees(
-								geometry.source,
-								preview.via,
-								geometry.target,
-							),
-						}
-					: {}),
+				...(preview.angle !== undefined ? { angle: preview.angle } : {}),
 			});
 		} else if (preview.angle !== undefined) {
 			onCommit({ connection: identity, angle: preview.angle });

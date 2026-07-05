@@ -141,11 +141,14 @@ describe("useConnectionRoutingDrag", () => {
 			},
 		);
 		drag.onDotPointerMove(pointerMove(40, -40));
+		const previewedAngle = drag.previewFor("conn-a-+-b-0")?.angle;
+		expect(typeof previewedAngle).toBe("number");
 		drag.onDotPointerUp();
 		const commit = onCommit.mock.calls[0][0];
 		expect(commit.via).toEqual({ x: 40, y: -40 });
 		expect(typeof commit.angle).toBe("number");
 		expect(commit.angle).not.toBe(0);
+		expect(commit.angle).toBe(previewedAngle);
 	});
 
 	test("escape cancels the drag without committing", () => {
