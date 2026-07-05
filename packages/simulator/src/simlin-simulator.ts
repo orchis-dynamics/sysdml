@@ -11,6 +11,7 @@ import type {
 	Simulator,
 } from "@sysdml/contracts";
 
+import { collectUnsupportedBuiltinDiagnostics } from "./engine-support.js";
 import { irToSimlinProject } from "./ir-to-simlin.js";
 
 let readyBackend: Promise<DirectBackend> | null = null;
@@ -133,6 +134,11 @@ async function runModelToRows(
 
 export class SimlinSimulator implements Simulator {
 	async simulate(ir: IR): Promise<SimulationResult> {
+		const unsupportedBuiltinDiagnostics =
+			collectUnsupportedBuiltinDiagnostics(ir);
+		if (unsupportedBuiltinDiagnostics.length > 0) {
+			return { rows: [], diagnostics: unsupportedBuiltinDiagnostics };
+		}
 		const diagnostics: SimDiagnostic[] = [];
 		try {
 			const engine = await backend();
