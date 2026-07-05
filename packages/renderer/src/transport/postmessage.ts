@@ -1,4 +1,8 @@
-import type { ConnectionRoutingEdit, IR } from "@sysdml/contracts";
+import type {
+	ConnectionRoutingEdit,
+	ElementPositionEdit,
+	IR,
+} from "@sysdml/contracts";
 
 import type { IRTransport, OutboundMessage } from "./types.js";
 import { isInboundMessage } from "./types.js";
@@ -46,6 +50,24 @@ export class PostMessageAdapter implements IRTransport {
 			type: "editConnectionRouting",
 			...edit,
 		};
+		this.vscode.postMessage(message);
+	}
+
+	sendPositionEdits(positions: ElementPositionEdit[]): void {
+		if (this.vscode === null) return;
+		const message: OutboundMessage = {
+			type: "editElementPositions",
+			positions: positions.map((edit) => ({
+				id: edit.id,
+				position: { x: edit.position.x, y: edit.position.y },
+			})),
+		};
+		this.vscode.postMessage(message);
+	}
+
+	sendPinMissingPositions(): void {
+		if (this.vscode === null) return;
+		const message: OutboundMessage = { type: "pinMissingPositions" };
 		this.vscode.postMessage(message);
 	}
 }

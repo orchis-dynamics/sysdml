@@ -25,4 +25,12 @@ export class NullAdapter implements IRTransport {
 	sendRoutingEdit(): void {
 		// intentionally empty — this transport does not persist routing edits
 	}
+
+	sendPositionEdits(): void {
+		// intentionally empty — this transport does not persist position edits
+	}
+
+	sendPinMissingPositions(): void {
+		// intentionally empty — this transport does not persist pin missing positions
+	}
 }
