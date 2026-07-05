@@ -12,6 +12,50 @@ import { spanToRange } from "../analysis.js";
 export type RoutingEditResult = { edits: TextEdit[] } | { error: string };
 
 const POLARITY_ARROWS = { "+": "->+", "-": "->-", "=>": "=>" } as const;
+const VALID_POLARITIES = new Set(Object.keys(POLARITY_ARROWS));
+const MAX_ANGLE_MAGNITUDE_DEGREES = 180;
+
+function invalidParamsError(
+	params: UpdateConnectionRoutingParams,
+): string | null {
+	const { connection } = params;
+	if (typeof connection.from !== "string" || connection.from.length === 0) {
+		return "connection.from must be a non-empty string";
+	}
+	if (typeof connection.to !== "string" || connection.to.length === 0) {
+		return "connection.to must be a non-empty string";
+	}
+	if (!VALID_POLARITIES.has(connection.polarity)) {
+		return "connection.polarity must be one of '+', '-', '=>'";
+	}
+	if (
+		typeof connection.occurrence !== "number" ||
+		!Number.isInteger(connection.occurrence) ||
+		connection.occurrence < 0
+	) {
+		return "connection.occurrence must be a non-negative integer";
+	}
+	if (params.angle !== undefined) {
+		if (
+			typeof params.angle !== "number" ||
+			!Number.isInteger(params.angle) ||
+			Math.abs(params.angle) > MAX_ANGLE_MAGNITUDE_DEGREES
+		) {
+			return "angle must be an integer between -180 and 180";
+		}
+	}
+	if (params.via !== undefined) {
+		if (
+			typeof params.via.x !== "number" ||
+			!Number.isInteger(params.via.x) ||
+			typeof params.via.y !== "number" ||
+			!Number.isInteger(params.via.y)
+		) {
+			return "via.x and via.y must be integers";
+		}
+	}
+	return null;
+}
 
 function findConnection(
 	ast: FileNode,
@@ -70,6 +114,8 @@ export function computeConnectionRoutingEdits(
 	sourceText: string,
 	params: UpdateConnectionRoutingParams,
 ): RoutingEditResult {
+	const invalidParams = invalidParamsError(params);
+	if (invalidParams) return { error: invalidParams };
 	const decl = findConnection(ast, params);
 	if (!decl) {
 		const arrow = POLARITY_ARROWS[params.connection.polarity];

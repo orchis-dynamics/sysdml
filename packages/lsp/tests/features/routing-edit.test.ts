@@ -139,4 +139,76 @@ describe("computeConnectionRoutingEdits", () => {
 		);
 		expect(result).toHaveProperty("error");
 	});
+
+	it("errors on a non-integer angle", () => {
+		const source = `sfd m\na ->+ b`;
+		const analysis = analyzeDocument(source);
+		const result = computeConnectionRoutingEdits(
+			analysis.ast!,
+			source,
+			routingParams({ angle: 45.5 }),
+		);
+		expect(result).toHaveProperty("error");
+		expect(result).not.toHaveProperty("edits");
+	});
+
+	it("errors on an out-of-range angle", () => {
+		const source = `sfd m\na ->+ b`;
+		const analysis = analyzeDocument(source);
+		const result = computeConnectionRoutingEdits(
+			analysis.ast!,
+			source,
+			routingParams({ angle: 181 }),
+		);
+		expect(result).toHaveProperty("error");
+		expect(result).not.toHaveProperty("edits");
+	});
+
+	it("errors on a non-numeric angle", () => {
+		const source = `sfd m\na ->+ b`;
+		const analysis = analyzeDocument(source);
+		const result = computeConnectionRoutingEdits(
+			analysis.ast!,
+			source,
+			routingParams({ angle: "45" as unknown as number }),
+		);
+		expect(result).toHaveProperty("error");
+		expect(result).not.toHaveProperty("edits");
+	});
+
+	it("errors on a fractional via coordinate", () => {
+		const source = `sfd m\na ->+ b { via: { x: 1, y: 2 } }`;
+		const analysis = analyzeDocument(source);
+		const result = computeConnectionRoutingEdits(
+			analysis.ast!,
+			source,
+			routingParams({ via: { x: 1.5, y: 2 } }),
+		);
+		expect(result).toHaveProperty("error");
+		expect(result).not.toHaveProperty("edits");
+	});
+
+	it("errors on a negative occurrence", () => {
+		const source = `sfd m\na ->+ b`;
+		const analysis = analyzeDocument(source);
+		const result = computeConnectionRoutingEdits(
+			analysis.ast!,
+			source,
+			routingParams({ angle: 30, connection: { occurrence: -1 } }),
+		);
+		expect(result).toHaveProperty("error");
+		expect(result).not.toHaveProperty("edits");
+	});
+
+	it("errors on an invalid polarity", () => {
+		const source = `sfd m\na ->+ b`;
+		const analysis = analyzeDocument(source);
+		const result = computeConnectionRoutingEdits(
+			analysis.ast!,
+			source,
+			routingParams({ angle: 30, connection: { polarity: "~" as never } }),
+		);
+		expect(result).toHaveProperty("error");
+		expect(result).not.toHaveProperty("edits");
+	});
 });
