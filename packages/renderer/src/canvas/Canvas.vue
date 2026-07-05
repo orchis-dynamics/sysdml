@@ -1,7 +1,13 @@
 <script setup lang="ts">
-import type { ConnectionRoutingEdit, IR, IRPosition } from "@sysdml/contracts";
+import type {
+	ConnectionRoutingEdit,
+	ElementPositionEdit,
+	IR,
+	IRPosition,
+} from "@sysdml/contracts";
 import {
 	computeLayout,
+	computeMissingPositions,
 	isCausalLoopDiagram,
 	type LayoutNode,
 	type LayoutEdge,
@@ -56,6 +62,12 @@ const containerRef = ref<HTMLDivElement | null>(null);
 const { transform, scale, onPointerDown, onPointerMove, onPointerUp, onWheel } =
 	usePanZoom(containerRef);
 
+const emit = defineEmits<{
+	routingEdit: [edit: ConnectionRoutingEdit];
+	positionEdit: [edits: ElementPositionEdit[]];
+	pinMissingPositions: [];
+}>();
+
 const {
 	hasMovedPastClickThreshold,
 	resolveNode,
@@ -63,9 +75,17 @@ const {
 	onNodePointerMove,
 	onNodePointerUp,
 	reset: resetDragOffsets,
-} = useNodeDrag({ scale });
-
-const emit = defineEmits<{ routingEdit: [edit: ConnectionRoutingEdit] }>();
+} = useNodeDrag({
+	scale,
+	onCommit: (edits) =>
+		emit(
+			"positionEdit",
+			edits.map((edit) => ({
+				id: edit.id,
+				position: { x: edit.position.x, y: edit.position.y },
+			})),
+		),
+});
 
 const {
 	hoveredEdgeId,
@@ -134,6 +154,25 @@ watch(
 		resetDragOffsets();
 		clearPreviews();
 	},
+);
+
+let lastPinSignature: string | null = null;
+
+watch(
+	() => props.ir,
+	(ir) => {
+		if (!ir) return;
+		const missing = computeMissingPositions(ir);
+		if (missing.length === 0) return;
+		const signature = missing
+			.map((entry) => entry.id)
+			.sort()
+			.join("\n");
+		if (signature === lastPinSignature) return;
+		lastPinSignature = signature;
+		emit("pinMissingPositions");
+	},
+	{ immediate: true },
 );
 
 function onNodeClick(node: LayoutNode) {
