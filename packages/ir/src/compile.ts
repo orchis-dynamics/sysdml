@@ -21,8 +21,8 @@ import type {
 	IRGraphicalFunctionKind,
 	IRPosition,
 } from "@sysdml/contracts";
-
 import { BUILTIN_FUNCTIONS, DiagnosticCode } from "@sysdml/contracts";
+
 import { compileExpr, RESERVED_LOOKUP_PREFIX } from "./expr.js";
 
 function isTimeDeclaration(n: DeclarationNode): n is TimeDeclarationNode {
@@ -97,7 +97,9 @@ function validateGraphicalFunctionBody(
 	}
 
 	const ypts =
-		yptsProp && yptsProp.key === "ypts" ? numListToFloats(yptsProp.value) : null;
+		yptsProp && yptsProp.key === "ypts"
+			? numListToFloats(yptsProp.value)
+			: null;
 	if (ypts === null) {
 		errors.push({
 			code: DiagnosticCode.MISSING_YPTS,

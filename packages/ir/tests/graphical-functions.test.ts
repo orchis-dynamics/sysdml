@@ -1,8 +1,8 @@
+import { DiagnosticCode } from "@sysdml/contracts";
+import type { IR, IRGraphicalFunction } from "@sysdml/contracts";
 import { parseSource } from "@sysdml/parser";
 import { describe, test, expect } from "vitest";
 
-import { DiagnosticCode } from "@sysdml/contracts";
-import type { IR, IRGraphicalFunction } from "@sysdml/contracts";
 import { compileAST } from "../src/index.js";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────

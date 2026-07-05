@@ -1,4 +1,8 @@
-import { orthogonalPipePoints, polylineMidpoint, type Point } from "@sysdml/layout";
+import {
+	orthogonalPipePoints,
+	polylineMidpoint,
+	type Point,
+} from "@sysdml/layout";
 
 export { orthogonalPipePoints, polylineMidpoint };
 export type { Point };

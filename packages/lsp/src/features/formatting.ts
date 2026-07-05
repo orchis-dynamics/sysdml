@@ -1,4 +1,3 @@
-import { parseSource } from "@sysdml/parser";
 import type {
 	FileNode,
 	DeclarationNode,
@@ -14,6 +13,7 @@ import type {
 	NumberListNode,
 	PositionNode,
 } from "@sysdml/contracts";
+import { parseSource } from "@sysdml/parser";
 
 export function formatSource(source: string): string | null {
 	if (containsComments(source)) return null;
@@ -23,9 +23,7 @@ export function formatSource(source: string): string | null {
 }
 
 function containsComments(source: string): boolean {
-	return (
-		source.includes("#") || source.includes("//") || source.includes("/*")
-	);
+	return source.includes("#") || source.includes("//") || source.includes("/*");
 }
 
 function printFile(file: FileNode): string {

@@ -5,7 +5,10 @@ export function positionAfterSpanEnd(span: Span): Position {
 	return Position.create(span.end.line - 1, span.end.col);
 }
 
-export function lineLeadingWhitespace(sourceText: string, line: number): string {
+export function lineLeadingWhitespace(
+	sourceText: string,
+	line: number,
+): string {
 	const lineText = sourceText.split("\n")[line - 1] ?? "";
 	return /^[ \t]*/.exec(lineText)?.[0] ?? "";
 }

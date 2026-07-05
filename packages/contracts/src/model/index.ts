@@ -1,5 +1,5 @@
-import type { IRExpressionNode } from "../expression/index.js";
 import type { IRDiagnostic } from "../diagnostics/index.js";
+import type { IRExpressionNode } from "../expression/index.js";
 
 export interface IRTime {
 	start: number;

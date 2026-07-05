@@ -116,7 +116,8 @@ function creationInsertEdit(
 ): TextEdit {
 	const lines = creations
 		.map(
-			(creation) => `aux ${creation.id} { position: ${posText(creation.position)} }`,
+			(creation) =>
+				`aux ${creation.id} { position: ${posText(creation.position)} }`,
 		)
 		.join("\n");
 	const firstConnection = ast.decls.find(

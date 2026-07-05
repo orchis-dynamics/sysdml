@@ -1,4 +1,10 @@
-import type { IR, IRStock, IRFlow, IRPosition, IRConnection } from "@sysdml/contracts";
+import type {
+	IR,
+	IRStock,
+	IRFlow,
+	IRPosition,
+	IRConnection,
+} from "@sysdml/contracts";
 
 import {
 	orthogonalPipePoints,
