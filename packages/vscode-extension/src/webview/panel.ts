@@ -5,7 +5,9 @@ import type {
 	ExtensionToWebviewMessage,
 	GetIRParams,
 	GetIRResult,
+	PinMissingPositionsParams,
 	UpdateConnectionRoutingParams,
+	UpdateElementPositionsParams,
 	WebviewToExtensionMessage,
 } from "@sysdml/contracts";
 import * as vscode from "vscode";
@@ -77,6 +79,12 @@ export class DiagramPanel {
 				if (message.type === "editConnectionRouting") {
 					diagramPanel.relayRoutingEdit(client, message);
 				}
+				if (message.type === "editElementPositions") {
+					diagramPanel.relayPositionEdits(client, message);
+				}
+				if (message.type === "pinMissingPositions") {
+					diagramPanel.relayPinMissingPositions(client);
+				}
 			},
 		);
 
@@ -99,6 +107,29 @@ export class DiagramPanel {
 			via: message.via,
 		};
 		void client.sendNotification("sysdml/updateConnectionRouting", params);
+	}
+
+	relayPositionEdits(
+		client: LanguageClient,
+		message: Extract<
+			WebviewToExtensionMessage,
+			{ type: "editElementPositions" }
+		>,
+	): void {
+		if (this.lastRenderedUri === null) return;
+		if (client.state !== State.Running) return;
+		const params: UpdateElementPositionsParams = {
+			uri: this.lastRenderedUri,
+			positions: message.positions,
+		};
+		void client.sendNotification("sysdml/updateElementPositions", params);
+	}
+
+	relayPinMissingPositions(client: LanguageClient): void {
+		if (this.lastRenderedUri === null) return;
+		if (client.state !== State.Running) return;
+		const params: PinMissingPositionsParams = { uri: this.lastRenderedUri };
+		void client.sendNotification("sysdml/pinMissingPositions", params);
 	}
 
 	async refresh(client: LanguageClient): Promise<void> {
