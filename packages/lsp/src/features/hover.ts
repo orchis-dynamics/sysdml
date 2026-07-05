@@ -38,7 +38,7 @@ function buildHoverContent(
 			case "AuxiliaryDeclaration":
 				if (decl.id === name) {
 					const irAux = ir?.auxiliaries.find((a) => a.id === name);
-					return `**aux** \`${name}\`${irAux ? ` = ${formatIRExpr(irAux.expr)}` : ""}${formatPosition(irAux?.position)}`;
+					return `**aux** \`${name}\`${irAux?.expr ? ` = ${formatIRExpr(irAux.expr)}` : ""}${formatPosition(irAux?.position)}`;
 				}
 				break;
 			case "FlowDeclaration":

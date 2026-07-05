@@ -77,7 +77,9 @@ function printStockDeclaration(decl: StockDeclarationNode): string {
 }
 
 function printAuxiliaryDeclaration(decl: AuxiliaryDeclarationNode): string {
-	const head = `aux ${decl.id} = ${printExpr(decl.expr)}`;
+	const head = decl.expr
+		? `aux ${decl.id} = ${printExpr(decl.expr)}`
+		: `aux ${decl.id}`;
 	if (decl.position === undefined) return head;
 	return `${head} { position: ${printPos(decl.position)} }`;
 }

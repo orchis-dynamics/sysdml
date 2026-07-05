@@ -43,7 +43,7 @@ function getResultExpression(
 	expect(diagnostics).toHaveLength(0);
 	expect(ir).not.toBeNull();
 	// last aux is always `result`
-	return ir!.auxiliaries[ir!.auxiliaries.length - 1].expr;
+	return ir!.auxiliaries[ir!.auxiliaries.length - 1].expr!;
 }
 
 function createFunctionCallNode(

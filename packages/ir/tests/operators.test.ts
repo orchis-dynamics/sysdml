@@ -35,7 +35,7 @@ function getResultExpression(expressionSource: string): IRExpressionNode {
 		`unexpected diagnostics for ${expressionSource}`,
 	).toHaveLength(0);
 	expect(ir).not.toBeNull();
-	return ir!.auxiliaries[ir!.auxiliaries.length - 1].expr;
+	return ir!.auxiliaries[ir!.auxiliaries.length - 1].expr!;
 }
 
 const createRefNode = (id: string): IRExpressionNode => ({

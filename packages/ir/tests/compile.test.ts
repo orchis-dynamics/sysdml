@@ -370,3 +370,32 @@ describe("CLD kind skips simulatable-only diagnostics", () => {
 		expect(codes).toContain("MISSING_STOCK");
 	});
 });
+
+describe("expression-less aux", () => {
+	it("compiles in a cld model with no expr and a position", () => {
+		const { ir, diagnostics } = compileAST(
+			parse(
+				`cld m\naux population { position: { x: 120, y: 40 } }\npopulation ->+ births`,
+			),
+		);
+		expect(diagnostics).toEqual([]);
+		expect(ir!.auxiliaries).toEqual([
+			{ id: "population", expr: undefined, position: { x: 120, y: 40 } },
+		]);
+	});
+
+	it("is an error in an sfd model", () => {
+		const { ir, diagnostics } = compileAST(
+			parse(
+				`sfd m\ntime { start: 0 end: 10 step: 1 }\naux broken { position: { x: 1, y: 2 } }`,
+			),
+		);
+		expect(ir).toBeNull();
+		expect(diagnostics).toContainEqual(
+			expect.objectContaining({
+				code: "AUX_MISSING_EXPRESSION",
+				message: "aux 'broken' requires an expression in sfd models",
+			}),
+		);
+	});
+});

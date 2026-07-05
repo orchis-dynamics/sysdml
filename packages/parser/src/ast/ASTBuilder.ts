@@ -375,7 +375,8 @@ export class ASTBuilder {
 	private auxDecl(ctx: AuxDeclContext): AuxiliaryDeclarationNode {
 		const id = ctx.IDENT().getText();
 		const idSpan = tokenSpan(ctx.IDENT());
-		const expr = buildExpr(ctx.expr());
+		const exprCtx = ctx.expr();
+		const expr = exprCtx ? buildExpr(exprCtx) : undefined;
 
 		let position: PositionNode | undefined;
 		const seenKeys = new Set<string>();

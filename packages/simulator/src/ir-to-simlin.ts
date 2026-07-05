@@ -236,15 +236,18 @@ function mapAuxiliaries(
 	ir: IR,
 	context: EquationLoweringContext,
 ): SimlinAuxiliary[] {
-	return ir.auxiliaries.map((auxiliary) => {
+	return ir.auxiliaries.flatMap((auxiliary) => {
+		if (!auxiliary.expr) return [];
 		const lowered = lowerEquation(auxiliary.expr, context);
-		return lowered.graphicalFunction
-			? {
-					name: auxiliary.id,
-					equation: lowered.equation,
-					graphicalFunction: lowered.graphicalFunction,
-				}
-			: { name: auxiliary.id, equation: lowered.equation };
+		return [
+			lowered.graphicalFunction
+				? {
+						name: auxiliary.id,
+						equation: lowered.equation,
+						graphicalFunction: lowered.graphicalFunction,
+					}
+				: { name: auxiliary.id, equation: lowered.equation },
+		];
 	});
 }
 

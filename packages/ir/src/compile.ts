@@ -464,17 +464,29 @@ export function compileAST(ast: FileNode): CompileResult {
 
 	// ── Aux ───────────────────────────────────────────────────────────────────
 
-	const auxiliaries: IRAuxiliary[] = auxDecls.map((auxDecl) => ({
-		id: auxDecl.id,
-		expr: compileExpr(
-			auxDecl.expr,
-			validIds,
-			graphicalFunctionNames,
-			errors,
-			syntheticGraphicalFunctions,
-		),
-		position: posToIR(auxDecl.position),
-	}));
+	const auxiliaries: IRAuxiliary[] = auxDecls.map((auxDecl) => {
+		if (!auxDecl.expr) {
+			if (ast.model.kind === "sfd") {
+				errors.push({
+					code: DiagnosticCode.AUX_MISSING_EXPRESSION,
+					message: `aux '${auxDecl.id}' requires an expression in sfd models`,
+					span: auxDecl.span,
+				});
+			}
+			return { id: auxDecl.id, position: posToIR(auxDecl.position) };
+		}
+		return {
+			id: auxDecl.id,
+			expr: compileExpr(
+				auxDecl.expr,
+				validIds,
+				graphicalFunctionNames,
+				errors,
+				syntheticGraphicalFunctions,
+			),
+			position: posToIR(auxDecl.position),
+		};
+	});
 
 	// ── Flows ─────────────────────────────────────────────────────────────────
 

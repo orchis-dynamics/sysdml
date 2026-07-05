@@ -54,8 +54,9 @@ function collectFunctionCallNames(
 function collectModelFunctionCallNames(ir: IR): Set<string> {
 	const names = new Set<string>();
 	for (const stock of ir.stocks) collectFunctionCallNames(stock.init, names);
-	for (const auxiliary of ir.auxiliaries)
-		collectFunctionCallNames(auxiliary.expr, names);
+	for (const auxiliary of ir.auxiliaries) {
+		if (auxiliary.expr) collectFunctionCallNames(auxiliary.expr, names);
+	}
 	for (const flow of ir.flows) collectFunctionCallNames(flow.rate, names);
 	return names;
 }

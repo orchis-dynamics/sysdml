@@ -20,7 +20,7 @@ export interface IRStock {
 
 export interface IRAuxiliary {
 	id: string;
-	expr: IRExpressionNode;
+	expr?: IRExpressionNode;
 	position?: IRPosition;
 }
 

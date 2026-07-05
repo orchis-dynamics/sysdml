@@ -225,7 +225,7 @@ export interface AuxiliaryDeclarationNode {
 	type: "AuxiliaryDeclaration";
 	id: string;
 	idSpan: Span;
-	expr: ExpressionNode;
+	expr?: ExpressionNode;
 	position?: PositionNode;
 	span: Span;
 }
