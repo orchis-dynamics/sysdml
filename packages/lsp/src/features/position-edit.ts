@@ -17,6 +17,8 @@ import { lineLeadingWhitespace, positionAfterSpanEnd } from "./edit-helpers.js";
 
 export type PositionEditResult = { edits: TextEdit[] } | { error: string };
 
+const IDENTIFIER_PATTERN = /^[A-Za-z_][A-Za-z0-9_]*$/;
+
 type PositionedDeclaration =
 	| StockDeclarationNode
 	| FlowDeclarationNode
@@ -32,6 +34,9 @@ function invalidParamsError(
 	for (const entry of params.positions) {
 		if (typeof entry.id !== "string" || entry.id.length === 0) {
 			return "position id must be a non-empty string";
+		}
+		if (!IDENTIFIER_PATTERN.test(entry.id)) {
+			return `position id '${entry.id}' is not a valid identifier`;
 		}
 		if (seen.has(entry.id)) {
 			return `duplicate element id '${entry.id}' in positions`;

@@ -155,6 +155,22 @@ describe("useNodeDrag", () => {
 		expect(structuredClone(payload)).toEqual(payload);
 	});
 
+	test("reset cancels an in-flight drag without committing", () => {
+		const onCommit = vi.fn();
+		const drag = useNodeDrag({ scale: ref(1), onCommit });
+		const node = {
+			id: "s",
+			kind: "stock",
+			position: { x: 0, y: 0 },
+			size: { width: 50, height: 20 },
+		} as const;
+		drag.onNodePointerDown(pointerDown(0, 0), node);
+		drag.onNodePointerMove(pointerMove(30, 40));
+		drag.reset();
+		drag.onNodePointerUp();
+		expect(onCommit).not.toHaveBeenCalled();
+	});
+
 	test("a second drag on the same node commits its cumulative position", () => {
 		const onCommit = vi.fn();
 		const drag = useNodeDrag({ scale: ref(1), onCommit });

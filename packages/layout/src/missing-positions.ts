@@ -26,23 +26,24 @@ export function computeMissingPositions(ir: IR): ElementPositionEdit[] {
 		});
 	}
 
+	const missingIds = [...participating].filter((id) => !explicit.has(id));
+	if (missingIds.length === 0) return [];
+
 	const layoutNodes = new Map(
 		computeLayout(ir).nodes.map((node) => [node.id, node]),
 	);
 
-	return [...participating]
-		.filter((id) => !explicit.has(id))
-		.flatMap((id) => {
-			const node = layoutNodes.get(id);
-			if (!node) return [];
-			return [
-				{
-					id,
-					position: {
-						x: Math.round(node.position.x),
-						y: Math.round(node.position.y),
-					},
+	return missingIds.flatMap((id) => {
+		const node = layoutNodes.get(id);
+		if (!node) return [];
+		return [
+			{
+				id,
+				position: {
+					x: Math.round(node.position.x),
+					y: Math.round(node.position.y),
 				},
-			];
-		});
+			},
+		];
+	});
 }

@@ -94,6 +94,8 @@ export function useNodeDrag({
 
 	function reset(): void {
 		dragOffsets.value = new Map();
+		draggingId = null;
+		dragNode = null;
 	}
 
 	return {

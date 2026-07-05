@@ -142,6 +142,19 @@ describe("computeElementPositionEdits", () => {
 			]),
 		).toBe("duplicate element id 'a' in positions");
 	});
+
+	it("rejects an id that is not a valid identifier", () => {
+		expect(
+			errorFor(`cld m\na ->+ b`, [
+				{
+					id: "x { position: { x: 0, y: 0 } }\naux evil",
+					position: { x: 1, y: 2 },
+				},
+			]),
+		).toBe(
+			"position id 'x { position: { x: 0, y: 0 } }\naux evil' is not a valid identifier",
+		);
+	});
 });
 
 describe("computeMissingPositionEdits", () => {
