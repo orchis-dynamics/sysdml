@@ -1,4 +1,8 @@
-import type { GetIRParams, GetIRResult } from "@sysdml/contracts";
+import type {
+	GetIRParams,
+	GetIRResult,
+	UpdateConnectionRoutingParams,
+} from "@sysdml/contracts";
 import { TextDocument } from "vscode-languageserver-textdocument";
 import {
 	createConnection,
@@ -7,6 +11,8 @@ import {
 	TextDocumentSyncKind,
 	TextEdit,
 	Range,
+	TextDocumentEdit,
+	OptionalVersionedTextDocumentIdentifier,
 } from "vscode-languageserver/node.js";
 
 import { analyzeDocument } from "./analysis.js";
@@ -20,6 +26,7 @@ import { getCompletionItems } from "./features/completion.js";
 import { getDefinitionLocation } from "./features/definition.js";
 import { formatSource } from "./features/formatting.js";
 import { getHoverContent } from "./features/hover.js";
+import { computeConnectionRoutingEdits } from "./features/routing-edit.js";
 import { getDocumentSymbols } from "./features/symbols.js";
 
 function startServer(connection: ReturnType<typeof createConnection>): void {
@@ -104,6 +111,47 @@ function startServer(connection: ReturnType<typeof createConnection>): void {
 			diagnostics: analysis?.irDiagnostics ?? [],
 		};
 	});
+
+	connection.onNotification(
+		"sysdml/updateConnectionRouting",
+		async (params: UpdateConnectionRoutingParams) => {
+			const document = documents.get(params.uri);
+			const analysis = getAnalysis(params.uri);
+			if (!document || !analysis?.ast) {
+				void connection.window.showWarningMessage(
+					"SysDML: cannot apply routing edit while the file has parse errors",
+				);
+				return;
+			}
+			const result = computeConnectionRoutingEdits(
+				analysis.ast,
+				document.getText(),
+				params,
+			);
+			if ("error" in result) {
+				void connection.window.showWarningMessage(`SysDML: ${result.error}`);
+				return;
+			}
+			const response = await connection.workspace.applyEdit({
+				edit: {
+					documentChanges: [
+						TextDocumentEdit.create(
+							OptionalVersionedTextDocumentIdentifier.create(
+								params.uri,
+								document.version,
+							),
+							result.edits,
+						),
+					],
+				},
+			});
+			if (!response.applied) {
+				void connection.window.showWarningMessage(
+					"SysDML: routing edit was not applied (document changed during the drag)",
+				);
+			}
+		},
+	);
 
 	documents.listen(connection);
 	connection.listen();
