@@ -94,9 +94,11 @@ describe("PostMessageAdapter", () => {
 		const adapter = new PostMessageAdapter();
 		adapter.start();
 		adapter.sendPinMissingPositions();
-		expect(postMessage.mock.calls.at(-1)?.[0]).toEqual({
+		const message = postMessage.mock.calls.at(-1)?.[0];
+		expect(message).toEqual({
 			type: "pinMissingPositions",
 		});
+		expect(structuredClone(message)).toEqual(message);
 	});
 
 	test("sendPositionEdits before start is a no-op", () => {
