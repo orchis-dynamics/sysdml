@@ -4,3 +4,4 @@ export * from "./layout-theme.js";
 export * from "./layout-edges.js";
 export * from "./layout-auxiliaries.js";
 export * from "./layout-engine.js";
+export * from "./missing-positions.js";
