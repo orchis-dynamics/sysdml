@@ -45,6 +45,9 @@ export function activate(context: vscode.ExtensionContext): void {
 		}
 	});
 
+	let refreshDebounce: ReturnType<typeof setTimeout> | undefined;
+	const REFRESH_DEBOUNCE_MS = 200;
+
 	context.subscriptions.push(
 		vscode.commands.registerCommand("sysdml.openDiagram", () => {
 			if (!client) return;
@@ -68,6 +71,16 @@ export function activate(context: vscode.ExtensionContext): void {
 			if (!editor || editor.document.languageId !== "sysdml") return;
 			if (!client || !diagramPanel || diagramPanel.isDisposed) return;
 			await diagramPanel.refresh(client);
+		}),
+		vscode.workspace.onDidChangeTextDocument((event) => {
+			if (event.document.languageId !== "sysdml") return;
+			if (!client || !diagramPanel || diagramPanel.isDisposed) return;
+			const activeClient = client;
+			const activePanel = diagramPanel;
+			if (refreshDebounce !== undefined) clearTimeout(refreshDebounce);
+			refreshDebounce = setTimeout(() => {
+				void activePanel.refresh(activeClient);
+			}, REFRESH_DEBOUNCE_MS);
 		}),
 	);
 }

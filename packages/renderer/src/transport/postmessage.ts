@@ -1,4 +1,4 @@
-import type { IR } from "@sysdml/contracts";
+import type { ConnectionRoutingEdit, IR } from "@sysdml/contracts";
 
 import type { IRTransport, OutboundMessage } from "./types.js";
 import { isInboundMessage } from "./types.js";
@@ -7,11 +7,12 @@ export class PostMessageAdapter implements IRTransport {
 	private irCallbacks: Array<(ir: IR) => void> = [];
 	private errorCallbacks: Array<(message: string) => void> = [];
 	private messageListener: ((event: MessageEvent) => void) | null = null;
+	private vscode: ReturnType<typeof acquireVsCodeApi> | null = null;
 
 	start(): void {
-		const vscode = acquireVsCodeApi();
+		this.vscode = acquireVsCodeApi();
 		const ready: OutboundMessage = { type: "ready" };
-		vscode.postMessage(ready);
+		this.vscode.postMessage(ready);
 
 		this.messageListener = (event: MessageEvent) => {
 			if (!isInboundMessage(event.data)) return;
@@ -37,5 +38,14 @@ export class PostMessageAdapter implements IRTransport {
 
 	onError(cb: (message: string) => void): void {
 		this.errorCallbacks.push(cb);
+	}
+
+	sendRoutingEdit(edit: ConnectionRoutingEdit): void {
+		if (this.vscode === null) return;
+		const message: OutboundMessage = {
+			type: "editConnectionRouting",
+			...edit,
+		};
+		this.vscode.postMessage(message);
 	}
 }

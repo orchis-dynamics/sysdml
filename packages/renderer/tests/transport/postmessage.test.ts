@@ -47,4 +47,30 @@ describe("PostMessageAdapter", () => {
 		dispatchInboundError("after stop");
 		expect(onError).not.toHaveBeenCalled();
 	});
+
+	test("sendRoutingEdit posts an editConnectionRouting message", () => {
+		const postMessage = vi.fn();
+		vi.stubGlobal("acquireVsCodeApi", () => ({ postMessage }));
+		const adapter = new PostMessageAdapter();
+		adapter.start();
+		adapter.sendRoutingEdit({
+			connection: { from: "a", polarity: "+", to: "b", occurrence: 0 },
+			angle: 45,
+		});
+		expect(postMessage).toHaveBeenCalledWith({
+			type: "editConnectionRouting",
+			connection: { from: "a", polarity: "+", to: "b", occurrence: 0 },
+			angle: 45,
+		});
+	});
+
+	test("sendRoutingEdit before start is a no-op", () => {
+		const adapter = new PostMessageAdapter();
+		expect(() =>
+			adapter.sendRoutingEdit({
+				connection: { from: "a", polarity: "+", to: "b", occurrence: 0 },
+				angle: 45,
+			}),
+		).not.toThrow();
+	});
 });

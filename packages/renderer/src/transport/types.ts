@@ -1,4 +1,4 @@
-import type { IR } from "@sysdml/contracts";
+import type { ConnectionRoutingEdit, IR } from "@sysdml/contracts";
 import type {
 	ExtensionToWebviewMessage,
 	WebviewToExtensionMessage,
@@ -9,6 +9,7 @@ export interface IRTransport {
 	stop(): void;
 	onIR(cb: (ir: IR) => void): void;
 	onError(cb: (message: string) => void): void;
+	sendRoutingEdit(edit: ConnectionRoutingEdit): void;
 }
 
 export type InboundMessage = ExtensionToWebviewMessage;

@@ -1,3 +1,33 @@
+import type {
+	AuxiliaryDeclarationNode,
+	BinaryExpressionNode,
+	ConnectionDeclarationNode,
+	DeclarationNode,
+	Diagnostic,
+	EndpointNode,
+	ExpressionNode,
+	FileNode,
+	FlowDeclarationNode,
+	FlowPropertyNode,
+	FunctionCallNode,
+	GraphicalFunctionBodyNode,
+	GraphicalFunctionDeclarationNode,
+	GraphicalFunctionPropertyNode,
+	GroupedExpressionNode,
+	IdentifierReferenceNode,
+	IfThenElseNode,
+	ModelDeclarationNode,
+	NumberLiteralNode,
+	NumberListNode,
+	PositionNode,
+	SignedNumberNode,
+	Span,
+	StockDeclarationNode,
+	StockPropertyNode,
+	TimeDeclarationNode,
+	TimePropertyNode,
+	UnaryExpressionNode,
+} from "@sysdml/contracts";
 import { ParserRuleContext, TerminalNode, Token } from "antlr4ng";
 
 import {
@@ -55,36 +85,6 @@ import {
 	UnaryMinusContext,
 	UnaryPlusContext,
 } from "../../generated/SYSDMLParser.js";
-import type {
-	AuxiliaryDeclarationNode,
-	BinaryExpressionNode,
-	ConnectionDeclarationNode,
-	DeclarationNode,
-	Diagnostic,
-	EndpointNode,
-	ExpressionNode,
-	FileNode,
-	FlowDeclarationNode,
-	FlowPropertyNode,
-	FunctionCallNode,
-	GraphicalFunctionBodyNode,
-	GraphicalFunctionDeclarationNode,
-	GraphicalFunctionPropertyNode,
-	GroupedExpressionNode,
-	IdentifierReferenceNode,
-	IfThenElseNode,
-	ModelDeclarationNode,
-	NumberLiteralNode,
-	NumberListNode,
-	PositionNode,
-	SignedNumberNode,
-	Span,
-	StockDeclarationNode,
-	StockPropertyNode,
-	TimeDeclarationNode,
-	TimePropertyNode,
-	UnaryExpressionNode,
-} from "@sysdml/contracts";
 
 // ── Span helpers ─────────────────────────────────────────────────────────────
 
@@ -276,7 +276,8 @@ export class ASTBuilder {
 				continue;
 			}
 			const posLit = prop.posLiteral();
-			if (!posLit) throw new Error("stockDecl: POSITION prop has no posLiteral");
+			if (!posLit)
+				throw new Error("stockDecl: POSITION prop has no posLiteral");
 			position = this.buildPosLiteral(posLit) ?? undefined;
 		}
 
@@ -321,7 +322,8 @@ export class ASTBuilder {
 			}
 			if (key === "position") {
 				const posLit = prop.posLiteral();
-				if (!posLit) throw new Error("flowDecl: POSITION prop has no posLiteral");
+				if (!posLit)
+					throw new Error("flowDecl: POSITION prop has no posLiteral");
 				position = this.buildPosLiteral(posLit) ?? undefined;
 				continue;
 			}
@@ -511,11 +513,15 @@ export class ASTBuilder {
 
 	private connProps(props: ConnPropContext[]): {
 		angle?: number;
+		angleSpan?: Span;
 		via?: PositionNode;
+		viaSpan?: Span;
 	} {
 		const seenKeys = new Set<string>();
 		let angle: number | undefined;
+		let angleSpan: Span | undefined;
 		let via: PositionNode | undefined;
+		let viaSpan: Span | undefined;
 		for (const prop of props) {
 			const key = prop.ANGLE() !== null ? "angle" : "via";
 			if (
@@ -528,19 +534,21 @@ export class ASTBuilder {
 				if (!signedNum)
 					throw new Error("connProp: ANGLE present but no signedNumber");
 				angle = signedNumberToFloat(signedNum);
+				angleSpan = spanOf(prop);
 				continue;
 			}
 			const pos = prop.posLiteral();
 			if (!pos) throw new Error("connProp: VIA present but no posLiteral");
 			via = this.buildPosLiteral(pos) ?? undefined;
+			if (via) viaSpan = spanOf(prop);
 		}
-		return { angle, via };
+		return { angle, angleSpan, via, viaSpan };
 	}
 
 	private positiveCausal(
 		ctx: PositiveCausalContext,
 	): ConnectionDeclarationNode {
-		const { angle, via } = this.connProps(ctx.connProp());
+		const { angle, angleSpan, via, viaSpan } = this.connProps(ctx.connProp());
 		return {
 			type: "ConnectionDeclaration",
 			from: ctx.IDENT(0)!.getText(),
@@ -549,7 +557,9 @@ export class ASTBuilder {
 			to: ctx.IDENT(1)!.getText(),
 			toSpan: tokenSpan(ctx.IDENT(1)!),
 			angle,
+			angleSpan,
 			via,
+			viaSpan,
 			span: spanOf(ctx),
 		};
 	}
@@ -557,7 +567,7 @@ export class ASTBuilder {
 	private negativeCausal(
 		ctx: NegativeCausalContext,
 	): ConnectionDeclarationNode {
-		const { angle, via } = this.connProps(ctx.connProp());
+		const { angle, angleSpan, via, viaSpan } = this.connProps(ctx.connProp());
 		return {
 			type: "ConnectionDeclaration",
 			from: ctx.IDENT(0)!.getText(),
@@ -566,7 +576,9 @@ export class ASTBuilder {
 			to: ctx.IDENT(1)!.getText(),
 			toSpan: tokenSpan(ctx.IDENT(1)!),
 			angle,
+			angleSpan,
 			via,
+			viaSpan,
 			span: spanOf(ctx),
 		};
 	}
@@ -574,7 +586,7 @@ export class ASTBuilder {
 	private flowConnection(
 		ctx: FlowConnectionContext,
 	): ConnectionDeclarationNode {
-		const { angle, via } = this.connProps(ctx.connProp());
+		const { angle, angleSpan, via, viaSpan } = this.connProps(ctx.connProp());
 		return {
 			type: "ConnectionDeclaration",
 			from: ctx.IDENT(0)!.getText(),
@@ -583,7 +595,9 @@ export class ASTBuilder {
 			to: ctx.IDENT(1)!.getText(),
 			toSpan: tokenSpan(ctx.IDENT(1)!),
 			angle,
+			angleSpan,
 			via,
+			viaSpan,
 			span: spanOf(ctx),
 		};
 	}

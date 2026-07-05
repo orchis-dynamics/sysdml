@@ -43,6 +43,10 @@ export class WebSocketAdapter implements IRTransport {
 		this.errorCallbacks.push(cb);
 	}
 
+	sendRoutingEdit(): void {
+		// intentionally empty — this transport does not persist routing edits
+	}
+
 	private connect(): void {
 		if (this.isStopped) return;
 		const webSocket = new WebSocket(this.url);

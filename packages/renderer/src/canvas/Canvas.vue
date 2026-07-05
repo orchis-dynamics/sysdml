@@ -1,13 +1,15 @@
 <script setup lang="ts">
-import type { IR } from "@sysdml/contracts";
+import type { ConnectionRoutingEdit, IR, IRPosition } from "@sysdml/contracts";
 import { useResizeObserver } from "@vueuse/core";
 import { ref, computed, watch, type Component } from "vue";
 
 import { useSimulatorState } from "../state/simulator-state.js";
 import ArrowTip from "./ArrowTip.vue";
+import { useConnectionRoutingDrag } from "./composables/connection-routing-drag.js";
 import { useNodeDrag } from "./composables/node-drag.js";
 import { usePanZoom } from "./composables/pan-zoom.js";
 import {
+	arcFromChordAndCentralAngle,
 	clipToBox,
 	connectionControlPoint,
 	flowElbowCorner,
@@ -62,6 +64,26 @@ const {
 	reset: resetDragOffsets,
 } = useNodeDrag({ scale });
 
+const emit = defineEmits<{ routingEdit: [edit: ConnectionRoutingEdit] }>();
+
+const {
+	hoveredEdgeId,
+	draggingEdgeId,
+	previewFor,
+	onEdgePointerEnter,
+	onEdgePointerLeave,
+	onDotPointerDown,
+	onDotPointerMove,
+	onDotPointerUp,
+	clearPreviews,
+} = useConnectionRoutingDrag({
+	scale,
+	onCommit: (edit) => emit("routingEdit", edit),
+});
+
+const ROUTING_HIT_STROKE_SCREEN_PX = 12;
+const ROUTING_DOT_RADIUS_SCREEN_PX = 4;
+
 enum VisualEdgeKindEnum {
 	Default = "default",
 	Flow = "flow",
@@ -109,6 +131,7 @@ watch(
 	() => props.ir,
 	() => {
 		resetDragOffsets();
+		clearPreviews();
 	},
 );
 
@@ -133,15 +156,27 @@ function targetBox(id: string): LayoutNode | null {
 	return resolvedNodes.value.find((n) => n.id === id) ?? null;
 }
 
+function connectionHints(edge: LayoutConnectionEdge): {
+	angle?: number;
+	via?: IRPosition;
+} {
+	const preview = previewFor(edge.id);
+	return {
+		angle: preview?.angle ?? edge.angle,
+		via: preview?.via ?? edge.via,
+	};
+}
+
 function routedConnectionFor(
 	edge: LayoutConnectionEdge,
 ): RoutedConnection | null {
-	if (edge.angle === undefined && edge.via === undefined) return null;
+	const hints = connectionHints(edge);
+	if (hints.angle === undefined && hints.via === undefined) return null;
 	return routeConnection(
 		nodeCenter(edge.source),
 		nodeCenter(edge.target),
 		targetBox(edge.target),
-		{ angle: edge.angle, via: edge.via },
+		hints,
 	);
 }
 
@@ -184,6 +219,73 @@ function edgeEndpoints(edge: LayoutEdge): {
 	);
 	const end = box ? clipToBox(controlPoint, targetCenter, box) : targetCenter;
 	return { source, controlPoint, corner: null, end };
+}
+
+interface RoutingDot {
+	edge: LayoutConnectionEdge;
+	x: number;
+	y: number;
+}
+
+function dotPosition(edge: LayoutConnectionEdge): Point {
+	const hints = connectionHints(edge);
+	const source = nodeCenter(edge.source);
+	const target = nodeCenter(edge.target);
+	if (hints.via !== undefined) return hints.via;
+	if (hints.angle !== undefined) {
+		return segmentPointAt(
+			arcFromChordAndCentralAngle(source, target, hints.angle),
+			0.5,
+		);
+	}
+	const { controlPoint, end } = edgeEndpoints(edge);
+	if (controlPoint === null) {
+		return { x: (source.x + target.x) / 2, y: (source.y + target.y) / 2 };
+	}
+	return quadraticPoint(source, controlPoint, end, 0.5);
+}
+
+const routingDots = computed<RoutingDot[]>(() => {
+	const dots: RoutingDot[] = [];
+	for (const edge of layout.value.edges) {
+		if (edge.kind !== "connection") continue;
+		if (hoveredEdgeId.value !== edge.id && draggingEdgeId.value !== edge.id) {
+			continue;
+		}
+		const { x, y } = dotPosition(edge);
+		dots.push({ edge, x, y });
+	}
+	return dots;
+});
+
+function onRoutingDotPointerDown(event: PointerEvent, dot: RoutingDot): void {
+	onDotPointerDown(
+		event,
+		{
+			id: dot.edge.id,
+			from: dot.edge.source,
+			polarity: dot.edge.polarity,
+			to: dot.edge.target,
+			occurrence: dot.edge.occurrence,
+			hasVia: dot.edge.via !== undefined,
+			hasAngle: dot.edge.angle !== undefined,
+		},
+		{
+			source: nodeCenter(dot.edge.source),
+			target: nodeCenter(dot.edge.target),
+			dotStart: { x: dot.x, y: dot.y },
+		},
+	);
+}
+
+function onCanvasPointerMove(event: PointerEvent): void {
+	onNodePointerMove(event);
+	onDotPointerMove(event);
+}
+
+function onCanvasPointerUp(): void {
+	onNodePointerUp();
+	onDotPointerUp();
 }
 
 function getEdgePath(edge: LayoutEdge): string {
@@ -310,6 +412,7 @@ type EdgeRenderItem =
 			path: string;
 			strokeClass: string;
 			markerId: string;
+			connectionEdge: LayoutConnectionEdge | null;
 	  };
 
 const edgeRenderItems = computed<EdgeRenderItem[]>(() =>
@@ -331,6 +434,7 @@ const edgeRenderItems = computed<EdgeRenderItem[]>(() =>
 			path: getEdgePath(edge),
 			strokeClass: getEdgeStrokeClass(edge),
 			markerId: getEdgeArrowTipId(edge),
+			connectionEdge: edge.kind === "connection" ? edge : null,
 		};
 	}),
 );
@@ -375,9 +479,9 @@ useResizeObserver(containerRef, ([entry]) => {
 		<div
 			class="absolute inset-0 origin-top-left font-mono"
 			:style="{ transform }"
-			@pointermove="onNodePointerMove"
-			@pointerup="onNodePointerUp"
-			@pointercancel="onNodePointerUp"
+			@pointermove="onCanvasPointerMove"
+			@pointerup="onCanvasPointerUp"
+			@pointercancel="onCanvasPointerUp"
 		>
 			<svg
 				class="absolute inset-0 pointer-events-none overflow-visible"
@@ -416,6 +520,16 @@ useResizeObserver(containerRef, ([entry]) => {
 						fill="none"
 						:marker-end="`url(#${item.markerId})`"
 					/>
+					<path
+						v-if="item.kind === 'other' && item.connectionEdge"
+						:d="item.path"
+						stroke="transparent"
+						:stroke-width="ROUTING_HIT_STROKE_SCREEN_PX / scale"
+						fill="none"
+						style="pointer-events: stroke"
+						@pointerenter="onEdgePointerEnter(item.connectionEdge.id)"
+						@pointerleave="onEdgePointerLeave(item.connectionEdge.id)"
+					/>
 				</template>
 				<text
 					v-for="label in polarityLabels"
@@ -431,6 +545,18 @@ useResizeObserver(containerRef, ([entry]) => {
 				>
 					{{ label.text }}
 				</text>
+				<circle
+					v-for="dot in routingDots"
+					:key="`routing-dot-${dot.edge.id}`"
+					:cx="dot.x"
+					:cy="dot.y"
+					:r="ROUTING_DOT_RADIUS_SCREEN_PX / scale"
+					class="fill-sky-500"
+					style="pointer-events: all; cursor: grab"
+					@pointerenter="onEdgePointerEnter(dot.edge.id)"
+					@pointerleave="onEdgePointerLeave(dot.edge.id)"
+					@pointerdown="onRoutingDotPointerDown($event, dot)"
+				/>
 			</svg>
 
 			<div

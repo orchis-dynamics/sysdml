@@ -36,6 +36,7 @@ export interface LayoutConnectionEdge {
 	source: string;
 	target: string;
 	polarity: "+" | "-" | "=>";
+	occurrence: number;
 	angle?: number;
 	via?: IRPosition;
 }
