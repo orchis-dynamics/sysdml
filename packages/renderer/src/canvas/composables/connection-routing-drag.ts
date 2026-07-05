@@ -1,5 +1,5 @@
 import type { ConnectionRoutingEdit, IRPosition } from "@sysdml/contracts";
-import { ref, type Ref } from "vue";
+import { getCurrentInstance, onUnmounted, ref, type Ref } from "vue";
 
 import {
 	centralAngleDegreesFromDragPoint,
@@ -208,6 +208,12 @@ export function useConnectionRoutingDrag({
 		for (const timer of revertTimers.values()) clearTimeout(timer);
 		revertTimers.clear();
 		previews.value = new Map();
+	}
+
+	if (getCurrentInstance()) {
+		onUnmounted(() => {
+			window.removeEventListener("keydown", onKeyDown);
+		});
 	}
 
 	return {
