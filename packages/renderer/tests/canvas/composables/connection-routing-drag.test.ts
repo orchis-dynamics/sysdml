@@ -128,6 +128,21 @@ describe("useConnectionRoutingDrag", () => {
 		});
 	});
 
+	test("via commit payload survives structured clone for postMessage", () => {
+		const onCommit = vi.fn();
+		const drag = useConnectionRoutingDrag({ scale: ref(1), onCommit });
+		drag.onDotPointerDown(pointerDown(40, -30), viaConnection(), {
+			source: { x: 0, y: 0 },
+			target: { x: 100, y: 0 },
+			dotStart: { x: 40, y: -30 },
+		});
+		drag.onDotPointerMove(pointerMove(60, -10));
+		drag.onDotPointerUp();
+		const commit = onCommit.mock.calls[0][0];
+		expect(() => structuredClone(commit)).not.toThrow();
+		expect(structuredClone(commit)).toEqual(commit);
+	});
+
 	test("via drag on a connection with angle also commits the derived angle", () => {
 		const onCommit = vi.fn();
 		const drag = useConnectionRoutingDrag({ scale: ref(1), onCommit });

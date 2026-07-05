@@ -1,5 +1,11 @@
 import type { ConnectionRoutingEdit, IRPosition } from "@sysdml/contracts";
-import { getCurrentInstance, onUnmounted, ref, type Ref } from "vue";
+import {
+	getCurrentInstance,
+	onUnmounted,
+	ref,
+	shallowRef,
+	type Ref,
+} from "vue";
 
 import {
 	centralAngleDegreesFromDragPoint,
@@ -41,7 +47,7 @@ export function useConnectionRoutingDrag({
 }) {
 	const hoveredEdgeId = ref<string | null>(null);
 	const draggingEdgeId = ref<string | null>(null);
-	const previews = ref(new Map<string, RoutingPreview>());
+	const previews = shallowRef(new Map<string, RoutingPreview>());
 	const revertTimers = new Map<string, ReturnType<typeof setTimeout>>();
 
 	let dragConnection: RoutingDragConnection | null = null;
@@ -189,7 +195,7 @@ export function useConnectionRoutingDrag({
 		if (preview.via !== undefined) {
 			onCommit({
 				connection: identity,
-				via: preview.via,
+				via: { x: preview.via.x, y: preview.via.y },
 				...(preview.angle !== undefined ? { angle: preview.angle } : {}),
 			});
 		} else if (preview.angle !== undefined) {
