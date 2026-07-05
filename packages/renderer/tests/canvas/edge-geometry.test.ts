@@ -622,4 +622,12 @@ describe("routing drag geometry", () => {
 			),
 		).toBe(0);
 	});
+
+	test("via-derived angle is clamped to the writable range", () => {
+		const source = { x: 0, y: 0 };
+		const target = { x: 100, y: 0 };
+		const deepVia = { x: 150, y: -400 };
+		const angle = viaDerivedCentralAngleDegrees(source, deepVia, target);
+		expect(Math.abs(angle)).toBeLessThanOrEqual(180);
+	});
 });

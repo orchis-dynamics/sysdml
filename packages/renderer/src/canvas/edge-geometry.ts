@@ -536,7 +536,7 @@ export function viaDerivedCentralAngleDegrees(
 	const viaOffset = normalizeAnglePositive(viaAngleRadians - startAngleRadians);
 	const sourceToViaRadians =
 		viaOffset <= positiveSweep ? viaOffset : viaOffset - FULL_TURN_RADIANS;
-	return Math.round((sourceToViaRadians * 180) / Math.PI);
+	return clampAngleDegrees(Math.round((sourceToViaRadians * 180) / Math.PI));
 }
 
 export function flowPipeGeometry(
