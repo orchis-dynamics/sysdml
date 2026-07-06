@@ -334,6 +334,33 @@ export function compileAST(ast: FileNode): CompileResult {
 			message: "At least one stock is required",
 		});
 
+	if (!isSimulatable) {
+		stockDecls.forEach((stockDecl) =>
+			nonFatalDiagnostics.push({
+				code: DiagnosticCode.SFD_ONLY_DECLARATION,
+				message: `stock '${stockDecl.id}' is only supported in sfd models`,
+				span: stockDecl.span,
+				severity: "warning",
+			}),
+		);
+		flowDecls.forEach((flowDecl) =>
+			nonFatalDiagnostics.push({
+				code: DiagnosticCode.SFD_ONLY_DECLARATION,
+				message: `flow '${flowDecl.id}' is only supported in sfd models`,
+				span: flowDecl.span,
+				severity: "warning",
+			}),
+		);
+		graphicalFunctionDecls.forEach((graphicalFunctionDecl) =>
+			nonFatalDiagnostics.push({
+				code: DiagnosticCode.SFD_ONLY_DECLARATION,
+				message: `gf '${graphicalFunctionDecl.id}' is only supported in sfd models`,
+				span: graphicalFunctionDecl.span,
+				severity: "warning",
+			}),
+		);
+	}
+
 	// ── Duplicate ID check ────────────────────────────────────────────────────
 
 	const allIdDecls: Array<{ id: string; span: Span }> = [

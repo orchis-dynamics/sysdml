@@ -399,3 +399,35 @@ describe("expression-less aux", () => {
 		);
 	});
 });
+
+describe("sfd-only declarations in cld models", () => {
+	it("warns on stock, flow, and gf declarations without blocking the IR", () => {
+		const { ir, diagnostics } = compileAST(
+			parse(
+				`cld m\n\nstock s {\n  init: 1\n}\n\nflow f {\n  from: null\n  to: null\n  rate: 1\n}\n\ngf g {\n  ypts: [0, 1]\n  xscale: [0, 1]\n}\n\ns ->+ b`,
+			),
+		);
+		expect(ir).not.toBeNull();
+		const warnings = diagnostics.filter(
+			(d) => d.code === "SFD_ONLY_DECLARATION",
+		);
+		expect(warnings).toHaveLength(3);
+		expect(warnings.every((d) => d.severity === "warning")).toBe(true);
+		expect(warnings.map((d) => d.message)).toEqual([
+			"stock 's' is only supported in sfd models",
+			"flow 'f' is only supported in sfd models",
+			"gf 'g' is only supported in sfd models",
+		]);
+	});
+
+	it("does not warn in sfd models or for cld aux declarations", () => {
+		const { diagnostics } = compileAST(
+			parse(
+				`cld m\n\naux a = 1\n\na ->+ b`,
+			),
+		);
+		expect(
+			diagnostics.some((d) => d.code === "SFD_ONLY_DECLARATION"),
+		).toBe(false);
+	});
+});
