@@ -335,28 +335,33 @@ export function compileAST(ast: FileNode): CompileResult {
 		});
 
 	if (!isSimulatable) {
-		stockDecls.forEach((stockDecl) =>
-			nonFatalDiagnostics.push({
+		timeDecls.forEach((timeDecl) =>
+			errors.push({
 				code: DiagnosticCode.SFD_ONLY_DECLARATION,
-				message: `stock '${stockDecl.id}' is only supported in sfd models`,
+				message:
+					"time block is not allowed in cld models; a cld is not simulated",
+				span: timeDecl.span,
+			}),
+		);
+		stockDecls.forEach((stockDecl) =>
+			errors.push({
+				code: DiagnosticCode.SFD_ONLY_DECLARATION,
+				message: `stock '${stockDecl.id}' is not allowed in cld models; a cld describes causal structure only — use an sfd model for stocks and flows`,
 				span: stockDecl.span,
-				severity: "warning",
 			}),
 		);
 		flowDecls.forEach((flowDecl) =>
-			nonFatalDiagnostics.push({
+			errors.push({
 				code: DiagnosticCode.SFD_ONLY_DECLARATION,
-				message: `flow '${flowDecl.id}' is only supported in sfd models`,
+				message: `flow '${flowDecl.id}' is not allowed in cld models; a cld describes causal structure only — use an sfd model for stocks and flows`,
 				span: flowDecl.span,
-				severity: "warning",
 			}),
 		);
 		graphicalFunctionDecls.forEach((graphicalFunctionDecl) =>
-			nonFatalDiagnostics.push({
+			errors.push({
 				code: DiagnosticCode.SFD_ONLY_DECLARATION,
-				message: `gf '${graphicalFunctionDecl.id}' is only supported in sfd models`,
+				message: `gf '${graphicalFunctionDecl.id}' is not allowed in cld models; graphical functions belong to sfd equations`,
 				span: graphicalFunctionDecl.span,
-				severity: "warning",
 			}),
 		);
 	}
@@ -502,6 +507,14 @@ export function compileAST(ast: FileNode): CompileResult {
 					span: auxDecl.span,
 				});
 			}
+			return { id: auxDecl.id, position: posToIR(auxDecl.position) };
+		}
+		if (ast.model.kind === "cld") {
+			errors.push({
+				code: DiagnosticCode.AUX_EXPRESSION_IN_CLD,
+				message: `aux '${auxDecl.id}' cannot have an expression in cld models; cld variables carry structure only — use an sfd model for equations`,
+				span: auxDecl.span,
+			});
 			return { id: auxDecl.id, position: posToIR(auxDecl.position) };
 		}
 		return {

@@ -207,20 +207,9 @@ describe("computeMissingPositionEdits", () => {
 		).toEqual({ edits: [] });
 	});
 
-	it("never rewrites a positioned cld stock during auto-pinning", () => {
+	it("a cld containing a stock no longer compiles, so auto-pinning cannot touch it", () => {
 		const source = `cld m\n\nstock s {\n  init: 1\n  position: { x: 100, y: 100 }\n}\n\ns ->+ b`;
 		const analysis = analyzeDocument(source);
-		if (!analysis.ast || !analysis.ir) throw new Error("analysis failed");
-		const result = computeMissingPositionEdits(
-			analysis.ast,
-			analysis.ir,
-			source,
-			URI,
-		);
-		if ("error" in result) throw new Error(result.error);
-		const doc = TextDocument.create(URI, "sysdml", 1, source);
-		const applied = TextDocument.applyEdits(doc, result.edits);
-		expect(applied).toContain("position: { x: 100, y: 100 }");
-		expect(applied).not.toMatch(/aux s /);
+		expect(analysis.ir).toBeNull();
 	});
 });

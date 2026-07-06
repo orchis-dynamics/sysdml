@@ -401,33 +401,47 @@ describe("expression-less aux", () => {
 });
 
 describe("sfd-only declarations in cld models", () => {
-	it("warns on stock, flow, and gf declarations without blocking the IR", () => {
+	it("errors on time, stock, flow, and gf declarations and nulls the IR", () => {
 		const { ir, diagnostics } = compileAST(
 			parse(
-				`cld m\n\nstock s {\n  init: 1\n}\n\nflow f {\n  from: null\n  to: null\n  rate: 1\n}\n\ngf g {\n  ypts: [0, 1]\n  xscale: [0, 1]\n}\n\ns ->+ b`,
+				`cld m\n\ntime {\n  start: 0\n  end: 10\n  step: 1\n}\n\nstock s {\n  init: 1\n}\n\nflow f {\n  from: null\n  to: null\n  rate: 1\n}\n\ngf g {\n  ypts: [0, 1]\n  xscale: [0, 1]\n}\n\ns ->+ b`,
 			),
 		);
-		expect(ir).not.toBeNull();
-		const warnings = diagnostics.filter(
+		expect(ir).toBeNull();
+		const errorsOnly = diagnostics.filter(
 			(d) => d.code === "SFD_ONLY_DECLARATION",
 		);
-		expect(warnings).toHaveLength(3);
-		expect(warnings.every((d) => d.severity === "warning")).toBe(true);
-		expect(warnings.map((d) => d.message)).toEqual([
-			"stock 's' is only supported in sfd models",
-			"flow 'f' is only supported in sfd models",
-			"gf 'g' is only supported in sfd models",
+		expect(errorsOnly).toHaveLength(4);
+		expect(errorsOnly.every((d) => d.severity === undefined)).toBe(true);
+		expect(errorsOnly.map((d) => d.message)).toEqual([
+			"time block is not allowed in cld models; a cld is not simulated",
+			"stock 's' is not allowed in cld models; a cld describes causal structure only — use an sfd model for stocks and flows",
+			"flow 'f' is not allowed in cld models; a cld describes causal structure only — use an sfd model for stocks and flows",
+			"gf 'g' is not allowed in cld models; graphical functions belong to sfd equations",
 		]);
 	});
 
-	it("does not warn in sfd models or for cld aux declarations", () => {
-		const { diagnostics } = compileAST(
+	it("errors when a cld aux declares an expression", () => {
+		const { ir, diagnostics } = compileAST(
+			parse(`cld m\n\naux a = 1\n\na ->+ b`),
+		);
+		expect(ir).toBeNull();
+		const errorsOnly = diagnostics.filter(
+			(d) => d.code === "AUX_EXPRESSION_IN_CLD",
+		);
+		expect(errorsOnly).toHaveLength(1);
+		expect(errorsOnly[0].message).toBe(
+			"aux 'a' cannot have an expression in cld models; cld variables carry structure only — use an sfd model for equations",
+		);
+	});
+
+	it("compiles a strictly structural cld with positioned aux and routed connections", () => {
+		const { ir, diagnostics } = compileAST(
 			parse(
-				`cld m\n\naux a = 1\n\na ->+ b`,
+				`cld m\n\naux a { position: { x: 1, y: 2 } }\n\na ->+ b { angle: 45 }\nb ->- a { via: { x: 10, y: 20 } }`,
 			),
 		);
-		expect(
-			diagnostics.some((d) => d.code === "SFD_ONLY_DECLARATION"),
-		).toBe(false);
+		expect(diagnostics).toEqual([]);
+		expect(ir).not.toBeNull();
 	});
 });
