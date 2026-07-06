@@ -36,6 +36,38 @@ describe("computeMissingPositions", () => {
 		expect(ids).not.toContain("f");
 	});
 
+	test("cld: declared stocks, flows, and gfs are never auto-pinned", () => {
+		const model = ir({
+			model: { id: "m", kind: "cld" },
+			stocks: [stock("s", { x: 100, y: 100 })],
+			flows: [flow("f", null, null)],
+			auxiliaries: [],
+			connections: [connection("s", "b", "+"), connection("f", "g", "-")],
+		});
+		model.graphicalFunctions = [
+			{
+				id: "g",
+				kind: "linear",
+				xscale: [0, 1],
+				xpts: null,
+				ypts: [0, 1],
+				yscale: null,
+			},
+		];
+		const ids = computeMissingPositions(model).map((entry) => entry.id);
+		expect(ids).toEqual(["b"]);
+	});
+
+	test("cld: an unpositioned declared stock endpoint is still excluded", () => {
+		const model = ir({
+			model: { id: "m", kind: "cld" },
+			stocks: [stock("s")],
+			connections: [connection("s", "b", "+")],
+		});
+		const ids = computeMissingPositions(model).map((entry) => entry.id);
+		expect(ids).toEqual(["b"]);
+	});
+
 	test("coordinates are integers and deterministic across calls", () => {
 		const model = ir({
 			model: { id: "m", kind: "cld" },

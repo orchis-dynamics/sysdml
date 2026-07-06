@@ -44,9 +44,9 @@ function invalidParamsError(
 		seen.add(entry.id);
 		if (
 			typeof entry.position?.x !== "number" ||
-			!Number.isInteger(entry.position.x) ||
+			!Number.isSafeInteger(entry.position.x) ||
 			typeof entry.position?.y !== "number" ||
-			!Number.isInteger(entry.position.y)
+			!Number.isSafeInteger(entry.position.y)
 		) {
 			return `position x and y for '${entry.id}' must be integers`;
 		}
@@ -80,9 +80,13 @@ function blockInsertEdit(
 ): TextEdit {
 	const propertyText = `position: ${posText(position)}`;
 	if (decl.span.start.line === decl.span.end.line) {
+		const braceLine = sourceText.split("\n")[decl.span.end.line - 1] ?? "";
+		const charBeforeBrace = braceLine[decl.span.end.col - 2];
+		const needsSpace =
+			charBeforeBrace !== undefined && !/\s/.test(charBeforeBrace);
 		return TextEdit.insert(
 			Position.create(decl.span.end.line - 1, decl.span.end.col - 1),
-			`${propertyText} `,
+			`${needsSpace ? " " : ""}${propertyText} `,
 		);
 	}
 	const indentSourceLine =

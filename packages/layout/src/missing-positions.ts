@@ -15,6 +15,11 @@ export function computeMissingPositions(ir: IR): ElementPositionEdit[] {
 			participating.add(connection.from);
 			participating.add(connection.to);
 		});
+		ir.stocks.forEach((stock) => explicit.add(stock.id));
+		ir.flows.forEach((flow) => explicit.add(flow.id));
+		ir.graphicalFunctions.forEach((graphicalFunction) =>
+			explicit.add(graphicalFunction.id),
+		);
 	} else {
 		ir.stocks.forEach((stock) => {
 			participating.add(stock.id);

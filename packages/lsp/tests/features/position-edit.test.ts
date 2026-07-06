@@ -61,6 +61,13 @@ describe("computeElementPositionEdits", () => {
 		).toBe(`sfd m\nstock s { init: 1 position: { x: 1, y: 2 } }`);
 	});
 
+	it("keeps a space before the inserted property when the block has none", () => {
+		const source = `sfd m\nstock s { init: 1}`;
+		expect(
+			applyPositions(source, [{ id: "s", position: { x: 1, y: 2 } }]),
+		).toBe(`sfd m\nstock s { init: 1 position: { x: 1, y: 2 } }`);
+	});
+
 	it("inserts a position line into a flow block after via", () => {
 		const source = `sfd m\nflow f {\n  from: null\n  to: null\n  rate: 1\n  via: [{ x: 1, y: 2 }]\n}`;
 		expect(
@@ -134,6 +141,12 @@ describe("computeElementPositionEdits", () => {
 		).toBe("position x and y for 'a' must be integers");
 	});
 
+	it("rejects unsafe-integer coordinates", () => {
+		expect(
+			errorFor(`cld m\na ->+ b`, [{ id: "a", position: { x: 1e21, y: 0 } }]),
+		).toBe("position x and y for 'a' must be integers");
+	});
+
 	it("rejects duplicate ids in one batch", () => {
 		expect(
 			errorFor(`cld m\na ->+ b`, [
@@ -192,5 +205,22 @@ describe("computeMissingPositionEdits", () => {
 		expect(
 			computeMissingPositionEdits(analysis.ast, analysis.ir, source, URI),
 		).toEqual({ edits: [] });
+	});
+
+	it("never rewrites a positioned cld stock during auto-pinning", () => {
+		const source = `cld m\n\nstock s {\n  init: 1\n  position: { x: 100, y: 100 }\n}\n\ns ->+ b`;
+		const analysis = analyzeDocument(source);
+		if (!analysis.ast || !analysis.ir) throw new Error("analysis failed");
+		const result = computeMissingPositionEdits(
+			analysis.ast,
+			analysis.ir,
+			source,
+			URI,
+		);
+		if ("error" in result) throw new Error(result.error);
+		const doc = TextDocument.create(URI, "sysdml", 1, source);
+		const applied = TextDocument.applyEdits(doc, result.edits);
+		expect(applied).toContain("position: { x: 100, y: 100 }");
+		expect(applied).not.toMatch(/aux s /);
 	});
 });
