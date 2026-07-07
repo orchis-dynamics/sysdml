@@ -254,6 +254,7 @@ function snapSaveStepToStepMultiple(
 	const ratio = saveStep / step;
 	const nearest = Math.round(ratio);
 	const snapped = parseFloat((nearest * step).toPrecision(12));
+	if (!Number.isFinite(snapped)) return saveStep;
 	if (Math.abs(ratio - nearest) > 1e-12 * Math.max(1, Math.abs(ratio))) {
 		nonFatalDiagnostics.push({
 			code: DiagnosticCode.SAVE_STEP_NOT_MULTIPLE,
@@ -305,14 +306,14 @@ function compileTimeBlock(
 	if (step !== null && step <= 0) {
 		errors.push({
 			code: DiagnosticCode.INVALID_TIME_STEP,
-			message: `time.step must be greater than 0 (got ${step})`,
+			message: `time.step must be greater than 0 (got ${formatDecimal(step)})`,
 			span: timeDecl.span,
 		});
 	}
 	if (start !== null && end !== null && end < start) {
 		errors.push({
 			code: DiagnosticCode.INVALID_TIME_RANGE,
-			message: `time.end must be >= time.start (${end} < ${start})`,
+			message: `time.end must be >= time.start (${formatDecimal(end)} < ${formatDecimal(start)})`,
 			span: timeDecl.span,
 		});
 	}
@@ -320,14 +321,14 @@ function compileTimeBlock(
 	if (saveStep !== null && saveStep <= 0) {
 		errors.push({
 			code: DiagnosticCode.INVALID_SAVE_STEP,
-			message: `time.save_step must be greater than 0 (got ${saveStep})`,
+			message: `time.save_step must be greater than 0 (got ${formatDecimal(saveStep)})`,
 			span: timeDecl.span,
 		});
 	}
 	if (saveStep !== null && saveStep > 0 && step !== null && saveStep < step) {
 		errors.push({
 			code: DiagnosticCode.INVALID_SAVE_STEP,
-			message: `time.save_step must be >= time.step (${saveStep} < ${step})`,
+			message: `time.save_step must be >= time.step (${formatDecimal(saveStep)} < ${formatDecimal(step)})`,
 			span: timeDecl.span,
 		});
 	}

@@ -328,6 +328,17 @@ describe("time block non-finite values (B6.6)", () => {
 		).toBeDefined();
 	});
 
+	test("finite save_step whose snap product overflows keeps the finite literal", () => {
+		const NEAR_MAX = "17976931348623157" + "0".repeat(292);
+		const { ir, diagnostics } = compileTime(
+			`time { start: 0 end: 10 step: 3 save_step: ${NEAR_MAX} }`,
+		);
+		expect(diagnostics).toHaveLength(0);
+		expect(ir).not.toBeNull();
+		expect(Number.isFinite(ir!.time.saveStep!)).toBe(true);
+		expect(ir!.time.saveStep).toBe(1.7976931348623157e308);
+	});
+
 	test("NON_FINITE_TIME_VALUE points at the offending property", () => {
 		const { diagnostics } = compileTime(
 			`time { start: 0 end: 10 step: 1 save_step: ${OVERFLOW} }`,
@@ -335,7 +346,9 @@ describe("time block non-finite values (B6.6)", () => {
 		const diag = diagnostics.find(
 			(d) => d.code === DiagnosticCode.NON_FINITE_TIME_VALUE,
 		);
+		expect(diag).toBeDefined();
 		expect(diag!.span).toBeDefined();
+		expect(diag!.span!.start.line).toBe(2);
 		expect(diag!.span!.start.col).toBe(
 			"time { start: 0 end: 10 step: 1 ".length + 1,
 		);
