@@ -85,8 +85,12 @@ interface IRTime {
 	start: number;
 	end: number;
 	step: number;
+	saveStep?: number;
+	timeUnits?: string;
 }
 ```
+
+`saveStep` is absent when the source omits `save_step` and always holds a whole multiple of `step` — non-multiple source values are snapped to the nearest multiple with a `SAVE_STEP_NOT_MULTIPLE` warning. `timeUnits` carries the `time_units` identifier verbatim.
 
 ### `IRPosition`
 
@@ -240,6 +244,8 @@ type IRExpressionNode =
 | `UNDEFINED_IDENTIFIER`       | Expression references an unknown variable                      |
 | `INVALID_TIME_STEP`          | `time.step` is ≤ 0                                             |
 | `INVALID_TIME_RANGE`         | `time.end` < `time.start`                                      |
+| `INVALID_SAVE_STEP`          | `time.save_step` is ≤ 0 or < `time.step`                       |
+| `SAVE_STEP_NOT_MULTIPLE`     | Warning: `save_step` snapped to the nearest multiple of `step` |
 | `UNKNOWN_FUNCTION`           | Function name not in built-in set and not a graphical function |
 | `WRONG_ARITY`                | Built-in called with wrong number of arguments                 |
 | `INVALID_GF_KIND`            | `kind` is not `linear`, `extra`, or `step`                     |
