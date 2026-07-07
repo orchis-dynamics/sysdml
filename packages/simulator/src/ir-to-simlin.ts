@@ -212,7 +212,7 @@ function mapStocks(ir: IR, context: EquationLoweringContext): SimlinStock[] {
 		const wiring = wiringByStockId.get(stock.id);
 		return {
 			name: stock.id,
-			initialEquation: lowerEquation(stock.init, context).equation,
+			initialEquation: serializeExpression(stock.init, context),
 			inflows: wiring ? wiring.inflows : [],
 			outflows: wiring ? wiring.outflows : [],
 		};

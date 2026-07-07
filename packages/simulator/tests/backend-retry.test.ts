@@ -1,5 +1,5 @@
-import { compileAST } from "@sysdml/ir";
 import type { IR } from "@sysdml/contracts";
+import { compileAST } from "@sysdml/ir";
 import { parseSource } from "@sysdml/parser";
 import { expect, test, vi } from "vitest";
 

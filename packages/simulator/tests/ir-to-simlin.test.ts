@@ -68,6 +68,24 @@ flow births { from: null to: population rate: population * birth_rate }
 		});
 	});
 
+	test("hoists a bare graphical-function stock init into a hidden auxiliary", () => {
+		const bareInit = `
+sfd bare_init
+time { start: 0 end: 1 step: 1 }
+gf response { xscale: [0, 10] ypts: [0, 100] }
+stock reservoir { init: response(3) }
+`.trim();
+		const [model] = irToSimlinProject(buildIR(bareInit)).models;
+		const [stock] = model.stocks;
+		const hidden = model.auxiliaries.find(
+			(auxiliary) => auxiliary.name === stock.initialEquation,
+		);
+		expect(stock.initialEquation).toBe("_lookup_0");
+		expect(hidden).toBeDefined();
+		expect(hidden!.equation).toBe("3");
+		expect(hidden!.graphicalFunction).toBeDefined();
+	});
+
 	test("preserves both lookups when a graphical function is nested inside another's argument", () => {
 		const nestedGraphicalFunctions = `
 sfd nested_gf
