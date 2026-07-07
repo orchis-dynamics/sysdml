@@ -1,8 +1,8 @@
+import { DiagnosticCode } from "@sysdml/contracts";
+import type { IR, IRGraphicalFunction } from "@sysdml/contracts";
 import { parseSource } from "@sysdml/parser";
 import { describe, test, expect } from "vitest";
 
-import { DiagnosticCode } from "@sysdml/contracts";
-import type { IR, IRGraphicalFunction } from "@sysdml/contracts";
 import { compileAST } from "../src/index.js";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -171,7 +171,7 @@ describe("named GF call in expression", () => {
     `);
 		const auxExpr = ir.auxiliaries.find(
 			(auxiliaryVariable) => auxiliaryVariable.id === "result",
-		)!.expr;
+		)!.expr!;
 		expect(auxExpr.type).toBe("GraphicalFunctionCall");
 	});
 
@@ -182,7 +182,7 @@ describe("named GF call in expression", () => {
     `);
 		const auxExpr = ir.auxiliaries.find(
 			(auxiliaryVariable) => auxiliaryVariable.id === "result",
-		)!.expr;
+		)!.expr!;
 		if (auxExpr.type === "GraphicalFunctionCall") {
 			expect(auxExpr.name).toBe("food_curve");
 		}
@@ -195,7 +195,7 @@ describe("named GF call in expression", () => {
     `);
 		const auxExpr = ir.auxiliaries.find(
 			(auxiliaryVariable) => auxiliaryVariable.id === "result",
-		)!.expr;
+		)!.expr!;
 		if (auxExpr.type === "GraphicalFunctionCall") {
 			expect(auxExpr.argument).toEqual({ type: "Reference", id: "s" });
 		}
@@ -216,7 +216,7 @@ describe("named GF call in expression", () => {
     `);
 		const auxExpr = ir.auxiliaries.find(
 			(auxiliaryVariable) => auxiliaryVariable.id === "result",
-		)!.expr;
+		)!.expr!;
 		expect(auxExpr.type).not.toBe("FunctionCall");
 	});
 });
@@ -231,7 +231,7 @@ describe("aux referencing named GF", () => {
     `);
 		const auxExpr = ir.auxiliaries.find(
 			(auxiliaryVariable) => auxiliaryVariable.id === "effect",
-		)!.expr;
+		)!.expr!;
 		expect(auxExpr.type).toBe("GraphicalFunctionCall");
 	});
 
@@ -242,7 +242,7 @@ describe("aux referencing named GF", () => {
     `);
 		const auxExpr = ir.auxiliaries.find(
 			(auxiliaryVariable) => auxiliaryVariable.id === "effect",
-		)!.expr;
+		)!.expr!;
 		if (auxExpr.type === "GraphicalFunctionCall") {
 			expect(auxExpr.argument).toEqual({ type: "Reference", id: "s" });
 		}
@@ -265,7 +265,7 @@ describe("aux referencing named GF", () => {
 describe("lookup() inline function", () => {
 	test("produces GFCall IR node", () => {
 		const ir = compileValid("aux result = lookup(s, 0, 0.5, 1)");
-		expect(ir.auxiliaries[0].expr.type).toBe("GraphicalFunctionCall");
+		expect(ir.auxiliaries[0].expr!.type).toBe("GraphicalFunctionCall");
 	});
 
 	test("produces synthetic GF in graphicalFunctions", () => {
@@ -291,15 +291,15 @@ describe("lookup() inline function", () => {
 
 	test("GFCall name references the synthetic GF id", () => {
 		const ir = compileValid("aux result = lookup(s, 0, 0.5, 1)");
-		if (ir.auxiliaries[0].expr.type === "GraphicalFunctionCall") {
-			expect(ir.auxiliaries[0].expr.name).toBe("__lookup_0");
+		if (ir.auxiliaries[0].expr!.type === "GraphicalFunctionCall") {
+			expect(ir.auxiliaries[0].expr!.name).toBe("__lookup_0");
 		}
 	});
 
 	test("GFCall arg is compiled input expression", () => {
 		const ir = compileValid("aux result = lookup(s, 0, 0.5, 1)");
-		if (ir.auxiliaries[0].expr.type === "GraphicalFunctionCall") {
-			expect(ir.auxiliaries[0].expr.argument).toEqual({
+		if (ir.auxiliaries[0].expr!.type === "GraphicalFunctionCall") {
+			expect(ir.auxiliaries[0].expr!.argument).toEqual({
 				type: "Reference",
 				id: "s",
 			});

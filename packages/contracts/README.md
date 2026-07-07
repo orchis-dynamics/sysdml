@@ -31,8 +31,8 @@ graph TD
   expression["expression — leaf"]
   syntax["syntax — leaf"]
   diagnostics --> syntax
-  model --> expression
   model --> diagnostics
+  model --> expression
   simulation --> model
   simulation --> diagnostics
   protocol --> diagnostics

@@ -73,4 +73,39 @@ describe("PostMessageAdapter", () => {
 			}),
 		).not.toThrow();
 	});
+
+	test("sendPositionEdits posts an editElementPositions message", () => {
+		const postMessage = vi.fn();
+		vi.stubGlobal("acquireVsCodeApi", () => ({ postMessage }));
+		const adapter = new PostMessageAdapter();
+		adapter.start();
+		adapter.sendPositionEdits([{ id: "a", position: { x: 1, y: 2 } }]);
+		const message = postMessage.mock.calls.at(-1)?.[0];
+		expect(message).toEqual({
+			type: "editElementPositions",
+			positions: [{ id: "a", position: { x: 1, y: 2 } }],
+		});
+		expect(structuredClone(message)).toEqual(message);
+	});
+
+	test("sendPinMissingPositions posts a pinMissingPositions message", () => {
+		const postMessage = vi.fn();
+		vi.stubGlobal("acquireVsCodeApi", () => ({ postMessage }));
+		const adapter = new PostMessageAdapter();
+		adapter.start();
+		adapter.sendPinMissingPositions();
+		const message = postMessage.mock.calls.at(-1)?.[0];
+		expect(message).toEqual({
+			type: "pinMissingPositions",
+		});
+		expect(structuredClone(message)).toEqual(message);
+	});
+
+	test("sendPositionEdits before start is a no-op", () => {
+		const postMessage = vi.fn();
+		vi.stubGlobal("acquireVsCodeApi", () => ({ postMessage }));
+		const adapter = new PostMessageAdapter();
+		adapter.sendPositionEdits([{ id: "a", position: { x: 1, y: 2 } }]);
+		expect(postMessage).not.toHaveBeenCalled();
+	});
 });

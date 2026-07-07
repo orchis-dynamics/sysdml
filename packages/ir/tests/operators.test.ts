@@ -1,8 +1,8 @@
+import { DiagnosticCode } from "@sysdml/contracts";
+import type { IRExpressionNode } from "@sysdml/contracts";
 import { parseSource } from "@sysdml/parser";
 import { describe, test, expect } from "vitest";
 
-import { DiagnosticCode } from "@sysdml/contracts";
-import type { IRExpressionNode } from "@sysdml/contracts";
 import { compileAST } from "../src/index.js";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -35,7 +35,7 @@ function getResultExpression(expressionSource: string): IRExpressionNode {
 		`unexpected diagnostics for ${expressionSource}`,
 	).toHaveLength(0);
 	expect(ir).not.toBeNull();
-	return ir!.auxiliaries[ir!.auxiliaries.length - 1].expr;
+	return ir!.auxiliaries[ir!.auxiliaries.length - 1].expr!;
 }
 
 const createRefNode = (id: string): IRExpressionNode => ({

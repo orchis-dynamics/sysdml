@@ -2,7 +2,7 @@ import { readFileSync } from "fs";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
 
-import { describe, test, expect, beforeAll } from "vitest";
+import { describe, test, it, expect, beforeAll } from "vitest";
 
 import { parseSource } from "../src/index.js";
 import type {
@@ -136,5 +136,25 @@ describe("model declaration keywords", () => {
 		const { ast, diagnostics } = parseSource(`model m\nA ->+ B`);
 		expect(diagnostics.length).toBeGreaterThan(0);
 		expect(ast).toBeNull();
+	});
+});
+
+describe("expression-less aux", () => {
+	it("parses an aux with only a position block", () => {
+		const { ast, diagnostics } = parseSource(
+			`cld m\naux population { position: { x: 120, y: 40 } }\npopulation ->+ births`,
+		);
+		expect(diagnostics).toEqual([]);
+		const aux = ast!.decls.find((d) => d.type === "AuxiliaryDeclaration");
+		expect(aux).toMatchObject({
+			id: "population",
+			expr: undefined,
+			position: { x: 120, y: 40 },
+		});
+	});
+
+	it("rejects a bare aux with neither expression nor block", () => {
+		const { diagnostics } = parseSource(`cld m\naux population`);
+		expect(diagnostics.length).toBeGreaterThan(0);
 	});
 });

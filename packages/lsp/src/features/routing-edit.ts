@@ -2,12 +2,12 @@ import type {
 	ConnectionDeclarationNode,
 	FileNode,
 	IRPosition,
-	Span,
 	UpdateConnectionRoutingParams,
 } from "@sysdml/contracts";
-import { Position, TextEdit } from "vscode-languageserver/node.js";
+import { TextEdit } from "vscode-languageserver/node.js";
 
 import { spanToRange } from "../analysis.js";
+import { lineLeadingWhitespace, positionAfterSpanEnd } from "./edit-helpers.js";
 
 export type RoutingEditResult = { edits: TextEdit[] } | { error: string };
 
@@ -75,15 +75,6 @@ function findConnection(
 		remaining--;
 	}
 	return null;
-}
-
-function positionAfterSpanEnd(span: Span): Position {
-	return Position.create(span.end.line - 1, span.end.col);
-}
-
-function lineLeadingWhitespace(sourceText: string, line: number): string {
-	const lineText = sourceText.split("\n")[line - 1] ?? "";
-	return /^[ \t]*/.exec(lineText)?.[0] ?? "";
 }
 
 function angleEdit(

@@ -21,8 +21,8 @@ import type {
 	IRGraphicalFunctionKind,
 	IRPosition,
 } from "@sysdml/contracts";
-
 import { BUILTIN_FUNCTIONS, DiagnosticCode } from "@sysdml/contracts";
+
 import { compileExpr, RESERVED_LOOKUP_PREFIX } from "./expr.js";
 
 function isTimeDeclaration(n: DeclarationNode): n is TimeDeclarationNode {
@@ -97,7 +97,9 @@ function validateGraphicalFunctionBody(
 	}
 
 	const ypts =
-		yptsProp && yptsProp.key === "ypts" ? numListToFloats(yptsProp.value) : null;
+		yptsProp && yptsProp.key === "ypts"
+			? numListToFloats(yptsProp.value)
+			: null;
 	if (ypts === null) {
 		errors.push({
 			code: DiagnosticCode.MISSING_YPTS,
@@ -332,6 +334,38 @@ export function compileAST(ast: FileNode): CompileResult {
 			message: "At least one stock is required",
 		});
 
+	if (!isSimulatable) {
+		timeDecls.forEach((timeDecl) =>
+			errors.push({
+				code: DiagnosticCode.SFD_ONLY_DECLARATION,
+				message:
+					"time block is not allowed in cld models; a cld is not simulated",
+				span: timeDecl.span,
+			}),
+		);
+		stockDecls.forEach((stockDecl) =>
+			errors.push({
+				code: DiagnosticCode.SFD_ONLY_DECLARATION,
+				message: `stock '${stockDecl.id}' is not allowed in cld models; a cld describes causal structure only — use an sfd model for stocks and flows`,
+				span: stockDecl.span,
+			}),
+		);
+		flowDecls.forEach((flowDecl) =>
+			errors.push({
+				code: DiagnosticCode.SFD_ONLY_DECLARATION,
+				message: `flow '${flowDecl.id}' is not allowed in cld models; a cld describes causal structure only — use an sfd model for stocks and flows`,
+				span: flowDecl.span,
+			}),
+		);
+		graphicalFunctionDecls.forEach((graphicalFunctionDecl) =>
+			errors.push({
+				code: DiagnosticCode.SFD_ONLY_DECLARATION,
+				message: `gf '${graphicalFunctionDecl.id}' is not allowed in cld models; graphical functions belong to sfd equations`,
+				span: graphicalFunctionDecl.span,
+			}),
+		);
+	}
+
 	// ── Duplicate ID check ────────────────────────────────────────────────────
 
 	const allIdDecls: Array<{ id: string; span: Span }> = [
@@ -464,17 +498,37 @@ export function compileAST(ast: FileNode): CompileResult {
 
 	// ── Aux ───────────────────────────────────────────────────────────────────
 
-	const auxiliaries: IRAuxiliary[] = auxDecls.map((auxDecl) => ({
-		id: auxDecl.id,
-		expr: compileExpr(
-			auxDecl.expr,
-			validIds,
-			graphicalFunctionNames,
-			errors,
-			syntheticGraphicalFunctions,
-		),
-		position: posToIR(auxDecl.position),
-	}));
+	const auxiliaries: IRAuxiliary[] = auxDecls.map((auxDecl) => {
+		if (!auxDecl.expr) {
+			if (ast.model.kind === "sfd") {
+				errors.push({
+					code: DiagnosticCode.AUX_MISSING_EXPRESSION,
+					message: `aux '${auxDecl.id}' requires an expression in sfd models`,
+					span: auxDecl.span,
+				});
+			}
+			return { id: auxDecl.id, position: posToIR(auxDecl.position) };
+		}
+		if (ast.model.kind === "cld") {
+			errors.push({
+				code: DiagnosticCode.AUX_EXPRESSION_IN_CLD,
+				message: `aux '${auxDecl.id}' cannot have an expression in cld models; cld variables carry structure only — use an sfd model for equations`,
+				span: auxDecl.span,
+			});
+			return { id: auxDecl.id, position: posToIR(auxDecl.position) };
+		}
+		return {
+			id: auxDecl.id,
+			expr: compileExpr(
+				auxDecl.expr,
+				validIds,
+				graphicalFunctionNames,
+				errors,
+				syntheticGraphicalFunctions,
+			),
+			position: posToIR(auxDecl.position),
+		};
+	});
 
 	// ── Flows ─────────────────────────────────────────────────────────────────
 

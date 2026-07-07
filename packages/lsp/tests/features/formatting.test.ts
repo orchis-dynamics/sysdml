@@ -191,4 +191,11 @@ describe("layout formatting", () => {
 		expect(once).not.toBeNull();
 		expect(formatSource(once!)).toBe(once);
 	});
+
+	it("prints an expression-less aux with its position block", () => {
+		const source = `cld m\naux population { position: { x: 120, y: 40 } }`;
+		expect(formatSource(source)).toBe(
+			`cld m\n\naux population { position: { x: 120, y: 40 } }\n`,
+		);
+	});
 });

@@ -42,7 +42,7 @@ function findIdentInDecl(
 			return null;
 		case "AuxiliaryDeclaration":
 			if (isPositionInSpan(position, decl.idSpan)) return decl.id;
-			return findIdentInExpr(decl.expr, position);
+			return decl.expr ? findIdentInExpr(decl.expr, position) : null;
 		case "FlowDeclaration":
 			if (isPositionInSpan(position, decl.idSpan)) return decl.id;
 			return findIdentInFlowProps(decl, position);

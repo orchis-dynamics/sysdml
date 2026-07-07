@@ -1,5 +1,9 @@
 <script setup lang="ts">
-import type { ConnectionRoutingEdit, IR } from "@sysdml/contracts";
+import type {
+	ConnectionRoutingEdit,
+	ElementPositionEdit,
+	IR,
+} from "@sysdml/contracts";
 import { ref, computed, onMounted, onUnmounted } from "vue";
 
 import Canvas from "./canvas/Canvas.vue";
@@ -58,6 +62,14 @@ onUnmounted(() => {
 function onRoutingEdit(edit: ConnectionRoutingEdit): void {
 	transport?.sendRoutingEdit(edit);
 }
+
+function onPositionEdit(edits: ElementPositionEdit[]): void {
+	transport?.sendPositionEdits(edits);
+}
+
+function onPinMissingPositions(): void {
+	transport?.sendPinMissingPositions();
+}
 </script>
 
 <template>
@@ -75,7 +87,13 @@ function onRoutingEdit(edit: ConnectionRoutingEdit): void {
 			Simulation: {{ simulationError }}
 		</div>
 		<SimulationDiagnosticsBanner :diagnostics="simulationDiagnostics" />
-		<Canvas :ir="ir" class="flex-1 min-h-0" @routing-edit="onRoutingEdit" />
+		<Canvas
+			:ir="ir"
+			class="flex-1 min-h-0"
+			@routing-edit="onRoutingEdit"
+			@position-edit="onPositionEdit"
+			@pin-missing-positions="onPinMissingPositions"
+		/>
 		<GraphPanel class="h-64 shrink-0">
 			<template #default="{ rows, variableIds }">
 				<TimeseriesLineChart :rows="rows" :variable-ids="variableIds" />

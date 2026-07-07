@@ -1,7 +1,7 @@
 import { describe, expect, test } from "vitest";
 
-import { constructLayoutEdges } from "../../src/canvas/layout-edges.js";
-import { connection, flow } from "../helpers/ir-builders.js";
+import { constructLayoutEdges } from "../src/layout-edges.js";
+import { connection, flow } from "./helpers/ir-builders.js";
 
 describe("constructLayoutEdges — flow edges", () => {
 	test("produces one edge per flow with from→to stocks", () => {

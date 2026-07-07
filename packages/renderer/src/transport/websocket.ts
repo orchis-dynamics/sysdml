@@ -47,6 +47,10 @@ export class WebSocketAdapter implements IRTransport {
 		// intentionally empty — this transport does not persist routing edits
 	}
 
+	sendPositionEdits(): void {}
+
+	sendPinMissingPositions(): void {}
+
 	private connect(): void {
 		if (this.isStopped) return;
 		const webSocket = new WebSocket(this.url);

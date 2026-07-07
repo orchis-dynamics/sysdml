@@ -1,8 +1,8 @@
+import { DiagnosticCode } from "@sysdml/contracts";
+import type { IRExpressionNode } from "@sysdml/contracts";
 import { parseSource } from "@sysdml/parser";
 import { describe, test, expect } from "vitest";
 
-import { DiagnosticCode } from "@sysdml/contracts";
-import type { IRExpressionNode } from "@sysdml/contracts";
 import { compileAST } from "../src/index.js";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -43,7 +43,7 @@ function getResultExpression(
 	expect(diagnostics).toHaveLength(0);
 	expect(ir).not.toBeNull();
 	// last aux is always `result`
-	return ir!.auxiliaries[ir!.auxiliaries.length - 1].expr;
+	return ir!.auxiliaries[ir!.auxiliaries.length - 1].expr!;
 }
 
 function createFunctionCallNode(

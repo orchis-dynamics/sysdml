@@ -54,6 +54,7 @@ flowProp
 
 auxDecl
     : AUX IDENT EQ expr (LBRACE auxMetaProp+ RBRACE)?
+    | AUX IDENT LBRACE auxMetaProp+ RBRACE
     ;
 
 auxMetaProp
