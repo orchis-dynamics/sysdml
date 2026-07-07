@@ -61,6 +61,9 @@ function printTimeDeclaration(decl: TimeDeclarationNode): string {
 		const prop = decl.props.find((p) => p.key === key);
 		return prop ? [`  ${key}: ${prop.value.value}`] : [];
 	});
+	if (decl.method) {
+		lines.push(`  method: ${decl.method.value}`);
+	}
 	if (decl.timeUnits) {
 		lines.push(`  time_units: ${decl.timeUnits.value}`);
 	}

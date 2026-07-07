@@ -9,10 +9,12 @@ import type { Position } from "vscode-languageserver/node.js";
 
 const TOP_LEVEL_KEYWORDS = ["sfd", "cld", "stock", "aux", "flow", "time", "gf"];
 const GF_KIND_VALUES = ["linear", "extra", "step"];
+const TIME_METHOD_VALUES = ["euler", "rk4", "rk2"];
 
 type CompletionContext =
 	| "flow-endpoint"
 	| "gf-kind"
+	| "time-method"
 	| "expression"
 	| "block-key"
 	| "top-level";
@@ -23,7 +25,7 @@ const BLOCK_KEYS: Record<BlockKind, readonly string[]> = {
 	stock: ["init", "position"],
 	flow: ["from", "to", "rate", "position", "via"],
 	aux: ["position"],
-	time: ["start", "end", "step", "save_step", "time_units"],
+	time: ["start", "end", "step", "save_step", "method", "time_units"],
 	gf: ["kind", "xscale", "xpts", "ypts", "yscale"],
 	connection: ["angle", "via"],
 };
@@ -73,6 +75,8 @@ function detectContext(source: string, position: Position): CompletionContext {
 	if (/\b(from|to)\s*:\s*$/.test(textBefore)) return "flow-endpoint";
 	// Match "kind:" with optional whitespace after the colon
 	if (/\bkind\s*:\s*$/.test(textBefore)) return "gf-kind";
+	// Match "method:" with optional whitespace after the colon
+	if (/\bmethod\s*:\s*$/.test(textBefore)) return "time-method";
 
 	// Check if we're inside a block by counting braces before this position
 	const sourceUpToCursor = lines
@@ -210,6 +214,12 @@ export function getCompletionItems(
 		}
 		case "gf-kind":
 			return GF_KIND_VALUES.map((v) => {
+				const item = CompletionItem.create(v);
+				item.kind = CompletionItemKind.EnumMember;
+				return item;
+			});
+		case "time-method":
+			return TIME_METHOD_VALUES.map((v) => {
 				const item = CompletionItem.create(v);
 				item.kind = CompletionItemKind.EnumMember;
 				return item;

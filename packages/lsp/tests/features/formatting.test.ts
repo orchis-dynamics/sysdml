@@ -55,6 +55,16 @@ aux birth_rate = 0.02
 		);
 	});
 
+	it("formats time block with method in canonical position", () => {
+		const result = formatSource(
+			"sfd m\ntime{time_units:years\nmethod:rk4\nstep:1\nend:10\nstart:0\nsave_step:2}\nstock s{init:0}",
+		);
+		expect(result).not.toBeNull();
+		expect(result).toContain(
+			"time {\n  start: 0\n  end: 10\n  step: 1\n  save_step: 2\n  method: rk4\n  time_units: years\n}",
+		);
+	});
+
 	it("formats a time block without the optional props unchanged", () => {
 		const result = formatSource(
 			"sfd m\ntime{step:1\nend:10\nstart:0}\nstock s{init:0}",
