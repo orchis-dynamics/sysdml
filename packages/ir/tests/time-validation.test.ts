@@ -157,3 +157,86 @@ describe("time block validation — XMILE §2.3 mappings (B6.4)", () => {
 		).toBeUndefined();
 	});
 });
+
+describe("time block save_step and time_units (B6.5, B6.2)", () => {
+	function compileTime(timeBlock: string) {
+		const { ast, parseDiagnostics } = compile(`sfd m\n${timeBlock}\n${ONE_STOCK}`);
+		expect(parseDiagnostics).toHaveLength(0);
+		expect(ast).not.toBeNull();
+		return compileAST(ast!);
+	}
+
+	test("save_step: 0 → INVALID_SAVE_STEP", () => {
+		const { ir, diagnostics } = compileTime(
+			`time { start: 0 end: 10 step: 1 save_step: 0 }`,
+		);
+		expect(ir).toBeNull();
+		const diag = diagnostics.find(
+			(d) => d.code === DiagnosticCode.INVALID_SAVE_STEP,
+		);
+		expect(diag).toBeDefined();
+		expect(diag!.message).toBe(
+			"time.save_step must be greater than 0 (got 0)",
+		);
+	});
+
+	test("save_step smaller than step → INVALID_SAVE_STEP", () => {
+		const { ir, diagnostics } = compileTime(
+			`time { start: 0 end: 10 step: 1 save_step: 0.5 }`,
+		);
+		expect(ir).toBeNull();
+		const diag = diagnostics.find(
+			(d) => d.code === DiagnosticCode.INVALID_SAVE_STEP,
+		);
+		expect(diag).toBeDefined();
+		expect(diag!.message).toBe("time.save_step must be >= time.step (0.5 < 1)");
+	});
+
+	test("save_step equal to step is clean", () => {
+		const { ir, diagnostics } = compileTime(
+			`time { start: 0 end: 10 step: 1 save_step: 1 }`,
+		);
+		expect(diagnostics).toHaveLength(0);
+		expect(ir!.time.saveStep).toBe(1);
+	});
+
+	test("save_step as a multiple of step is clean", () => {
+		const { ir, diagnostics } = compileTime(
+			`time { start: 0 end: 10 step: 0.5 save_step: 2.5 }`,
+		);
+		expect(diagnostics).toHaveLength(0);
+		expect(ir!.time.saveStep).toBe(2.5);
+	});
+
+	test("non-multiple save_step passes through uncorrected", () => {
+		const { ir, diagnostics } = compileTime(
+			`time { start: 0 end: 10 step: 0.4 save_step: 1 }`,
+		);
+		expect(diagnostics).toHaveLength(0);
+		expect(ir!.time.saveStep).toBe(1);
+	});
+
+	test("omitted save_step leaves the field absent", () => {
+		const { ir, diagnostics } = compileTime(
+			`time { start: 0 end: 10 step: 1 }`,
+		);
+		expect(diagnostics).toHaveLength(0);
+		expect("saveStep" in ir!.time).toBe(false);
+	});
+
+	test("time_units flows into IRTime", () => {
+		const { ir, diagnostics } = compileTime(
+			`time { start: 0 end: 10 step: 1 time_units: years }`,
+		);
+		expect(diagnostics).toHaveLength(0);
+		expect(ir!.time.timeUnits).toBe("years");
+	});
+
+	test("omitted time_units leaves the field absent", () => {
+		const { ir, diagnostics } = compileTime(
+			`time { start: 0 end: 10 step: 1 }`,
+		);
+		expect(diagnostics).toHaveLength(0);
+		expect("timeUnits" in ir!.time).toBe(false);
+	});
+});

@@ -5,6 +5,8 @@ export interface IRTime {
 	start: number;
 	end: number;
 	step: number;
+	saveStep?: number;
+	timeUnits?: string;
 }
 
 export interface IRPosition {

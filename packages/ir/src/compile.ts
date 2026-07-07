@@ -20,6 +20,7 @@ import type {
 	IRGraphicalFunction,
 	IRGraphicalFunctionKind,
 	IRPosition,
+	IRTime,
 } from "@sysdml/contracts";
 import { BUILTIN_FUNCTIONS, DiagnosticCode } from "@sysdml/contracts";
 
@@ -238,9 +239,9 @@ function validateGraphicalFunctionIdentifier(
 function compileTimeBlock(
 	timeDecl: TimeDeclarationNode,
 	errors: IRDiagnostic[],
-): { start: number; end: number; step: number } {
+): IRTime {
 	const findTimePropertyValue = (
-		key: "start" | "end" | "step",
+		key: "start" | "end" | "step" | "save_step",
 	): number | null => {
 		const prop = timeDecl.props.find((timeProp) => timeProp.key === key);
 		return prop ? parseFloat(prop.value.value) : null;
@@ -249,6 +250,7 @@ function compileTimeBlock(
 	const start = findTimePropertyValue("start");
 	const end = findTimePropertyValue("end");
 	const step = findTimePropertyValue("step");
+	const saveStep = findTimePropertyValue("save_step");
 
 	const requiredProperties: Array<{ key: string; value: number | null }> = [
 		{ key: "start", value: start },
@@ -280,7 +282,30 @@ function compileTimeBlock(
 		});
 	}
 
-	return { start: start ?? 0, end: end ?? 0, step: step ?? 1 };
+	if (saveStep !== null && saveStep <= 0) {
+		errors.push({
+			code: DiagnosticCode.INVALID_SAVE_STEP,
+			message: `time.save_step must be greater than 0 (got ${saveStep})`,
+			span: timeDecl.span,
+		});
+	}
+	if (saveStep !== null && saveStep > 0 && step !== null && saveStep < step) {
+		errors.push({
+			code: DiagnosticCode.INVALID_SAVE_STEP,
+			message: `time.save_step must be >= time.step (${saveStep} < ${step})`,
+			span: timeDecl.span,
+		});
+	}
+
+	return {
+		start: start ?? 0,
+		end: end ?? 0,
+		step: step ?? 1,
+		...(saveStep !== null && { saveStep }),
+		...(timeDecl.timeUnits !== undefined && {
+			timeUnits: timeDecl.timeUnits.value,
+		}),
+	};
 }
 
 export function compileAST(ast: FileNode): CompileResult {
