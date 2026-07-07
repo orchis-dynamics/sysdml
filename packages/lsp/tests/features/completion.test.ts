@@ -234,7 +234,13 @@ birth_rate ->+ births
 				character: 2,
 			});
 			const labels = items.map((i) => i.label);
-			expect(labels.sort()).toEqual(["end", "save_step", "start", "step", "time_units"]);
+			expect(labels.sort()).toEqual([
+				"end",
+				"save_step",
+				"start",
+				"step",
+				"time_units",
+			]);
 		});
 
 		it("offers save_step and time_units inside a time block", () => {
