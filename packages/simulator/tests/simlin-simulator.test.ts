@@ -329,4 +329,30 @@ aux y = outer(inner(x))
 			expect(diagnostic.severity).toBe("error");
 		}
 	});
+
+	test("method: rk4 runs fourth-order Runge-Kutta through the engine", async () => {
+		const rk4Growth = `
+sfd growth_rk4
+time { start: 0 end: 10 step: 1 method: rk4 }
+stock population { init: 100 }
+aux growth_rate = 0.1
+flow births { from: null to: population rate: population * growth_rate }
+`.trim();
+		const result = await new SimlinSimulator().simulate(buildIR(rk4Growth));
+		expect(result.diagnostics).toEqual([]);
+		expect(result.rows[10].population).toBeCloseTo(271.8279744135167, 6);
+	});
+
+	test("method: euler pins the Euler trajectory", async () => {
+		const eulerGrowth = `
+sfd growth_euler
+time { start: 0 end: 10 step: 1 method: euler }
+stock population { init: 100 }
+aux growth_rate = 0.1
+flow births { from: null to: population rate: population * growth_rate }
+`.trim();
+		const result = await new SimlinSimulator().simulate(buildIR(eulerGrowth));
+		expect(result.diagnostics).toEqual([]);
+		expect(result.rows[10].population).toBeCloseTo(259.37424601, 6);
+	});
 });
