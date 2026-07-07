@@ -168,14 +168,21 @@ export interface ModelDeclarationNode {
 
 export interface TimePropertyNode {
 	type: "TimeProperty";
-	key: "start" | "end" | "step";
+	key: "start" | "end" | "step" | "save_step";
 	value: NumberLiteralNode;
+	span: Span;
+}
+
+export interface TimeUnitsNode {
+	type: "TimeUnits";
+	value: string;
 	span: Span;
 }
 
 export interface TimeDeclarationNode {
 	type: "TimeDeclaration";
 	props: TimePropertyNode[];
+	timeUnits?: TimeUnitsNode;
 	span: Span;
 }
 
