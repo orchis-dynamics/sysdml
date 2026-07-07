@@ -46,7 +46,8 @@ describe("save_step matrix guard against the engine phantom-row bug (SL8)", () =
 		"step %f save_step %f end %f yields strictly increasing times covering the horizon",
 		async (step, saveStep, end) => {
 			const ir = buildIRAllowingWarnings(growthModel(step, saveStep, end));
-			const saveInterval = ir.time.saveStep ?? step;
+			expect(ir.time.saveStep).toBeDefined();
+			const saveInterval = ir.time.saveStep!;
 			const stepRatio = saveInterval / step;
 			expect(Math.abs(stepRatio - Math.round(stepRatio))).toBeLessThan(1e-9);
 			const result = await new SimlinSimulator().simulate(ir);
@@ -59,7 +60,7 @@ describe("save_step matrix guard against the engine phantom-row bug (SL8)", () =
 				expect(row.population).toBeGreaterThanOrEqual(100);
 			}
 			const lastTime = result.rows.at(-1)!.time;
-			expect(end - lastTime).toBeLessThan(saveInterval + 1e-9);
+			expect(end - lastTime).toBeLessThan(saveInterval - 1e-9);
 		},
 	);
 });
