@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 
-import { compileAST } from "@sysdml/ir";
 import { Project } from "@simlin/engine";
+import { compileAST } from "@sysdml/ir";
 import { parseSource } from "@sysdml/parser";
 
 import { irToSimlinProject } from "../src/ir-to-simlin.ts";
@@ -28,8 +28,11 @@ function compileToIR(source: string) {
 		throw new Error("Parse error: no AST produced");
 	}
 	const { ir, diagnostics: irDiagnostics } = compileAST(ast);
-	if (irDiagnostics.length > 0) {
-		throw new Error(`IR error: ${irDiagnostics[0].message}`);
+	const irErrors = irDiagnostics.filter(
+		(diagnostic) => diagnostic.severity !== "warning",
+	);
+	if (irErrors.length > 0) {
+		throw new Error(`IR error: ${irErrors[0].message}`);
 	}
 	if (ir === null) {
 		throw new Error("IR error: compilation produced no IR");

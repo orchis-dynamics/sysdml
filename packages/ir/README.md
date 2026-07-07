@@ -244,6 +244,7 @@ type IRExpressionNode =
 | `UNDEFINED_IDENTIFIER`       | Expression references an unknown variable                      |
 | `INVALID_TIME_STEP`          | `time.step` is ≤ 0                                             |
 | `INVALID_TIME_RANGE`         | `time.end` < `time.start`                                      |
+| `NON_FINITE_TIME_VALUE`      | A `time` property literal overflows to a non-finite number     |
 | `INVALID_SAVE_STEP`          | `time.save_step` is ≤ 0 or < `time.step`                       |
 | `SAVE_STEP_NOT_MULTIPLE`     | Warning: `save_step` snapped to the nearest multiple of `step` |
 | `UNKNOWN_FUNCTION`           | Function name not in built-in set and not a graphical function |

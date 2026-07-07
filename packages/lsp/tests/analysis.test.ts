@@ -92,4 +92,24 @@ a ->+ s { angle: 999 }
 		);
 		expect(warningDiagnostic?.code).toBe("CONNECTION_ANGLE_OUT_OF_RANGE");
 	});
+
+	it("maps MULTI_MODEL_NOT_SUPPORTED to DiagnosticSeverity.Warning (B12)", () => {
+		const result = analyzeDocument(`sfd main
+sfd sub
+time {
+  start: 0
+  end: 10
+  step: 1
+}
+stock s {
+  init: 0
+}
+`);
+		expect(result.ir).not.toBeNull();
+		const multiModel = result.diagnostics.find(
+			(diagnostic) => diagnostic.code === "MULTI_MODEL_NOT_SUPPORTED",
+		);
+		expect(multiModel).toBeDefined();
+		expect(multiModel!.severity).toBe(DiagnosticSeverity.Warning);
+	});
 });
