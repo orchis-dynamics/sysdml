@@ -1,7 +1,7 @@
+import { DiagnosticCode } from "@sysdml/contracts";
 import { parseSource } from "@sysdml/parser";
 import { describe, test, expect } from "vitest";
 
-import { DiagnosticCode } from "@sysdml/contracts";
 import { compileAST } from "../src/compile.js";
 
 describe("MULTI_MODEL_NOT_SUPPORTED (B1)", () => {
@@ -29,6 +29,7 @@ describe("MULTI_MODEL_NOT_SUPPORTED (B1)", () => {
 		);
 		expect(multi).toHaveLength(1);
 		expect(multi[0].message).toContain("sub");
+		expect(multi[0].severity).toBe("warning");
 		expect(multi[0].span).toBeDefined();
 		expect(multi[0].span!.start.line).toBe(2);
 	});

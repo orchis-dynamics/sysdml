@@ -11,6 +11,15 @@ function compile(src: string) {
 	return { ast, parseDiagnostics };
 }
 
+function compileTime(timeBlock: string) {
+	const { ast, parseDiagnostics } = compile(
+		`sfd m\n${timeBlock}\n${ONE_STOCK}`,
+	);
+	expect(parseDiagnostics).toHaveLength(0);
+	expect(ast).not.toBeNull();
+	return compileAST(ast!);
+}
+
 describe("time block validation — XMILE §2.3 mappings (B6.4)", () => {
 	test("missing time block → MISSING_TIME_BLOCK", () => {
 		const { ast, parseDiagnostics } = compile(`sfd m\n${ONE_STOCK}`);
@@ -159,15 +168,6 @@ describe("time block validation — XMILE §2.3 mappings (B6.4)", () => {
 });
 
 describe("time block save_step and time_units (B6.5, B6.2)", () => {
-	function compileTime(timeBlock: string) {
-		const { ast, parseDiagnostics } = compile(
-			`sfd m\n${timeBlock}\n${ONE_STOCK}`,
-		);
-		expect(parseDiagnostics).toHaveLength(0);
-		expect(ast).not.toBeNull();
-		return compileAST(ast!);
-	}
-
 	test("save_step: 0 → INVALID_SAVE_STEP", () => {
 		const { ir, diagnostics } = compileTime(
 			`time { start: 0 end: 10 step: 1 save_step: 0 }`,
@@ -273,5 +273,127 @@ describe("time block save_step and time_units (B6.5, B6.2)", () => {
 		);
 		expect(diagnostics).toHaveLength(0);
 		expect("timeUnits" in ir!.time).toBe(false);
+	});
+
+	test("snap warning renders sub-1e-7 values in plain decimal", () => {
+		const { ir, diagnostics } = compileTime(
+			`time { start: 0 end: 10 step: 0.0000001 save_step: 0.00000033 }`,
+		);
+		expect(ir).not.toBeNull();
+		const diag = diagnostics.find(
+			(d) => d.code === DiagnosticCode.SAVE_STEP_NOT_MULTIPLE,
+		);
+		expect(diag).toBeDefined();
+		expect(diag!.message).toBe(
+			"time.save_step (0.00000033) is not a multiple of time.step (0.0000001); saving every 0.0000003 (3 * step)",
+		);
+		expect(ir!.time.saveStep).toBe(3e-7);
+	});
+});
+
+describe("time block non-finite values (B6.6)", () => {
+	const OVERFLOW = "9".repeat(400);
+
+	test("overflowing start → NON_FINITE_TIME_VALUE", () => {
+		const { ir, diagnostics } = compileTime(
+			`time { start: ${OVERFLOW} end: 10 step: 1 }`,
+		);
+		expect(ir).toBeNull();
+		const diag = diagnostics.find(
+			(d) => d.code === DiagnosticCode.NON_FINITE_TIME_VALUE,
+		);
+		expect(diag).toBeDefined();
+		expect(diag!.message).toBe(
+			"time.start must be a finite number (got Infinity)",
+		);
+	});
+
+	test("overflowing end → NON_FINITE_TIME_VALUE", () => {
+		const { ir, diagnostics } = compileTime(
+			`time { start: 0 end: ${OVERFLOW} step: 1 }`,
+		);
+		expect(ir).toBeNull();
+		expect(
+			diagnostics.find((d) => d.code === DiagnosticCode.NON_FINITE_TIME_VALUE),
+		).toBeDefined();
+	});
+
+	test("overflowing decimal literal → NON_FINITE_TIME_VALUE", () => {
+		const { ir, diagnostics } = compileTime(
+			`time { start: 0 end: 10 step: ${OVERFLOW}.5 }`,
+		);
+		expect(ir).toBeNull();
+		expect(
+			diagnostics.find((d) => d.code === DiagnosticCode.NON_FINITE_TIME_VALUE),
+		).toBeDefined();
+	});
+
+	test("finite save_step whose snap product overflows keeps the finite literal", () => {
+		const NEAR_MAX = "17976931348623157" + "0".repeat(292);
+		const { ir, diagnostics } = compileTime(
+			`time { start: 0 end: 10 step: 3 save_step: ${NEAR_MAX} }`,
+		);
+		expect(diagnostics).toHaveLength(0);
+		expect(ir).not.toBeNull();
+		expect(Number.isFinite(ir!.time.saveStep!)).toBe(true);
+		expect(ir!.time.saveStep).toBe(1.7976931348623157e308);
+	});
+
+	test("NON_FINITE_TIME_VALUE points at the offending property", () => {
+		const { diagnostics } = compileTime(
+			`time { start: 0 end: 10 step: 1 save_step: ${OVERFLOW} }`,
+		);
+		const diag = diagnostics.find(
+			(d) => d.code === DiagnosticCode.NON_FINITE_TIME_VALUE,
+		);
+		expect(diag).toBeDefined();
+		expect(diag!.span).toBeDefined();
+		expect(diag!.span!.start.line).toBe(2);
+		expect(diag!.span!.start.col).toBe(
+			"time { start: 0 end: 10 step: 1 ".length + 1,
+		);
+	});
+
+	test("overflowing step → NON_FINITE_TIME_VALUE, no MISSING_TIME_PROPERTY", () => {
+		const { ir, diagnostics } = compileTime(
+			`time { start: 0 end: 10 step: ${OVERFLOW} }`,
+		);
+		expect(ir).toBeNull();
+		expect(
+			diagnostics.find((d) => d.code === DiagnosticCode.NON_FINITE_TIME_VALUE),
+		).toBeDefined();
+		expect(
+			diagnostics.find((d) => d.code === DiagnosticCode.MISSING_TIME_PROPERTY),
+		).toBeUndefined();
+	});
+
+	test("overflowing save_step → NON_FINITE_TIME_VALUE without a snap warning", () => {
+		const { ir, diagnostics } = compileTime(
+			`time { start: 0 end: 10 step: 1 save_step: ${OVERFLOW} }`,
+		);
+		expect(ir).toBeNull();
+		expect(
+			diagnostics.find((d) => d.code === DiagnosticCode.NON_FINITE_TIME_VALUE),
+		).toBeDefined();
+		expect(
+			diagnostics.find((d) => d.code === DiagnosticCode.SAVE_STEP_NOT_MULTIPLE),
+		).toBeUndefined();
+	});
+
+	test("overflowing step and save_step emit one NON_FINITE_TIME_VALUE each and no other noise", () => {
+		const { ir, diagnostics } = compileTime(
+			`time { start: 0 end: 10 step: ${OVERFLOW} save_step: ${OVERFLOW} }`,
+		);
+		expect(ir).toBeNull();
+		expect(
+			diagnostics.filter(
+				(d) => d.code === DiagnosticCode.NON_FINITE_TIME_VALUE,
+			),
+		).toHaveLength(2);
+		expect(
+			diagnostics.filter(
+				(d) => d.code !== DiagnosticCode.NON_FINITE_TIME_VALUE,
+			),
+		).toHaveLength(0);
 	});
 });

@@ -26,6 +26,8 @@ import { BUILTIN_FUNCTIONS, DiagnosticCode } from "@sysdml/contracts";
 
 import { compileExpr, RESERVED_LOOKUP_PREFIX } from "./expr.js";
 
+type WarningDiagnostic = IRDiagnostic & { severity: "warning" };
+
 function isTimeDeclaration(n: DeclarationNode): n is TimeDeclarationNode {
 	return n.type === "TimeDeclaration";
 }
@@ -236,19 +238,27 @@ function validateGraphicalFunctionIdentifier(
 	}
 }
 
+function formatDecimal(value: number): string {
+	const plain = String(value);
+	if (!plain.includes("e")) return plain;
+	if (Number.isInteger(value)) return BigInt(value).toString();
+	return value.toFixed(20).replace(/0+$/, "").replace(/\.$/, "");
+}
+
 function snapSaveStepToStepMultiple(
 	saveStep: number,
 	step: number,
 	timeDecl: TimeDeclarationNode,
-	nonFatalDiagnostics: IRDiagnostic[],
+	nonFatalDiagnostics: WarningDiagnostic[],
 ): number {
 	const ratio = saveStep / step;
 	const nearest = Math.round(ratio);
 	const snapped = parseFloat((nearest * step).toPrecision(12));
+	if (!Number.isFinite(snapped)) return saveStep;
 	if (Math.abs(ratio - nearest) > 1e-12 * Math.max(1, Math.abs(ratio))) {
 		nonFatalDiagnostics.push({
 			code: DiagnosticCode.SAVE_STEP_NOT_MULTIPLE,
-			message: `time.save_step (${saveStep}) is not a multiple of time.step (${step}); saving every ${snapped} (${nearest} * step)`,
+			message: `time.save_step (${formatDecimal(saveStep)}) is not a multiple of time.step (${formatDecimal(step)}); saving every ${formatDecimal(snapped)} (${nearest} * step)`,
 			span: timeDecl.span,
 			severity: "warning",
 		});
@@ -259,13 +269,23 @@ function snapSaveStepToStepMultiple(
 function compileTimeBlock(
 	timeDecl: TimeDeclarationNode,
 	errors: IRDiagnostic[],
-	nonFatalDiagnostics: IRDiagnostic[],
+	nonFatalDiagnostics: WarningDiagnostic[],
 ): IRTime {
 	const findTimePropertyValue = (
 		key: "start" | "end" | "step" | "save_step",
 	): number | null => {
 		const prop = timeDecl.props.find((timeProp) => timeProp.key === key);
-		return prop ? parseFloat(prop.value.value) : null;
+		if (!prop) return null;
+		const value = parseFloat(prop.value.value);
+		if (!Number.isFinite(value)) {
+			errors.push({
+				code: DiagnosticCode.NON_FINITE_TIME_VALUE,
+				message: `time.${key} must be a finite number (got ${value})`,
+				span: prop.span,
+			});
+			return null;
+		}
+		return value;
 	};
 
 	const start = findTimePropertyValue("start");
@@ -273,13 +293,8 @@ function compileTimeBlock(
 	const step = findTimePropertyValue("step");
 	const saveStep = findTimePropertyValue("save_step");
 
-	const requiredProperties: Array<{ key: string; value: number | null }> = [
-		{ key: "start", value: start },
-		{ key: "end", value: end },
-		{ key: "step", value: step },
-	];
-	for (const { key, value } of requiredProperties) {
-		if (value === null) {
+	for (const key of ["start", "end", "step"] as const) {
+		if (!timeDecl.props.some((timeProp) => timeProp.key === key)) {
 			errors.push({
 				code: DiagnosticCode.MISSING_TIME_PROPERTY,
 				message: `time block is missing required property '${key}'`,
@@ -291,14 +306,14 @@ function compileTimeBlock(
 	if (step !== null && step <= 0) {
 		errors.push({
 			code: DiagnosticCode.INVALID_TIME_STEP,
-			message: `time.step must be greater than 0 (got ${step})`,
+			message: `time.step must be greater than 0 (got ${formatDecimal(step)})`,
 			span: timeDecl.span,
 		});
 	}
 	if (start !== null && end !== null && end < start) {
 		errors.push({
 			code: DiagnosticCode.INVALID_TIME_RANGE,
-			message: `time.end must be >= time.start (${end} < ${start})`,
+			message: `time.end must be >= time.start (${formatDecimal(end)} < ${formatDecimal(start)})`,
 			span: timeDecl.span,
 		});
 	}
@@ -306,14 +321,14 @@ function compileTimeBlock(
 	if (saveStep !== null && saveStep <= 0) {
 		errors.push({
 			code: DiagnosticCode.INVALID_SAVE_STEP,
-			message: `time.save_step must be greater than 0 (got ${saveStep})`,
+			message: `time.save_step must be greater than 0 (got ${formatDecimal(saveStep)})`,
 			span: timeDecl.span,
 		});
 	}
 	if (saveStep !== null && saveStep > 0 && step !== null && saveStep < step) {
 		errors.push({
 			code: DiagnosticCode.INVALID_SAVE_STEP,
-			message: `time.save_step must be >= time.step (${saveStep} < ${step})`,
+			message: `time.save_step must be >= time.step (${formatDecimal(saveStep)} < ${formatDecimal(step)})`,
 			span: timeDecl.span,
 		});
 	}
@@ -341,7 +356,7 @@ function compileTimeBlock(
 
 export function compileAST(ast: FileNode): CompileResult {
 	const errors: IRDiagnostic[] = [];
-	const nonFatalDiagnostics: IRDiagnostic[] = [];
+	const nonFatalDiagnostics: WarningDiagnostic[] = [];
 
 	// ── Collect typed decls ───────────────────────────────────────────────────
 
@@ -364,6 +379,7 @@ export function compileAST(ast: FileNode): CompileResult {
 			code: DiagnosticCode.MULTI_MODEL_NOT_SUPPORTED,
 			message: `Multi-model files are not supported in v0.1 (submodel '${submodel.id}'). Only the entry model declaration is compiled.`,
 			span: submodel.span,
+			severity: "warning",
 		});
 	}
 
