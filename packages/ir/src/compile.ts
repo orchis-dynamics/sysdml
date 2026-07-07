@@ -280,7 +280,7 @@ function compileTimeBlock(
 			errors.push({
 				code: DiagnosticCode.NON_FINITE_TIME_VALUE,
 				message: `time.${key} must be a finite number (got ${value})`,
-				span: timeDecl.span,
+				span: prop.span,
 			});
 			return null;
 		}

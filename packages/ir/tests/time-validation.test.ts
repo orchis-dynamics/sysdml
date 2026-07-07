@@ -318,6 +318,29 @@ describe("time block non-finite values (B6.6)", () => {
 		).toBeDefined();
 	});
 
+	test("overflowing decimal literal → NON_FINITE_TIME_VALUE", () => {
+		const { ir, diagnostics } = compileTime(
+			`time { start: 0 end: 10 step: ${OVERFLOW}.5 }`,
+		);
+		expect(ir).toBeNull();
+		expect(
+			diagnostics.find((d) => d.code === DiagnosticCode.NON_FINITE_TIME_VALUE),
+		).toBeDefined();
+	});
+
+	test("NON_FINITE_TIME_VALUE points at the offending property", () => {
+		const { diagnostics } = compileTime(
+			`time { start: 0 end: 10 step: 1 save_step: ${OVERFLOW} }`,
+		);
+		const diag = diagnostics.find(
+			(d) => d.code === DiagnosticCode.NON_FINITE_TIME_VALUE,
+		);
+		expect(diag!.span).toBeDefined();
+		expect(diag!.span!.start.col).toBe(
+			"time { start: 0 end: 10 step: 1 ".length + 1,
+		);
+	});
+
 	test("overflowing step → NON_FINITE_TIME_VALUE, no MISSING_TIME_PROPERTY", () => {
 		const { ir, diagnostics } = compileTime(
 			`time { start: 0 end: 10 step: ${OVERFLOW} }`,

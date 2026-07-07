@@ -29,21 +29,9 @@ describe("MULTI_MODEL_NOT_SUPPORTED (B1)", () => {
 		);
 		expect(multi).toHaveLength(1);
 		expect(multi[0].message).toContain("sub");
+		expect(multi[0].severity).toBe("warning");
 		expect(multi[0].span).toBeDefined();
 		expect(multi[0].span!.start.line).toBe(2);
-	});
-
-	test("MULTI_MODEL_NOT_SUPPORTED carries warning severity (B12)", () => {
-		const { ast } = parseSource(
-			`sfd main\nsfd sub\ntime { start: 0 end: 10 step: 1 }\nstock s { init: 0 }`,
-		);
-		expect(ast).not.toBeNull();
-		const { diagnostics } = compileAST(ast!);
-		const multi = diagnostics.find(
-			(d) => d.code === DiagnosticCode.MULTI_MODEL_NOT_SUPPORTED,
-		);
-		expect(multi).toBeDefined();
-		expect(multi!.severity).toBe("warning");
 	});
 
 	test("three-model file emits two MULTI_MODEL_NOT_SUPPORTED diagnostics in source order", () => {
