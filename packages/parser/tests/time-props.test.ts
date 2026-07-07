@@ -76,4 +76,38 @@ describe("time block save_step and time_units", () => {
 		expect(diag).toBeDefined();
 		expect(diag!.span.start.line).toBe(3);
 	});
+
+	test("method parses into the dedicated method field", () => {
+		const time = parseTime(
+			`sfd m\ntime { start: 0 end: 10 step: 1 method: rk4 }\nstock s { init: 0 }`,
+		);
+		expect(time.method).toBeDefined();
+		expect(time.method!.value).toBe("rk4");
+		expect(time.method!.span.start.line).toBe(2);
+		expect(time.props.map((p) => p.key)).toEqual(["start", "end", "step"]);
+	});
+
+	test("method and time_units together, any order", () => {
+		const time = parseTime(
+			`sfd m\ntime { method: euler start: 0 end: 10 time_units: years step: 1 }\nstock s { init: 0 }`,
+		);
+		expect(time.method!.value).toBe("euler");
+		expect(time.timeUnits!.value).toBe("years");
+	});
+
+	test("duplicate method is rejected", () => {
+		const { diagnostics } = parseSource(
+			`sfd m\ntime { start: 0 end: 10 step: 1 method: rk4 method: euler }\nstock s { init: 0 }`,
+		);
+		expect(diagnostics.length).toBeGreaterThan(0);
+		expect(diagnostics.some((d) => d.message.includes("method"))).toBe(true);
+	});
+
+	test("a variable named rk4 still parses", () => {
+		const { ast, diagnostics } = parseSource(
+			`sfd m\ntime { start: 0 end: 10 step: 1 }\nstock s { init: 0 }\naux rk4 = 1`,
+		);
+		expect(diagnostics).toHaveLength(0);
+		expect(ast).not.toBeNull();
+	});
 });

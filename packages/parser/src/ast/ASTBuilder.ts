@@ -25,6 +25,7 @@ import type {
 	StockDeclarationNode,
 	StockPropertyNode,
 	TimeDeclarationNode,
+	TimeMethodNode,
 	TimePropertyNode,
 	TimeUnitsNode,
 	UnaryExpressionNode,
@@ -235,6 +236,7 @@ export class ASTBuilder {
 	private timeDecl(ctx: TimeDeclContext): TimeDeclarationNode {
 		const seenKeys = new Set<string>();
 		const props: TimePropertyNode[] = [];
+		let method: TimeMethodNode | undefined;
 		let timeUnits: TimeUnitsNode | undefined;
 		for (const timePropContext of ctx.timeProp()) {
 			if (timePropContext.TIME_UNITS()) {
@@ -242,6 +244,17 @@ export class ASTBuilder {
 				if (this.registerKeyOnce(seenKeys, "time_units", "time block", span)) {
 					timeUnits = {
 						type: "TimeUnits",
+						value: timePropContext.IDENT()!.getText(),
+						span,
+					};
+				}
+				continue;
+			}
+			if (timePropContext.METHOD()) {
+				const span = spanOf(timePropContext);
+				if (this.registerKeyOnce(seenKeys, "method", "time block", span)) {
+					method = {
+						type: "TimeMethod",
 						value: timePropContext.IDENT()!.getText(),
 						span,
 					};
@@ -256,6 +269,7 @@ export class ASTBuilder {
 		return {
 			type: "TimeDeclaration",
 			props,
+			method,
 			timeUnits,
 			span: spanOf(ctx),
 		};

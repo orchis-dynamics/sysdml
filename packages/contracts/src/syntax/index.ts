@@ -179,9 +179,16 @@ export interface TimeUnitsNode {
 	span: Span;
 }
 
+export interface TimeMethodNode {
+	type: "TimeMethod";
+	value: string;
+	span: Span;
+}
+
 export interface TimeDeclarationNode {
 	type: "TimeDeclaration";
 	props: TimePropertyNode[];
+	method?: TimeMethodNode;
 	timeUnits?: TimeUnitsNode;
 	span: Span;
 }
