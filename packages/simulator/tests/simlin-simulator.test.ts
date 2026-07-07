@@ -218,6 +218,20 @@ describe("SimlinSimulator", () => {
 		expect(result.rows[0].reservoir).toBeCloseTo(60, 9);
 	});
 
+	test("evaluates a bare graphical function call as a stock init", async () => {
+		const bareInitLookupModel = `
+sfd bare_init_lookup
+time { start: 0 end: 1 step: 1 }
+gf response { xscale: [0, 10] ypts: [0, 100] }
+stock reservoir { init: response(3) }
+`.trim();
+		const result = await new SimlinSimulator().simulate(
+			buildIR(bareInitLookupModel),
+		);
+		expect(result.diagnostics).toEqual([]);
+		expect(result.rows[0].reservoir).toBeCloseTo(30, 9);
+	});
+
 	test("evaluates a graphical function nested inside another's argument", async () => {
 		const chainedLookupModel = `
 sfd chained_lookup
