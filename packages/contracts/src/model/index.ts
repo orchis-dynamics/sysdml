@@ -6,6 +6,7 @@ export interface IRTime {
 	end: number;
 	step: number;
 	saveStep?: number;
+	method?: "euler" | "rk4" | "rk2";
 	timeUnits?: string;
 }
 
