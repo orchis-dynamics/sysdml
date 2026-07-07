@@ -20,6 +20,7 @@ import type {
 	IRGraphicalFunction,
 	IRGraphicalFunctionKind,
 	IRPosition,
+	IRTime,
 } from "@sysdml/contracts";
 import { BUILTIN_FUNCTIONS, DiagnosticCode } from "@sysdml/contracts";
 
@@ -235,12 +236,33 @@ function validateGraphicalFunctionIdentifier(
 	}
 }
 
+function snapSaveStepToStepMultiple(
+	saveStep: number,
+	step: number,
+	timeDecl: TimeDeclarationNode,
+	nonFatalDiagnostics: IRDiagnostic[],
+): number {
+	const ratio = saveStep / step;
+	const nearest = Math.round(ratio);
+	const snapped = parseFloat((nearest * step).toPrecision(12));
+	if (Math.abs(ratio - nearest) > 1e-12 * Math.max(1, Math.abs(ratio))) {
+		nonFatalDiagnostics.push({
+			code: DiagnosticCode.SAVE_STEP_NOT_MULTIPLE,
+			message: `time.save_step (${saveStep}) is not a multiple of time.step (${step}); saving every ${snapped} (${nearest} * step)`,
+			span: timeDecl.span,
+			severity: "warning",
+		});
+	}
+	return snapped;
+}
+
 function compileTimeBlock(
 	timeDecl: TimeDeclarationNode,
 	errors: IRDiagnostic[],
-): { start: number; end: number; step: number } {
+	nonFatalDiagnostics: IRDiagnostic[],
+): IRTime {
 	const findTimePropertyValue = (
-		key: "start" | "end" | "step",
+		key: "start" | "end" | "step" | "save_step",
 	): number | null => {
 		const prop = timeDecl.props.find((timeProp) => timeProp.key === key);
 		return prop ? parseFloat(prop.value.value) : null;
@@ -249,6 +271,7 @@ function compileTimeBlock(
 	const start = findTimePropertyValue("start");
 	const end = findTimePropertyValue("end");
 	const step = findTimePropertyValue("step");
+	const saveStep = findTimePropertyValue("save_step");
 
 	const requiredProperties: Array<{ key: string; value: number | null }> = [
 		{ key: "start", value: start },
@@ -280,7 +303,40 @@ function compileTimeBlock(
 		});
 	}
 
-	return { start: start ?? 0, end: end ?? 0, step: step ?? 1 };
+	if (saveStep !== null && saveStep <= 0) {
+		errors.push({
+			code: DiagnosticCode.INVALID_SAVE_STEP,
+			message: `time.save_step must be greater than 0 (got ${saveStep})`,
+			span: timeDecl.span,
+		});
+	}
+	if (saveStep !== null && saveStep > 0 && step !== null && saveStep < step) {
+		errors.push({
+			code: DiagnosticCode.INVALID_SAVE_STEP,
+			message: `time.save_step must be >= time.step (${saveStep} < ${step})`,
+			span: timeDecl.span,
+		});
+	}
+
+	const effectiveSaveStep =
+		saveStep !== null && step !== null && step > 0 && saveStep >= step
+			? snapSaveStepToStepMultiple(
+					saveStep,
+					step,
+					timeDecl,
+					nonFatalDiagnostics,
+				)
+			: saveStep;
+
+	return {
+		start: start ?? 0,
+		end: end ?? 0,
+		step: step ?? 1,
+		...(effectiveSaveStep !== null && { saveStep: effectiveSaveStep }),
+		...(timeDecl.timeUnits !== undefined && {
+			timeUnits: timeDecl.timeUnits.value,
+		}),
+	};
 }
 
 export function compileAST(ast: FileNode): CompileResult {
@@ -431,7 +487,7 @@ export function compileAST(ast: FileNode): CompileResult {
 
 	const timeDecl = timeDecls[0];
 	const time = timeDecl
-		? compileTimeBlock(timeDecl, errors)
+		? compileTimeBlock(timeDecl, errors, nonFatalDiagnostics)
 		: { start: 0, end: 0, step: 1 };
 
 	// ── Build valid ID set ────────────────────────────────────────────────────

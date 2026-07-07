@@ -29,6 +29,8 @@ timeProp
     : START COLON number
     | END   COLON number
     | STEP  COLON number
+    | SAVE_STEP  COLON number
+    | TIME_UNITS COLON IDENT
     ;
 
 stockDecl
@@ -194,6 +196,8 @@ INIT    : 'init'  ;
 START   : 'start' ;
 END     : 'end'   ;
 STEP    : 'step'  ;
+SAVE_STEP  : 'save_step'  ;
+TIME_UNITS : 'time_units' ;
 NULL    : 'null'  ;
 
 // Graphical function keywords — reserved exactly like the SFD block-property

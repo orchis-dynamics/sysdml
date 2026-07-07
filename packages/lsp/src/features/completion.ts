@@ -23,7 +23,7 @@ const BLOCK_KEYS: Record<BlockKind, readonly string[]> = {
 	stock: ["init", "position"],
 	flow: ["from", "to", "rate", "position", "via"],
 	aux: ["position"],
-	time: ["start", "end", "step"],
+	time: ["start", "end", "step", "save_step", "time_units"],
 	gf: ["kind", "xscale", "xpts", "ypts", "yscale"],
 	connection: ["angle", "via"],
 };

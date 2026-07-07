@@ -26,6 +26,7 @@ import type {
 	StockPropertyNode,
 	TimeDeclarationNode,
 	TimePropertyNode,
+	TimeUnitsNode,
 	UnaryExpressionNode,
 } from "@sysdml/contracts";
 import { ParserRuleContext, TerminalNode, Token } from "antlr4ng";
@@ -234,7 +235,19 @@ export class ASTBuilder {
 	private timeDecl(ctx: TimeDeclContext): TimeDeclarationNode {
 		const seenKeys = new Set<string>();
 		const props: TimePropertyNode[] = [];
+		let timeUnits: TimeUnitsNode | undefined;
 		for (const timePropContext of ctx.timeProp()) {
+			if (timePropContext.TIME_UNITS()) {
+				const span = spanOf(timePropContext);
+				if (this.registerKeyOnce(seenKeys, "time_units", "time block", span)) {
+					timeUnits = {
+						type: "TimeUnits",
+						value: timePropContext.IDENT()!.getText(),
+						span,
+					};
+				}
+				continue;
+			}
 			const node = this.timeProp(timePropContext);
 			if (this.registerKeyOnce(seenKeys, node.key, "time block", node.span)) {
 				props.push(node);
@@ -243,20 +256,23 @@ export class ASTBuilder {
 		return {
 			type: "TimeDeclaration",
 			props,
+			timeUnits,
 			span: spanOf(ctx),
 		};
 	}
 
 	private timeProp(ctx: TimePropContext): TimePropertyNode {
-		const key: "start" | "end" | "step" = ctx.START()
+		const key: "start" | "end" | "step" | "save_step" = ctx.START()
 			? "start"
 			: ctx.END()
 				? "end"
-				: "step";
+				: ctx.STEP()
+					? "step"
+					: "save_step";
 		return {
 			type: "TimeProperty",
 			key,
-			value: buildNumber(ctx.number()),
+			value: buildNumber(ctx.number()!),
 			span: spanOf(ctx),
 		};
 	}

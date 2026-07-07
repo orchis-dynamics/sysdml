@@ -1,7 +1,7 @@
+import { DiagnosticCode } from "@sysdml/contracts";
 import { parseSource } from "@sysdml/parser";
 import { describe, test, expect } from "vitest";
 
-import { DiagnosticCode } from "@sysdml/contracts";
 import { compileAST } from "../src/compile.js";
 
 const ONE_STOCK = `stock s { init: 0 }`;
@@ -155,5 +155,123 @@ describe("time block validation — XMILE §2.3 mappings (B6.4)", () => {
 		expect(
 			diagnostics.find((d) => d.code === DiagnosticCode.INVALID_TIME_STEP),
 		).toBeUndefined();
+	});
+});
+
+describe("time block save_step and time_units (B6.5, B6.2)", () => {
+	function compileTime(timeBlock: string) {
+		const { ast, parseDiagnostics } = compile(
+			`sfd m\n${timeBlock}\n${ONE_STOCK}`,
+		);
+		expect(parseDiagnostics).toHaveLength(0);
+		expect(ast).not.toBeNull();
+		return compileAST(ast!);
+	}
+
+	test("save_step: 0 → INVALID_SAVE_STEP", () => {
+		const { ir, diagnostics } = compileTime(
+			`time { start: 0 end: 10 step: 1 save_step: 0 }`,
+		);
+		expect(ir).toBeNull();
+		const diag = diagnostics.find(
+			(d) => d.code === DiagnosticCode.INVALID_SAVE_STEP,
+		);
+		expect(diag).toBeDefined();
+		expect(diag!.message).toBe("time.save_step must be greater than 0 (got 0)");
+	});
+
+	test("save_step smaller than step → INVALID_SAVE_STEP", () => {
+		const { ir, diagnostics } = compileTime(
+			`time { start: 0 end: 10 step: 1 save_step: 0.5 }`,
+		);
+		expect(ir).toBeNull();
+		const diag = diagnostics.find(
+			(d) => d.code === DiagnosticCode.INVALID_SAVE_STEP,
+		);
+		expect(diag).toBeDefined();
+		expect(diag!.message).toBe("time.save_step must be >= time.step (0.5 < 1)");
+	});
+
+	test("save_step equal to step is clean", () => {
+		const { ir, diagnostics } = compileTime(
+			`time { start: 0 end: 10 step: 1 save_step: 1 }`,
+		);
+		expect(diagnostics).toHaveLength(0);
+		expect(ir!.time.saveStep).toBe(1);
+	});
+
+	test("save_step as a multiple of step is clean", () => {
+		const { ir, diagnostics } = compileTime(
+			`time { start: 0 end: 10 step: 0.5 save_step: 2.5 }`,
+		);
+		expect(diagnostics).toHaveLength(0);
+		expect(ir!.time.saveStep).toBe(2.5);
+	});
+
+	test("non-multiple save_step snaps to the nearest whole multiple with a warning", () => {
+		const { ir, diagnostics } = compileTime(
+			`time { start: 0 end: 10 step: 0.4 save_step: 1 }`,
+		);
+		expect(ir).not.toBeNull();
+		expect(diagnostics).toHaveLength(1);
+		expect(diagnostics[0].code).toBe(DiagnosticCode.SAVE_STEP_NOT_MULTIPLE);
+		expect(diagnostics[0].severity).toBe("warning");
+		expect(diagnostics[0].message).toBe(
+			"time.save_step (1) is not a multiple of time.step (0.4); saving every 1.2 (3 * step)",
+		);
+		expect(ir!.time.saveStep).toBe(1.2);
+	});
+
+	test("float-near-multiple save_step stays uncorrected without a warning", () => {
+		const { ir, diagnostics } = compileTime(
+			`time { start: 0 end: 10 step: 0.1 save_step: 0.3 }`,
+		);
+		expect(diagnostics).toHaveLength(0);
+		expect(ir!.time.saveStep).toBe(0.3);
+	});
+
+	test("large-ratio near-multiple still snaps", () => {
+		const { ir, diagnostics } = compileTime(
+			`time { start: 0 end: 30000000 step: 1 save_step: 10000000.005 }`,
+		);
+		expect(ir).not.toBeNull();
+		const diag = diagnostics.find(
+			(d) => d.code === DiagnosticCode.SAVE_STEP_NOT_MULTIPLE,
+		);
+		expect(diag).toBeDefined();
+		expect(diag!.severity).toBe("warning");
+		expect(ir!.time.saveStep).toBe(10000000);
+	});
+
+	test("high-side float noise on a near-multiple normalizes silently", () => {
+		const { ir, diagnostics } = compileTime(
+			`time { start: 0 end: 10 step: 0.5 save_step: 2.5000000000000004 }`,
+		);
+		expect(diagnostics).toHaveLength(0);
+		expect(ir!.time.saveStep).toBe(2.5);
+	});
+
+	test("omitted save_step leaves the field absent", () => {
+		const { ir, diagnostics } = compileTime(
+			`time { start: 0 end: 10 step: 1 }`,
+		);
+		expect(diagnostics).toHaveLength(0);
+		expect("saveStep" in ir!.time).toBe(false);
+	});
+
+	test("time_units flows into IRTime", () => {
+		const { ir, diagnostics } = compileTime(
+			`time { start: 0 end: 10 step: 1 time_units: years }`,
+		);
+		expect(diagnostics).toHaveLength(0);
+		expect(ir!.time.timeUnits).toBe("years");
+	});
+
+	test("omitted time_units leaves the field absent", () => {
+		const { ir, diagnostics } = compileTime(
+			`time { start: 0 end: 10 step: 1 }`,
+		);
+		expect(diagnostics).toHaveLength(0);
+		expect("timeUnits" in ir!.time).toBe(false);
 	});
 });

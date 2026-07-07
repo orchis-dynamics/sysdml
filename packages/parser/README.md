@@ -56,9 +56,11 @@ cld <id>
 
 ```
 time {
-  start: <number>
-  end:   <number>
-  step:  <number>
+  start:       <number>
+  end:         <number>
+  step:        <number>
+  save_step?:  <number>       # save interval, defaults to step
+  time_units?: <identifier>   # e.g. years
 }
 ```
 
