@@ -75,7 +75,6 @@ function detectContext(source: string, position: Position): CompletionContext {
 	if (/\b(from|to)\s*:\s*$/.test(textBefore)) return "flow-endpoint";
 	// Match "kind:" with optional whitespace after the colon
 	if (/\bkind\s*:\s*$/.test(textBefore)) return "gf-kind";
-	// Match "method:" with optional whitespace after the colon
 	if (/\bmethod\s*:\s*$/.test(textBefore)) return "time-method";
 
 	// Check if we're inside a block by counting braces before this position
