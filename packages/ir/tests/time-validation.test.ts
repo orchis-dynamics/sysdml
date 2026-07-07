@@ -243,6 +243,14 @@ describe("time block save_step and time_units (B6.5, B6.2)", () => {
 		expect(ir!.time.saveStep).toBe(10000000);
 	});
 
+	test("high-side float noise on a near-multiple normalizes silently", () => {
+		const { ir, diagnostics } = compileTime(
+			`time { start: 0 end: 10 step: 0.5 save_step: 2.5000000000000004 }`,
+		);
+		expect(diagnostics).toHaveLength(0);
+		expect(ir!.time.saveStep).toBe(2.5);
+	});
+
 	test("omitted save_step leaves the field absent", () => {
 		const { ir, diagnostics } = compileTime(
 			`time { start: 0 end: 10 step: 1 }`,

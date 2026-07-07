@@ -106,6 +106,14 @@ aux birth_rate = 0.02
 flow births { from: null to: population rate: population * birth_rate }
 `.trim();
 
+const nearMissSaveStepModel = `
+sfd near_miss
+time { start: 0 end: 10 step: 0.25 save_step: 1.1 }
+stock population { init: 100 }
+aux birth_rate = 0.02
+flow births { from: null to: population rate: population * birth_rate }
+`.trim();
+
 const nestedLookupModel = `
 sfd nested_lookup
 time { start: 0 end: 1 step: 1 }
@@ -187,6 +195,16 @@ describe("SimlinSimulator", () => {
 		expect(result.rows.map((row) => row.time)).toEqual([
 			0, 1.2000000000000002, 2.4, 3.5999999999999996, 4.8, 6.000000000000001,
 			7.200000000000002, 8.400000000000002, 9.600000000000003,
+		]);
+	});
+
+	test("snapped near-multiple save_step keeps the full horizon", async () => {
+		const result = await new SimlinSimulator().simulate(
+			buildIRAllowingWarnings(nearMissSaveStepModel),
+		);
+		expect(result.diagnostics).toHaveLength(0);
+		expect(result.rows.map((row) => row.time)).toEqual([
+			0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
 		]);
 	});
 
@@ -275,9 +293,7 @@ aux y = outer(inner(x))
 		);
 		expect(result.rows).toEqual([]);
 		expect(result.diagnostics.length).toBeGreaterThanOrEqual(2);
-		const messages = result.diagnostics.map(
-			(diagnostic) => diagnostic.message,
-		);
+		const messages = result.diagnostics.map((diagnostic) => diagnostic.message);
 		expect(
 			messages.some((message) => message.includes("unknown_dependency")),
 		).toBe(true);

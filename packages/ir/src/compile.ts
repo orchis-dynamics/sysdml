@@ -244,16 +244,15 @@ function snapSaveStepToStepMultiple(
 ): number {
 	const ratio = saveStep / step;
 	const nearest = Math.round(ratio);
-	if (Math.abs(ratio - nearest) <= 1e-12 * Math.max(1, Math.abs(ratio))) {
-		return saveStep;
-	}
 	const snapped = parseFloat((nearest * step).toPrecision(12));
-	nonFatalDiagnostics.push({
-		code: DiagnosticCode.SAVE_STEP_NOT_MULTIPLE,
-		message: `time.save_step (${saveStep}) is not a multiple of time.step (${step}); saving every ${snapped} (${nearest} * step)`,
-		span: timeDecl.span,
-		severity: "warning",
-	});
+	if (Math.abs(ratio - nearest) > 1e-12 * Math.max(1, Math.abs(ratio))) {
+		nonFatalDiagnostics.push({
+			code: DiagnosticCode.SAVE_STEP_NOT_MULTIPLE,
+			message: `time.save_step (${saveStep}) is not a multiple of time.step (${step}); saving every ${snapped} (${nearest} * step)`,
+			span: timeDecl.span,
+			severity: "warning",
+		});
+	}
 	return snapped;
 }
 
