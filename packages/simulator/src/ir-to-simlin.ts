@@ -251,6 +251,17 @@ function mapAuxiliaries(
 	});
 }
 
+function mapSimSpecs(ir: IR): SimlinSimSpecs {
+	return {
+		startTime: ir.time.start,
+		endTime: ir.time.end,
+		dt: String(ir.time.step),
+		...(ir.time.saveStep !== undefined && { saveStep: ir.time.saveStep }),
+		...(ir.time.timeUnits !== undefined && { timeUnits: ir.time.timeUnits }),
+		method: "euler",
+	};
+}
+
 export function irToSimlinProject(ir: IR): SimlinProject {
 	const context: EquationLoweringContext = {
 		graphicalFunctions: ir.graphicalFunctions,
@@ -262,12 +273,7 @@ export function irToSimlinProject(ir: IR): SimlinProject {
 	const auxiliaries = mapAuxiliaries(ir, context);
 	return {
 		name: ir.model.id,
-		simSpecs: {
-			startTime: ir.time.start,
-			endTime: ir.time.end,
-			dt: String(ir.time.step),
-			method: "euler",
-		},
+		simSpecs: mapSimSpecs(ir),
 		models: [
 			{
 				name: "main",

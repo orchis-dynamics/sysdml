@@ -50,6 +50,24 @@ describe("irToSimlinProject", () => {
 		});
 	});
 
+	test("maps save_step and time_units into sim specs when present", () => {
+		const sampled = `
+sfd sampled
+time { start: 0 end: 10 step: 0.25 save_step: 1 time_units: years }
+stock population { init: 100 }
+aux birth_rate = 0.02
+flow births { from: null to: population rate: population * birth_rate }
+`.trim();
+		expect(irToSimlinProject(buildIR(sampled)).simSpecs).toEqual({
+			startTime: 0,
+			endTime: 10,
+			dt: "0.25",
+			saveStep: 1,
+			timeUnits: "years",
+			method: "euler",
+		});
+	});
+
 	test("preserves both lookups when a graphical function is nested inside another's argument", () => {
 		const nestedGraphicalFunctions = `
 sfd nested_gf

@@ -59,6 +59,30 @@ aux inflowRate = 5
 flow addWater { from: null to: waterStock rate: inflowRate }
 `.trim();
 
+const saveStepModel = `
+sfd sampled
+time { start: 0 end: 10 step: 0.25 save_step: 1 }
+stock population { init: 100 }
+aux birth_rate = 0.02
+flow births { from: null to: population rate: population * birth_rate }
+`.trim();
+
+const fineStepModel = `
+sfd fine
+time { start: 0 end: 10 step: 0.25 }
+stock population { init: 100 }
+aux birth_rate = 0.02
+flow births { from: null to: population rate: population * birth_rate }
+`.trim();
+
+const timeUnitsModel = `
+sfd dated
+time { start: 0 end: 10 step: 1 time_units: years }
+stock population { init: 100 }
+aux birth_rate = 0.02
+flow births { from: null to: population rate: population * birth_rate }
+`.trim();
+
 const nestedLookupModel = `
 sfd nested_lookup
 time { start: 0 end: 1 step: 1 }
@@ -108,6 +132,28 @@ describe("SimlinSimulator", () => {
 		]);
 		expect(result.rows[0].waterStock).toBeCloseTo(50, 9);
 		expect(result.rows[3].waterStock).toBeCloseTo(65, 9);
+	});
+
+	test("save_step thins result rows to the save interval", async () => {
+		const result = await new SimlinSimulator().simulate(buildIR(saveStepModel));
+		expect(result.diagnostics).toHaveLength(0);
+		expect(result.rows.length).toBe(11);
+		expect(result.rows.map((row) => row.time)).toEqual([
+			0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+		]);
+	});
+
+	test("omitted save_step keeps one row per step", async () => {
+		const result = await new SimlinSimulator().simulate(buildIR(fineStepModel));
+		expect(result.rows.length).toBe(41);
+	});
+
+	test("time_units passes through without affecting the run", async () => {
+		const result = await new SimlinSimulator().simulate(
+			buildIR(timeUnitsModel),
+		);
+		expect(result.diagnostics).toHaveLength(0);
+		expect(result.rows.length).toBe(11);
 	});
 
 	test("evaluates a graphical function nested inside a larger expression", async () => {
