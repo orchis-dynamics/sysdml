@@ -1,6 +1,16 @@
-import type { ExpressionNode, IRDiagnostic, IRExpressionNode, IRGraphicalFunction, Span } from "@sysdml/contracts";
-
-import { BUILTIN_ARITY, BUILTIN_FUNCTIONS, ZERO_ARG_BUILTINS, DiagnosticCode } from "@sysdml/contracts";
+import type {
+	ExpressionNode,
+	IRDiagnostic,
+	IRExpressionNode,
+	IRGraphicalFunction,
+	Span,
+} from "@sysdml/contracts";
+import {
+	BUILTIN_ARITY,
+	BUILTIN_FUNCTIONS,
+	ZERO_ARG_BUILTINS,
+	DiagnosticCode,
+} from "@sysdml/contracts";
 
 export const RESERVED_LOOKUP_PREFIX = "__lookup_";
 
@@ -12,8 +22,17 @@ export function compileExpr(
 	syntheticGraphicalFunctions: IRGraphicalFunction[],
 ): IRExpressionNode {
 	switch (node.type) {
-		case "NumberLiteral":
-			return { type: "Number", value: parseFloat(node.value) };
+		case "NumberLiteral": {
+			const value = parseFloat(node.value);
+			if (!Number.isFinite(value)) {
+				errors.push({
+					code: DiagnosticCode.NON_FINITE_LITERAL,
+					message: `Numeric literal must be a finite number (got ${value})`,
+					span: node.span,
+				});
+			}
+			return { type: "Number", value };
+		}
 
 		case "IdentifierReference": {
 			const uppercasedName = node.name.toUpperCase();
@@ -245,7 +264,7 @@ function compileLookup(
 	}
 
 	const ypts: number[] = [];
-	let hasNonLiteralYPoint = false;
+	let hasInvalidYPoint = false;
 	for (const yArgument of args.slice(1)) {
 		const literalValue = extractLiteralNumber(yArgument);
 		if (literalValue === null) {
@@ -254,12 +273,14 @@ function compileLookup(
 				message: "lookup() y-values must be numeric literals",
 				span: yArgument.span,
 			});
-			hasNonLiteralYPoint = true;
+			hasInvalidYPoint = true;
+		} else if (!Number.isFinite(literalValue)) {
+			hasInvalidYPoint = true;
 		} else {
 			ypts.push(literalValue);
 		}
 	}
-	if (hasNonLiteralYPoint) {
+	if (hasInvalidYPoint) {
 		compileAllArguments();
 		return { type: "Number", value: 0 };
 	}

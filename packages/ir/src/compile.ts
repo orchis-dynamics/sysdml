@@ -53,11 +53,22 @@ function isGraphicalFunctionDeclaration(
 	return n.type === "GraphicalFunctionDeclaration";
 }
 
-function numListToFloats(node: NumberListNode): number[] {
-	return node.values.map(
-		(signedNumber) =>
-			(signedNumber.negative ? -1 : 1) * parseFloat(signedNumber.lit.value),
-	);
+function numListToFloats(
+	node: NumberListNode,
+	errors: IRDiagnostic[],
+): number[] {
+	return node.values.map((signedNumber) => {
+		const value =
+			(signedNumber.negative ? -1 : 1) * parseFloat(signedNumber.lit.value);
+		if (!Number.isFinite(value)) {
+			errors.push({
+				code: DiagnosticCode.NON_FINITE_LITERAL,
+				message: `Numeric literal must be a finite number (got ${value})`,
+				span: signedNumber.span,
+			});
+		}
+		return value;
+	});
 }
 
 function posToIR(pos: PositionNode | undefined): IRPosition | undefined {
@@ -101,7 +112,7 @@ function validateGraphicalFunctionBody(
 
 	const ypts =
 		yptsProp && yptsProp.key === "ypts"
-			? numListToFloats(yptsProp.value)
+			? numListToFloats(yptsProp.value, errors)
 			: null;
 	if (ypts === null) {
 		errors.push({
@@ -140,7 +151,7 @@ function validateGraphicalFunctionBody(
 
 	let xscale: [number, number] | null = null;
 	if (xscaleProp && xscaleProp.key === "xscale") {
-		const values = numListToFloats(xscaleProp.value);
+		const values = numListToFloats(xscaleProp.value, errors);
 		if (values.length !== 2) {
 			errors.push({
 				code: DiagnosticCode.XSCALE_WRONG_COUNT,
@@ -148,7 +159,7 @@ function validateGraphicalFunctionBody(
 				span: declSpan,
 			});
 			isValid = false;
-		} else if (values[0] >= values[1]) {
+		} else if (values.every(Number.isFinite) && values[0] >= values[1]) {
 			errors.push({
 				code: DiagnosticCode.XSCALE_NOT_ASCENDING,
 				message: `'${id}': xscale min must be less than max (got [${values[0]}, ${values[1]}])`,
@@ -162,7 +173,7 @@ function validateGraphicalFunctionBody(
 
 	let xpts: number[] | null = null;
 	if (xptsProp && xptsProp.key === "xpts") {
-		const values = numListToFloats(xptsProp.value);
+		const values = numListToFloats(xptsProp.value, errors);
 		if (values.length !== ypts.length) {
 			errors.push({
 				code: DiagnosticCode.XPTS_YPTS_COUNT_MISMATCH,
@@ -171,7 +182,8 @@ function validateGraphicalFunctionBody(
 			});
 			isValid = false;
 		} else {
-			for (let i = 1; i < values.length; i++) {
+			const allFinite = values.every(Number.isFinite);
+			for (let i = 1; allFinite && i < values.length; i++) {
 				if (values[i] <= values[i - 1]) {
 					errors.push({
 						code: DiagnosticCode.XPTS_NOT_ASCENDING,
@@ -186,7 +198,7 @@ function validateGraphicalFunctionBody(
 		}
 	}
 
-	if (kind === "step" && ypts.length >= 2) {
+	if (kind === "step" && ypts.length >= 2 && ypts.every(Number.isFinite)) {
 		if (ypts[ypts.length - 1] !== ypts[ypts.length - 2]) {
 			errors.push({
 				code: DiagnosticCode.STEP_LAST_YPTS_MISMATCH,
@@ -199,7 +211,7 @@ function validateGraphicalFunctionBody(
 
 	let yscale: [number, number] | null = null;
 	if (yscaleProp && yscaleProp.key === "yscale") {
-		const values = numListToFloats(yscaleProp.value);
+		const values = numListToFloats(yscaleProp.value, errors);
 		if (values.length !== 2) {
 			errors.push({
 				code: DiagnosticCode.YSCALE_WRONG_COUNT,
