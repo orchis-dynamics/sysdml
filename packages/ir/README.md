@@ -86,11 +86,12 @@ interface IRTime {
 	end: number;
 	step: number;
 	saveStep?: number;
+	method?: "euler" | "rk4" | "rk2";
 	timeUnits?: string;
 }
 ```
 
-`saveStep` is absent when the source omits `save_step` and always holds a whole multiple of `step` — non-multiple source values are snapped to the nearest multiple with a `SAVE_STEP_NOT_MULTIPLE` warning. `timeUnits` carries the `time_units` identifier verbatim.
+`saveStep` is absent when the source omits `save_step` and always holds a whole multiple of `step` — non-multiple source values are snapped to the nearest multiple with a `SAVE_STEP_NOT_MULTIPLE` warning. `method` carries the validated integration method and is absent when the source omits it. `timeUnits` carries the `time_units` identifier verbatim.
 
 ### `IRPosition`
 
@@ -247,6 +248,7 @@ type IRExpressionNode =
 | `MISSING_TIME_PROPERTY`      | `time` block is missing `start`, `end`, or `step`              |
 | `NON_FINITE_TIME_VALUE`      | A `time` property literal overflows to a non-finite number     |
 | `NON_FINITE_LITERAL`         | Expression, `LOOKUP`, or `gf` literal overflows to non-finite  |
+| `INVALID_METHOD`             | `time.method` is not `euler`, `rk4`, or `rk2`                  |
 | `INVALID_SAVE_STEP`          | `time.save_step` is ≤ 0 or < `time.step`                       |
 | `SAVE_STEP_NOT_MULTIPLE`     | Warning: `save_step` snapped to the nearest multiple of `step` |
 | `UNKNOWN_FUNCTION`           | Function name not in built-in set and not a graphical function |

@@ -258,7 +258,7 @@ function mapSimSpecs(ir: IR): SimlinSimSpecs {
 		dt: String(ir.time.step),
 		...(ir.time.saveStep !== undefined && { saveStep: ir.time.saveStep }),
 		...(ir.time.timeUnits !== undefined && { timeUnits: ir.time.timeUnits }),
-		method: "euler",
+		method: ir.time.method ?? "rk4",
 	};
 }
 

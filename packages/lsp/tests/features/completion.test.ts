@@ -190,6 +190,26 @@ birth_rate ->+ births
 		});
 	});
 
+	it("offers method as a time block key", () => {
+		const source = "sfd m\ntime {\n  \n}\nstock s { init: 0 }";
+		const items = getCompletionItems(source, null, null, {
+			line: 2,
+			character: 2,
+		});
+		expect(items.map((i) => i.label)).toContain("method");
+	});
+
+	it("offers exactly the engine methods after method:", () => {
+		const source =
+			"sfd m\ntime {\n  start: 0\n  method: \n}\nstock s { init: 0 }";
+		const items = getCompletionItems(source, null, null, {
+			line: 3,
+			character: 10,
+		});
+		expect(items.map((i) => i.label)).toEqual(["euler", "rk4", "rk2"]);
+		expect(items[0].kind).toBe(CompletionItemKind.EnumMember);
+	});
+
 	describe("block key completions", () => {
 		it("suggests only stock keys inside a stock block", () => {
 			const src = "sfd m\nstock s {\n  init: 100\n  ";
@@ -236,6 +256,7 @@ birth_rate ->+ births
 			const labels = items.map((i) => i.label);
 			expect(labels.sort()).toEqual([
 				"end",
+				"method",
 				"save_step",
 				"start",
 				"step",

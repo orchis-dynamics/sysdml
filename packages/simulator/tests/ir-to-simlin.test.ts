@@ -46,7 +46,7 @@ describe("irToSimlinProject", () => {
 			startTime: 0,
 			endTime: 10,
 			dt: "1",
-			method: "euler",
+			method: "rk4",
 		});
 	});
 
@@ -64,8 +64,21 @@ flow births { from: null to: population rate: population * birth_rate }
 			dt: "0.25",
 			saveStep: 1,
 			timeUnits: "years",
-			method: "euler",
+			method: "rk4",
 		});
+	});
+
+	test("maps method into sim specs when present", () => {
+		const withMethod = `
+sfd with_method
+time { start: 0 end: 10 step: 1 method: rk2 }
+stock population { init: 100 }
+`.trim();
+		expect(irToSimlinProject(buildIR(withMethod)).simSpecs.method).toBe("rk2");
+	});
+
+	test("defaults method to rk4 when omitted", () => {
+		expect(irToSimlinProject(buildIR(growthModel)).simSpecs.method).toBe("rk4");
 	});
 
 	test("hoists a bare graphical-function stock init into a hidden auxiliary", () => {

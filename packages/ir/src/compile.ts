@@ -257,6 +257,13 @@ function formatDecimal(value: number): string {
 	return value.toFixed(20).replace(/0+$/, "").replace(/\.$/, "");
 }
 
+const INTEGRATION_METHODS = ["euler", "rk4", "rk2"] as const;
+type IntegrationMethod = (typeof INTEGRATION_METHODS)[number];
+
+function isIntegrationMethod(value: string): value is IntegrationMethod {
+	return (INTEGRATION_METHODS as readonly string[]).includes(value);
+}
+
 function snapSaveStepToStepMultiple(
 	saveStep: number,
 	step: number,
@@ -355,11 +362,25 @@ function compileTimeBlock(
 				)
 			: saveStep;
 
+	let method: IntegrationMethod | undefined;
+	if (timeDecl.method !== undefined) {
+		if (isIntegrationMethod(timeDecl.method.value)) {
+			method = timeDecl.method.value;
+		} else {
+			errors.push({
+				code: DiagnosticCode.INVALID_METHOD,
+				message: `time.method must be euler, rk4, or rk2 (got '${timeDecl.method.value}')`,
+				span: timeDecl.method.span,
+			});
+		}
+	}
+
 	return {
 		start: start ?? 0,
 		end: end ?? 0,
 		step: step ?? 1,
 		...(effectiveSaveStep !== null && { saveStep: effectiveSaveStep }),
+		...(method !== undefined && { method }),
 		...(timeDecl.timeUnits !== undefined && {
 			timeUnits: timeDecl.timeUnits.value,
 		}),

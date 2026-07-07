@@ -44,7 +44,7 @@
 		},
 		"keywords-property": {
 			"name": "keyword.other.property.sysdml",
-			"match": "\\b(from|to|rate|init|start|end|step|kind|xscale|xpts|ypts|yscale|position|via|angle)\\b"
+			"match": "\\b(from|to|rate|init|start|end|step|save_step|method|time_units|kind|xscale|xpts|ypts|yscale|position|via|angle)\\b"
 		},
 		"constants-language": {
 			"name": "constant.language.sysdml",

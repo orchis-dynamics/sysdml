@@ -397,3 +397,53 @@ describe("time block non-finite values (B6.6)", () => {
 		).toHaveLength(0);
 	});
 });
+
+describe("time block method (B6.1)", () => {
+	test.each(["euler", "rk4", "rk2"] as const)(
+		"method: %s is accepted and lands typed in IRTime",
+		(method) => {
+			const { ir, diagnostics } = compileTime(
+				`time { start: 0 end: 10 step: 1 method: ${method} }`,
+			);
+			expect(diagnostics).toHaveLength(0);
+			expect(ir!.time.method).toBe(method);
+		},
+	);
+
+	test("unknown method → INVALID_METHOD with pinned message and prop span", () => {
+		const { ir, diagnostics } = compileTime(
+			`time { start: 0 end: 10 step: 1 method: rk45 }`,
+		);
+		expect(ir).toBeNull();
+		const diag = diagnostics.find(
+			(d) => d.code === DiagnosticCode.INVALID_METHOD,
+		);
+		expect(diag).toBeDefined();
+		expect(diag!.message).toBe(
+			"time.method must be euler, rk4, or rk2 (got 'rk45')",
+		);
+		expect(diag!.span).toBeDefined();
+		expect(diag!.span!.start.line).toBe(2);
+		expect(diag!.span!.start.col).toBe(
+			"time { start: 0 end: 10 step: 1 ".length + 1,
+		);
+	});
+
+	test("method values are lowercase-exact: RK4 is rejected", () => {
+		const { ir, diagnostics } = compileTime(
+			`time { start: 0 end: 10 step: 1 method: RK4 }`,
+		);
+		expect(ir).toBeNull();
+		expect(
+			diagnostics.find((d) => d.code === DiagnosticCode.INVALID_METHOD),
+		).toBeDefined();
+	});
+
+	test("omitted method leaves the field absent", () => {
+		const { ir, diagnostics } = compileTime(
+			`time { start: 0 end: 10 step: 1 }`,
+		);
+		expect(diagnostics).toHaveLength(0);
+		expect("method" in ir!.time).toBe(false);
+	});
+});

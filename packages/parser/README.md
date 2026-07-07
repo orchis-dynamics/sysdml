@@ -60,6 +60,7 @@ time {
   end:         <number>
   step:        <number>
   save_step?:  <number>       # save interval, defaults to step
+  method?:     <identifier>   # euler | rk4 | rk2 (validated in the IR); defaults to rk4
   time_units?: <identifier>   # e.g. years
 }
 ```
@@ -338,8 +339,8 @@ Every node has a `span: { start: { line, col }, end: { line, col } }` (1-based).
 
 | Node                               | Fields                                                                                                                     |
 | ---------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| `TimeDeclarationNode`              | `props: TimePropertyNode[]`                                                                                                |
-| `TimePropertyNode`                 | `key: "start" \| "end" \| "step"`, `value: NumberLiteralNode`                                                              |
+| `TimeDeclarationNode`              | `props: TimePropertyNode[]`, `method?: TimeMethodNode`, `timeUnits?: TimeUnitsNode`                                        |
+| `TimePropertyNode`                 | `key: "start" \| "end" \| "step" \| "save_step"`, `value: NumberLiteralNode`                                              |
 | `StockDeclarationNode`             | `id: string`, `idSpan`, `props: StockPropertyNode[]`, `position?: PositionNode`                                            |
 | `StockPropertyNode`                | `init: ExpressionNode`                                                                                                     |
 | `FlowDeclarationNode`              | `id: string`, `idSpan`, `props: FlowPropertyNode[]`, `position?: PositionNode`, `via?: PositionNode[]`                     |

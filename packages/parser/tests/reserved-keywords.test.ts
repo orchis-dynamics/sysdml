@@ -32,6 +32,7 @@ const DECLARATION_KEYWORDS = [
 	"step",
 	"save_step",
 	"time_units",
+	"method",
 	"null",
 ];
 
