@@ -234,7 +234,18 @@ birth_rate ->+ births
 				character: 2,
 			});
 			const labels = items.map((i) => i.label);
-			expect(labels.sort()).toEqual(["end", "start", "step"]);
+			expect(labels.sort()).toEqual(["end", "save_step", "start", "step", "time_units"]);
+		});
+
+		it("offers save_step and time_units inside a time block", () => {
+			const src = "sfd test\ntime { start: 0\n ";
+			const items = getCompletionItems(src, null, null, {
+				line: 2,
+				character: 1,
+			});
+			const labels = items.map((item) => item.label);
+			expect(labels).toContain("save_step");
+			expect(labels).toContain("time_units");
 		});
 
 		it("suggests only gf keys inside a gf block", () => {

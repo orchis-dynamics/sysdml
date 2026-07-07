@@ -56,11 +56,14 @@ function printDecl(decl: DeclarationNode): string {
 }
 
 function printTimeDeclaration(decl: TimeDeclarationNode): string {
-	const order = ["start", "end", "step"] as const;
+	const order = ["start", "end", "step", "save_step"] as const;
 	const lines = order.flatMap((key) => {
 		const prop = decl.props.find((p) => p.key === key);
 		return prop ? [`  ${key}: ${prop.value.value}`] : [];
 	});
+	if (decl.timeUnits) {
+		lines.push(`  time_units: ${decl.timeUnits.value}`);
+	}
 	return `time {\n${lines.join("\n")}\n}`;
 }
 

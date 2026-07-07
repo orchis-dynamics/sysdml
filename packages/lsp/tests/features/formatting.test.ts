@@ -45,6 +45,24 @@ aux birth_rate = 0.02
 		expect(endIdx).toBeLessThan(stepIdx);
 	});
 
+	it("formats save_step and time_units in canonical order after step", () => {
+		const result = formatSource(
+			"sfd m\ntime{time_units:years\nsave_step:2\nstep:1\nend:10\nstart:0}\nstock s{init:0}",
+		);
+		expect(result).not.toBeNull();
+		expect(result).toContain(
+			"time {\n  start: 0\n  end: 10\n  step: 1\n  save_step: 2\n  time_units: years\n}",
+		);
+	});
+
+	it("formats a time block without the optional props unchanged", () => {
+		const result = formatSource(
+			"sfd m\ntime{step:1\nend:10\nstart:0}\nstock s{init:0}",
+		);
+		expect(result).not.toBeNull();
+		expect(result).toContain("time {\n  start: 0\n  end: 10\n  step: 1\n}");
+	});
+
 	it("formats flow block with canonical property order: from to rate", () => {
 		const result = formatSource(
 			"sfd m\ntime{start:0\nend:10\nstep:1}\nstock s{init:0}\nflow f{rate:1\nto:s\nfrom:null}",
