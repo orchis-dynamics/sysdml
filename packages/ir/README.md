@@ -246,7 +246,7 @@ type IRExpressionNode =
 | `INVALID_TIME_RANGE`         | `time.end` < `time.start`                                      |
 | `MISSING_TIME_PROPERTY`      | `time` block is missing `start`, `end`, or `step`              |
 | `NON_FINITE_TIME_VALUE`      | A `time` property literal overflows to a non-finite number     |
-| `NON_FINITE_LITERAL`         | An expression, `LOOKUP`, or `gf` literal overflows to a non-finite number |
+| `NON_FINITE_LITERAL`         | Expression, `LOOKUP`, or `gf` literal overflows to non-finite  |
 | `INVALID_SAVE_STEP`          | `time.save_step` is ≤ 0 or < `time.step`                       |
 | `SAVE_STEP_NOT_MULTIPLE`     | Warning: `save_step` snapped to the nearest multiple of `step` |
 | `UNKNOWN_FUNCTION`           | Function name not in built-in set and not a graphical function |

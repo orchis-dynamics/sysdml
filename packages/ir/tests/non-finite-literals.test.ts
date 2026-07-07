@@ -72,24 +72,44 @@ describe("non-finite expression literals (B6.7)", () => {
 });
 
 describe("non-finite LOOKUP y-points (B6.7)", () => {
-	test("overflowing LOOKUP y-point → NON_FINITE_LITERAL, no synthetic gf", () => {
+	test("overflowing LOOKUP y-point → exactly one NON_FINITE_LITERAL", () => {
 		const { ir, diagnostics } = compileModel(
 			`stock s { init: 0 }\naux a = LOOKUP(0.5, 0, ${OVERFLOW})`,
 		);
 		expect(ir).toBeNull();
 		expect(
-			diagnostics.find((d) => d.code === DiagnosticCode.NON_FINITE_LITERAL),
-		).toBeDefined();
+			diagnostics.filter((d) => d.code === DiagnosticCode.NON_FINITE_LITERAL),
+		).toHaveLength(1);
 	});
 
-	test("negated overflowing LOOKUP y-point → NON_FINITE_LITERAL", () => {
+	test("negated overflowing LOOKUP y-point → exactly one NON_FINITE_LITERAL", () => {
 		const { ir, diagnostics } = compileModel(
 			`stock s { init: 0 }\naux a = LOOKUP(0.5, 0, -${OVERFLOW})`,
 		);
 		expect(ir).toBeNull();
 		expect(
-			diagnostics.find((d) => d.code === DiagnosticCode.NON_FINITE_LITERAL),
-		).toBeDefined();
+			diagnostics.filter((d) => d.code === DiagnosticCode.NON_FINITE_LITERAL),
+		).toHaveLength(1);
+	});
+
+	test("grouped overflowing LOOKUP y-point → exactly one NON_FINITE_LITERAL", () => {
+		const { ir, diagnostics } = compileModel(
+			`stock s { init: 0 }\naux a = LOOKUP(0.5, 0, (${OVERFLOW}))`,
+		);
+		expect(ir).toBeNull();
+		expect(
+			diagnostics.filter((d) => d.code === DiagnosticCode.NON_FINITE_LITERAL),
+		).toHaveLength(1);
+	});
+
+	test("two overflowing LOOKUP y-points → two NON_FINITE_LITERAL diagnostics", () => {
+		const { ir, diagnostics } = compileModel(
+			`stock s { init: 0 }\naux a = LOOKUP(0.5, ${OVERFLOW}, ${OVERFLOW})`,
+		);
+		expect(ir).toBeNull();
+		expect(
+			diagnostics.filter((d) => d.code === DiagnosticCode.NON_FINITE_LITERAL),
+		).toHaveLength(2);
 	});
 });
 
@@ -104,14 +124,55 @@ describe("non-finite graphical function points (B6.7)", () => {
 		).toBeDefined();
 	});
 
-	test("overflowing gf xscale value → NON_FINITE_LITERAL", () => {
+	test("overflowing gf xscale value → NON_FINITE_LITERAL without ascending-check noise", () => {
 		const { ir, diagnostics } = compileModel(
-			`stock s { init: 0 }\ngf g { kind: linear xscale: [0, ${OVERFLOW}] ypts: [0, 1] }\naux a = g(5)`,
+			`stock s { init: 0 }\ngf g { kind: linear xscale: [${OVERFLOW}, 5] ypts: [0, 1] }\naux a = g(5)`,
 		);
 		expect(ir).toBeNull();
 		expect(
 			diagnostics.find((d) => d.code === DiagnosticCode.NON_FINITE_LITERAL),
 		).toBeDefined();
+		expect(
+			diagnostics.find((d) => d.code === DiagnosticCode.XSCALE_NOT_ASCENDING),
+		).toBeUndefined();
+	});
+
+	test("overflowing gf xpts value → NON_FINITE_LITERAL without ascending-check noise", () => {
+		const { ir, diagnostics } = compileModel(
+			`stock s { init: 0 }\ngf g { kind: linear xpts: [${OVERFLOW}, 5] ypts: [0, 1] }\naux a = g(5)`,
+		);
+		expect(ir).toBeNull();
+		expect(
+			diagnostics.find((d) => d.code === DiagnosticCode.NON_FINITE_LITERAL),
+		).toBeDefined();
+		expect(
+			diagnostics.find((d) => d.code === DiagnosticCode.XPTS_NOT_ASCENDING),
+		).toBeUndefined();
+	});
+
+	test("overflowing gf yscale value → NON_FINITE_LITERAL", () => {
+		const { ir, diagnostics } = compileModel(
+			`stock s { init: 0 }\ngf g { kind: linear xscale: [0, 10] ypts: [0, 1] yscale: [0, ${OVERFLOW}] }\naux a = g(5)`,
+		);
+		expect(ir).toBeNull();
+		expect(
+			diagnostics.find((d) => d.code === DiagnosticCode.NON_FINITE_LITERAL),
+		).toBeDefined();
+	});
+
+	test("overflowing step-kind last y-point skips the last-two-equal check", () => {
+		const { ir, diagnostics } = compileModel(
+			`stock s { init: 0 }\ngf g { kind: step xscale: [0, 10] ypts: [0, 1, ${OVERFLOW}] }\naux a = g(5)`,
+		);
+		expect(ir).toBeNull();
+		expect(
+			diagnostics.find((d) => d.code === DiagnosticCode.NON_FINITE_LITERAL),
+		).toBeDefined();
+		expect(
+			diagnostics.find(
+				(d) => d.code === DiagnosticCode.STEP_LAST_YPTS_MISMATCH,
+			),
+		).toBeUndefined();
 	});
 
 	test("negative overflowing gf ypts value reports -Infinity", () => {

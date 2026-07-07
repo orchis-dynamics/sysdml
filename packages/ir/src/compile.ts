@@ -159,7 +159,7 @@ function validateGraphicalFunctionBody(
 				span: declSpan,
 			});
 			isValid = false;
-		} else if (values[0] >= values[1]) {
+		} else if (values.every(Number.isFinite) && values[0] >= values[1]) {
 			errors.push({
 				code: DiagnosticCode.XSCALE_NOT_ASCENDING,
 				message: `'${id}': xscale min must be less than max (got [${values[0]}, ${values[1]}])`,
@@ -182,7 +182,8 @@ function validateGraphicalFunctionBody(
 			});
 			isValid = false;
 		} else {
-			for (let i = 1; i < values.length; i++) {
+			const allFinite = values.every(Number.isFinite);
+			for (let i = 1; allFinite && i < values.length; i++) {
 				if (values[i] <= values[i - 1]) {
 					errors.push({
 						code: DiagnosticCode.XPTS_NOT_ASCENDING,
@@ -197,7 +198,7 @@ function validateGraphicalFunctionBody(
 		}
 	}
 
-	if (kind === "step" && ypts.length >= 2) {
+	if (kind === "step" && ypts.length >= 2 && ypts.every(Number.isFinite)) {
 		if (ypts[ypts.length - 1] !== ypts[ypts.length - 2]) {
 			errors.push({
 				code: DiagnosticCode.STEP_LAST_YPTS_MISMATCH,
