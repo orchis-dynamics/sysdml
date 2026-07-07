@@ -52,6 +52,7 @@ function convertLinks(linksPtr) {
             to: link.to,
             polarity: convertLinkPolarity(link.polarity),
             score: link.score ?? undefined,
+            relativeScore: link.relativeScore ?? undefined,
         }));
     }
     finally {
@@ -251,6 +252,9 @@ class DirectBackend {
                 id: loop.id,
                 variables: loop.variables,
                 polarity: loop.polarity,
+                name: loop.name,
+                polarityConfidence: loop.polarityConfidence,
+                partition: loop.partition,
             }));
         }
         finally {

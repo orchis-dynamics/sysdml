@@ -33,24 +33,19 @@ export var ErrorCode;
     ErrorCode[ErrorCode["VariablesHaveErrors"] = 30] = "VariablesHaveErrors";
     ErrorCode[ErrorCode["UnitDefinitionErrors"] = 31] = "UnitDefinitionErrors";
     ErrorCode[ErrorCode["Generic"] = 32] = "Generic";
-    ErrorCode[ErrorCode["NoAppInUnits"] = 33] = "NoAppInUnits";
-    ErrorCode[ErrorCode["NoSubscriptInUnits"] = 34] = "NoSubscriptInUnits";
-    ErrorCode[ErrorCode["NoIfInUnits"] = 35] = "NoIfInUnits";
-    ErrorCode[ErrorCode["NoUnaryOpInUnits"] = 36] = "NoUnaryOpInUnits";
-    ErrorCode[ErrorCode["BadBinaryOpInUnits"] = 37] = "BadBinaryOpInUnits";
-    ErrorCode[ErrorCode["NoConstInUnits"] = 38] = "NoConstInUnits";
-    ErrorCode[ErrorCode["ExpectedInteger"] = 39] = "ExpectedInteger";
-    ErrorCode[ErrorCode["ExpectedIntegerOne"] = 40] = "ExpectedIntegerOne";
-    ErrorCode[ErrorCode["DuplicateUnit"] = 41] = "DuplicateUnit";
-    ErrorCode[ErrorCode["ExpectedModule"] = 42] = "ExpectedModule";
-    ErrorCode[ErrorCode["ExpectedIdent"] = 43] = "ExpectedIdent";
-    ErrorCode[ErrorCode["UnitMismatch"] = 44] = "UnitMismatch";
-    ErrorCode[ErrorCode["TodoWildcard"] = 45] = "TodoWildcard";
-    ErrorCode[ErrorCode["TodoStarRange"] = 46] = "TodoStarRange";
-    ErrorCode[ErrorCode["TodoRange"] = 47] = "TodoRange";
-    ErrorCode[ErrorCode["TodoArrayBuiltin"] = 48] = "TodoArrayBuiltin";
-    ErrorCode[ErrorCode["CantSubscriptScalar"] = 49] = "CantSubscriptScalar";
-    ErrorCode[ErrorCode["DimensionInScalarContext"] = 50] = "DimensionInScalarContext";
+    ErrorCode[ErrorCode["UnitMismatch"] = 33] = "UnitMismatch";
+    ErrorCode[ErrorCode["BadOverride"] = 34] = "BadOverride";
+    ErrorCode[ErrorCode["NoAppInUnits"] = 35] = "NoAppInUnits";
+    ErrorCode[ErrorCode["NoSubscriptInUnits"] = 36] = "NoSubscriptInUnits";
+    ErrorCode[ErrorCode["NoIfInUnits"] = 37] = "NoIfInUnits";
+    ErrorCode[ErrorCode["NoUnaryOpInUnits"] = 38] = "NoUnaryOpInUnits";
+    ErrorCode[ErrorCode["BadBinaryOpInUnits"] = 39] = "BadBinaryOpInUnits";
+    ErrorCode[ErrorCode["NoConstInUnits"] = 40] = "NoConstInUnits";
+    ErrorCode[ErrorCode["ExpectedInteger"] = 41] = "ExpectedInteger";
+    ErrorCode[ErrorCode["ExpectedIntegerOne"] = 42] = "ExpectedIntegerOne";
+    ErrorCode[ErrorCode["DuplicateUnit"] = 43] = "DuplicateUnit";
+    ErrorCode[ErrorCode["ExpectedModule"] = 44] = "ExpectedModule";
+    ErrorCode[ErrorCode["ExpectedIdent"] = 45] = "ExpectedIdent";
 })(ErrorCode || (ErrorCode = {}));
 export function errorCodeDescription(code) {
     switch (code) {
@@ -120,6 +115,10 @@ export function errorCodeDescription(code) {
             return "The project's unit definitions have errors";
         case ErrorCode.Generic:
             return 'Generic error from core engine';
+        case ErrorCode.UnitMismatch:
+            return 'Unit mismatch';
+        case ErrorCode.BadOverride:
+            return 'Invalid value override';
         case ErrorCode.NoAppInUnits:
             return 'Function calls are not allowed in unit definition';
         case ErrorCode.NoSubscriptInUnits:
@@ -142,20 +141,6 @@ export function errorCodeDescription(code) {
             return 'Expected a module, found a non-module';
         case ErrorCode.ExpectedIdent:
             return 'Expected an identifier';
-        case ErrorCode.UnitMismatch:
-            return 'Unit mismatch';
-        case ErrorCode.TodoWildcard:
-            return 'Wildcard subscripts not yet implemented';
-        case ErrorCode.TodoStarRange:
-            return 'Star range subscripts not yet implemented';
-        case ErrorCode.TodoRange:
-            return 'Range subscripts not yet implemented';
-        case ErrorCode.TodoArrayBuiltin:
-            return 'Array builtin not yet implemented';
-        case ErrorCode.CantSubscriptScalar:
-            return 'Cannot subscript a scalar variable';
-        case ErrorCode.DimensionInScalarContext:
-            return 'Dimension used in scalar context';
     }
     return 'Unknown error from core engine';
 }

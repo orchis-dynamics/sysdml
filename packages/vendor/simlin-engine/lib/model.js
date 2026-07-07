@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Model = exports.SIMLIN_VARTYPE_MODULE = exports.SIMLIN_VARTYPE_AUX = exports.SIMLIN_VARTYPE_FLOW = exports.SIMLIN_VARTYPE_STOCK = void 0;
+const types_1 = require("./internal/types");
 const errors_1 = require("./errors");
 const sim_1 = require("./sim");
 const patch_1 = require("./patch");
@@ -253,7 +254,7 @@ class Model {
             return canonicalizeModelName(detail.modelName) === canonicalName;
         });
         return modelErrors.map((detail) => ({
-            severity: 'error',
+            severity: detail.severity === types_1.SimlinErrorSeverity.Warning ? 'warning' : 'error',
             message: detail.message || 'Unknown error',
             variable: detail.variableName || undefined,
             suggestion: undefined,

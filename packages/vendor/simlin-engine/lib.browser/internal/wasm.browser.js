@@ -1,4 +1,4 @@
-import * as wasmModule from '../../core/libsimlin.wasm';
+import * as wasmModule from '../../core/libsimlin-browser.wasm';
 let wasmExports = null;
 let wasmMemory = null;
 let initPromise = null;

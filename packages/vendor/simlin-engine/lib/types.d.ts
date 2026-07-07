@@ -223,18 +223,24 @@ export declare enum LinkPolarity {
 export declare enum LoopPolarity {
     Reinforcing = 0,
     Balancing = 1,
-    Undetermined = 2
+    Undetermined = 2,
+    MostlyReinforcing = 3,
+    MostlyBalancing = 4
 }
 export interface Link {
     readonly from: string;
     readonly to: string;
     readonly polarity: LinkPolarity;
     readonly score?: Float64Array;
+    readonly relativeScore?: Float64Array;
 }
 export interface Loop {
     readonly id: string;
     readonly variables: readonly string[];
     readonly polarity: LoopPolarity;
+    readonly name: string | null;
+    readonly polarityConfidence: number;
+    readonly partition: number | null;
 }
 export interface DominantPeriod {
     readonly dominantLoops: readonly string[];

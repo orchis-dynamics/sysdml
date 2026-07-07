@@ -1,3 +1,4 @@
+import { SimlinErrorSeverity } from './internal/types';
 import { ErrorCode } from './errors';
 import { Sim } from './sim';
 import { ModelPatchBuilder } from './patch';
@@ -250,7 +251,7 @@ export class Model {
             return canonicalizeModelName(detail.modelName) === canonicalName;
         });
         return modelErrors.map((detail) => ({
-            severity: 'error',
+            severity: detail.severity === SimlinErrorSeverity.Warning ? 'warning' : 'error',
             message: detail.message || 'Unknown error',
             variable: detail.variableName || undefined,
             suggestion: undefined,

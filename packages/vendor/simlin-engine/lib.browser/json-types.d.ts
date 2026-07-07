@@ -9,11 +9,19 @@ export interface JsonGraphicalFunction {
     xScale?: JsonGraphicalFunctionScale;
     yScale?: JsonGraphicalFunctionScale;
 }
+export interface JsonDataSource {
+    kind: string;
+    file: string;
+    tabOrDelimiter: string;
+    rowOrCol: string;
+    cell: string;
+}
 export interface JsonCompat {
     activeInitial?: string;
     nonNegative?: boolean;
     canBeModuleInput?: boolean;
     isPublic?: boolean;
+    dataSource?: JsonDataSource;
 }
 export interface JsonElementEquation {
     subscript: string;
@@ -26,6 +34,7 @@ export interface JsonArrayedEquation {
     equation?: string;
     compat?: JsonCompat;
     elements?: JsonElementEquation[];
+    hasExceptDefault?: boolean;
 }
 export interface JsonModuleReference {
     src: string;
@@ -42,6 +51,8 @@ export interface JsonStock {
     arrayedEquation?: JsonArrayedEquation;
     compat?: JsonCompat;
     nonNegative?: boolean;
+    canBeModuleInput?: boolean;
+    isPublic?: boolean;
 }
 export interface JsonFlow {
     name: string;
@@ -53,6 +64,8 @@ export interface JsonFlow {
     arrayedEquation?: JsonArrayedEquation;
     compat?: JsonCompat;
     nonNegative?: boolean;
+    canBeModuleInput?: boolean;
+    isPublic?: boolean;
 }
 export interface JsonAuxiliary {
     name: string;
@@ -63,6 +76,8 @@ export interface JsonAuxiliary {
     documentation?: string;
     arrayedEquation?: JsonArrayedEquation;
     compat?: JsonCompat;
+    canBeModuleInput?: boolean;
+    isPublic?: boolean;
 }
 export interface JsonModule {
     name: string;
@@ -72,6 +87,8 @@ export interface JsonModule {
     documentation?: string;
     references?: JsonModuleReference[];
     compat?: JsonCompat;
+    canBeModuleInput?: boolean;
+    isPublic?: boolean;
 }
 export type JsonVariable = JsonStock | JsonFlow | JsonAuxiliary | JsonModule;
 export interface JsonFlowPoint {
