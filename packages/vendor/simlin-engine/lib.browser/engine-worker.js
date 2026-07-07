@@ -1,4 +1,9 @@
+import { ENGINE_PUBLIC_PATH_GLOBAL } from './worker-trampoline';
 const workerSelf = self;
+const publicPathOverride = self[ENGINE_PUBLIC_PATH_GLOBAL];
+if (typeof publicPathOverride === 'string' && typeof __webpack_public_path__ === 'string') {
+    __webpack_public_path__ = publicPathOverride;
+}
 let pendingMessages = [];
 workerSelf.onmessage = (event) => {
     if (pendingMessages !== null) {
@@ -49,5 +54,4 @@ import('./worker-server')
         }
     };
 });
-export {};
 //# sourceMappingURL=engine-worker.js.map

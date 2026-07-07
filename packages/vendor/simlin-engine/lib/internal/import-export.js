@@ -113,6 +113,9 @@ function simlin_project_render_svg(project, modelName) {
 function simlin_project_render_png(project, modelName, width, height) {
     const exports = (0, wasm_1.getExports)();
     const renderFn = exports.simlin_project_render_png;
+    if (typeof renderFn !== 'function') {
+        throw new Error('PNG rendering is not available in this build of libsimlin (browser builds omit png_render)');
+    }
     const namePtr = (0, memory_1.stringToWasm)(modelName);
     const outBufPtr = (0, memory_1.allocOutPtr)();
     const outLenPtr = (0, memory_1.allocOutUsize)();

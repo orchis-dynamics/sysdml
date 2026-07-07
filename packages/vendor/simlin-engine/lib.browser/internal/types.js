@@ -34,6 +34,18 @@ export var SimlinErrorCode;
     SimlinErrorCode[SimlinErrorCode["UnitDefinitionErrors"] = 31] = "UnitDefinitionErrors";
     SimlinErrorCode[SimlinErrorCode["Generic"] = 32] = "Generic";
     SimlinErrorCode[SimlinErrorCode["UnitMismatch"] = 33] = "UnitMismatch";
+    SimlinErrorCode[SimlinErrorCode["BadOverride"] = 34] = "BadOverride";
+    SimlinErrorCode[SimlinErrorCode["NoAppInUnits"] = 35] = "NoAppInUnits";
+    SimlinErrorCode[SimlinErrorCode["NoSubscriptInUnits"] = 36] = "NoSubscriptInUnits";
+    SimlinErrorCode[SimlinErrorCode["NoIfInUnits"] = 37] = "NoIfInUnits";
+    SimlinErrorCode[SimlinErrorCode["NoUnaryOpInUnits"] = 38] = "NoUnaryOpInUnits";
+    SimlinErrorCode[SimlinErrorCode["BadBinaryOpInUnits"] = 39] = "BadBinaryOpInUnits";
+    SimlinErrorCode[SimlinErrorCode["NoConstInUnits"] = 40] = "NoConstInUnits";
+    SimlinErrorCode[SimlinErrorCode["ExpectedInteger"] = 41] = "ExpectedInteger";
+    SimlinErrorCode[SimlinErrorCode["ExpectedIntegerOne"] = 42] = "ExpectedIntegerOne";
+    SimlinErrorCode[SimlinErrorCode["DuplicateUnit"] = 43] = "DuplicateUnit";
+    SimlinErrorCode[SimlinErrorCode["ExpectedModule"] = 44] = "ExpectedModule";
+    SimlinErrorCode[SimlinErrorCode["ExpectedIdent"] = 45] = "ExpectedIdent";
 })(SimlinErrorCode || (SimlinErrorCode = {}));
 export var SimlinErrorKind;
 (function (SimlinErrorKind) {
@@ -50,6 +62,11 @@ export var SimlinUnitErrorKind;
     SimlinUnitErrorKind[SimlinUnitErrorKind["Consistency"] = 2] = "Consistency";
     SimlinUnitErrorKind[SimlinUnitErrorKind["Inference"] = 3] = "Inference";
 })(SimlinUnitErrorKind || (SimlinUnitErrorKind = {}));
+export var SimlinErrorSeverity;
+(function (SimlinErrorSeverity) {
+    SimlinErrorSeverity[SimlinErrorSeverity["Error"] = 0] = "Error";
+    SimlinErrorSeverity[SimlinErrorSeverity["Warning"] = 1] = "Warning";
+})(SimlinErrorSeverity || (SimlinErrorSeverity = {}));
 export var SimlinJsonFormat;
 (function (SimlinJsonFormat) {
     SimlinJsonFormat[SimlinJsonFormat["Native"] = 0] = "Native";
@@ -66,5 +83,7 @@ export var SimlinLoopPolarity;
     SimlinLoopPolarity[SimlinLoopPolarity["Reinforcing"] = 0] = "Reinforcing";
     SimlinLoopPolarity[SimlinLoopPolarity["Balancing"] = 1] = "Balancing";
     SimlinLoopPolarity[SimlinLoopPolarity["Undetermined"] = 2] = "Undetermined";
+    SimlinLoopPolarity[SimlinLoopPolarity["MostlyReinforcing"] = 3] = "MostlyReinforcing";
+    SimlinLoopPolarity[SimlinLoopPolarity["MostlyBalancing"] = 4] = "MostlyBalancing";
 })(SimlinLoopPolarity || (SimlinLoopPolarity = {}));
 //# sourceMappingURL=types.js.map

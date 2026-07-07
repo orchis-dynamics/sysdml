@@ -9,5 +9,7 @@ export var LoopPolarity;
     LoopPolarity[LoopPolarity["Reinforcing"] = 0] = "Reinforcing";
     LoopPolarity[LoopPolarity["Balancing"] = 1] = "Balancing";
     LoopPolarity[LoopPolarity["Undetermined"] = 2] = "Undetermined";
+    LoopPolarity[LoopPolarity["MostlyReinforcing"] = 3] = "MostlyReinforcing";
+    LoopPolarity[LoopPolarity["MostlyBalancing"] = 4] = "MostlyBalancing";
 })(LoopPolarity || (LoopPolarity = {}));
 //# sourceMappingURL=types.js.map

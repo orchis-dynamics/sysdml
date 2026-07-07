@@ -40,7 +40,19 @@ export declare enum SimlinErrorCode {
     VariablesHaveErrors = 30,
     UnitDefinitionErrors = 31,
     Generic = 32,
-    UnitMismatch = 33
+    UnitMismatch = 33,
+    BadOverride = 34,
+    NoAppInUnits = 35,
+    NoSubscriptInUnits = 36,
+    NoIfInUnits = 37,
+    NoUnaryOpInUnits = 38,
+    BadBinaryOpInUnits = 39,
+    NoConstInUnits = 40,
+    ExpectedInteger = 41,
+    ExpectedIntegerOne = 42,
+    DuplicateUnit = 43,
+    ExpectedModule = 44,
+    ExpectedIdent = 45
 }
 export declare enum SimlinErrorKind {
     Project = 0,
@@ -55,6 +67,10 @@ export declare enum SimlinUnitErrorKind {
     Consistency = 2,
     Inference = 3
 }
+export declare enum SimlinErrorSeverity {
+    Error = 0,
+    Warning = 1
+}
 export declare enum SimlinJsonFormat {
     Native = 0,
     Sdai = 1
@@ -67,7 +83,9 @@ export declare enum SimlinLinkPolarity {
 export declare enum SimlinLoopPolarity {
     Reinforcing = 0,
     Balancing = 1,
-    Undetermined = 2
+    Undetermined = 2,
+    MostlyReinforcing = 3,
+    MostlyBalancing = 4
 }
 export interface ErrorDetail {
     code: SimlinErrorCode;
@@ -78,16 +96,22 @@ export interface ErrorDetail {
     endOffset: number;
     kind: SimlinErrorKind;
     unitErrorKind: SimlinUnitErrorKind;
+    severity: SimlinErrorSeverity;
+    details: string | null;
 }
 export interface Link {
     from: string;
     to: string;
     polarity: SimlinLinkPolarity;
     score: Float64Array | null;
+    relativeScore: Float64Array | null;
 }
 export interface Loop {
     id: string;
     variables: string[];
     polarity: SimlinLoopPolarity;
+    name: string | null;
+    polarityConfidence: number;
+    partition: number | null;
 }
 //# sourceMappingURL=types.d.ts.map

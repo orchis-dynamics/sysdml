@@ -106,8 +106,8 @@ export function simlin_analyze_get_relative_loop_score(sim, loopId, stepCount) {
         free(outErrPtr);
     }
 }
-const LOOP_SIZE = 16;
-const LINK_SIZE = 20;
+const LOOP_SIZE = 40;
+const LINK_SIZE = 28;
 const PTR_SIZE = 4;
 let structSizesValidated = false;
 function ensureStructSizesValidated() {
@@ -156,6 +156,9 @@ export function readLoops(loopsPtr) {
         const varsPtr = view.getUint32(ptr + 4, true);
         const varCount = view.getUint32(ptr + 8, true);
         const polarity = view.getUint32(ptr + 12, true);
+        const namePtr = view.getUint32(ptr + 16, true);
+        const polarityConfidence = view.getFloat64(ptr + 24, true);
+        const partition = view.getInt32(ptr + 32, true);
         const variables = [];
         for (let j = 0; j < varCount; j++) {
             const varNamePtr = view.getUint32(varsPtr + j * 4, true);
@@ -164,7 +167,8 @@ export function readLoops(loopsPtr) {
                 variables.push(name);
         }
         const id = wasmToString(idPtr) ?? '';
-        loops.push({ id, variables, polarity });
+        const name = namePtr !== 0 ? wasmToString(namePtr) : null;
+        loops.push({ id, variables, polarity, name, polarityConfidence, partition: partition < 0 ? null : partition });
     }
     return loops;
 }
@@ -184,13 +188,19 @@ export function readLinks(linksPtr) {
         const polarity = view.getUint32(ptr + 8, true);
         const scorePtr = view.getUint32(ptr + 12, true);
         const scoreLen = view.getUint32(ptr + 16, true);
+        const relScorePtr = view.getUint32(ptr + 20, true);
+        const relScoreLen = view.getUint32(ptr + 24, true);
         const from = wasmToString(fromPtr) ?? '';
         const to = wasmToString(toPtr) ?? '';
         let score = null;
         if (scorePtr !== 0 && scoreLen > 0) {
             score = readFloat64Array(scorePtr, scoreLen);
         }
-        links.push({ from, to, polarity, score });
+        let relativeScore = null;
+        if (relScorePtr !== 0 && relScoreLen > 0) {
+            relativeScore = readFloat64Array(relScorePtr, relScoreLen);
+        }
+        links.push({ from, to, polarity, score, relativeScore });
     }
     return links;
 }

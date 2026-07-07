@@ -62,6 +62,8 @@ function readErrorDetail(ptr) {
     const endOffset = view.getUint16(ptr + 18, true);
     const kind = view.getUint32(ptr + 20, true);
     const unitErrorKind = view.getUint32(ptr + 24, true);
+    const severity = view.getUint32(ptr + 28, true);
+    const detailsPtr = view.getUint32(ptr + 32, true);
     return {
         code,
         message: (0, memory_1.wasmToString)(messagePtr),
@@ -71,6 +73,8 @@ function readErrorDetail(ptr) {
         endOffset,
         kind,
         unitErrorKind,
+        severity,
+        details: (0, memory_1.wasmToString)(detailsPtr),
     };
 }
 function readAllErrorDetails(err) {

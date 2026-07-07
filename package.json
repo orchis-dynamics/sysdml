@@ -11,6 +11,7 @@
 		"lint:fix": "oxlint --fix",
 		"fmt": "oxfmt",
 		"fmt:check": "oxfmt --check",
+		"update-simlin": "bash scripts/update-simlin.sh",
 		"clean": "pnpm -r clean && rm -rf node_modules"
 	},
 	"devDependencies": {

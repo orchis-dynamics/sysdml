@@ -106,6 +106,9 @@ export function simlin_project_render_svg(project, modelName) {
 export function simlin_project_render_png(project, modelName, width, height) {
     const exports = getExports();
     const renderFn = exports.simlin_project_render_png;
+    if (typeof renderFn !== 'function') {
+        throw new Error('PNG rendering is not available in this build of libsimlin (browser builds omit png_render)');
+    }
     const namePtr = stringToWasm(modelName);
     const outBufPtr = allocOutPtr();
     const outLenPtr = allocOutUsize();

@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.SimlinLoopPolarity = exports.SimlinLinkPolarity = exports.SimlinJsonFormat = exports.SimlinUnitErrorKind = exports.SimlinErrorKind = exports.SimlinErrorCode = void 0;
+exports.SimlinLoopPolarity = exports.SimlinLinkPolarity = exports.SimlinJsonFormat = exports.SimlinErrorSeverity = exports.SimlinUnitErrorKind = exports.SimlinErrorKind = exports.SimlinErrorCode = void 0;
 var SimlinErrorCode;
 (function (SimlinErrorCode) {
     SimlinErrorCode[SimlinErrorCode["NoError"] = 0] = "NoError";
@@ -37,6 +37,18 @@ var SimlinErrorCode;
     SimlinErrorCode[SimlinErrorCode["UnitDefinitionErrors"] = 31] = "UnitDefinitionErrors";
     SimlinErrorCode[SimlinErrorCode["Generic"] = 32] = "Generic";
     SimlinErrorCode[SimlinErrorCode["UnitMismatch"] = 33] = "UnitMismatch";
+    SimlinErrorCode[SimlinErrorCode["BadOverride"] = 34] = "BadOverride";
+    SimlinErrorCode[SimlinErrorCode["NoAppInUnits"] = 35] = "NoAppInUnits";
+    SimlinErrorCode[SimlinErrorCode["NoSubscriptInUnits"] = 36] = "NoSubscriptInUnits";
+    SimlinErrorCode[SimlinErrorCode["NoIfInUnits"] = 37] = "NoIfInUnits";
+    SimlinErrorCode[SimlinErrorCode["NoUnaryOpInUnits"] = 38] = "NoUnaryOpInUnits";
+    SimlinErrorCode[SimlinErrorCode["BadBinaryOpInUnits"] = 39] = "BadBinaryOpInUnits";
+    SimlinErrorCode[SimlinErrorCode["NoConstInUnits"] = 40] = "NoConstInUnits";
+    SimlinErrorCode[SimlinErrorCode["ExpectedInteger"] = 41] = "ExpectedInteger";
+    SimlinErrorCode[SimlinErrorCode["ExpectedIntegerOne"] = 42] = "ExpectedIntegerOne";
+    SimlinErrorCode[SimlinErrorCode["DuplicateUnit"] = 43] = "DuplicateUnit";
+    SimlinErrorCode[SimlinErrorCode["ExpectedModule"] = 44] = "ExpectedModule";
+    SimlinErrorCode[SimlinErrorCode["ExpectedIdent"] = 45] = "ExpectedIdent";
 })(SimlinErrorCode || (exports.SimlinErrorCode = SimlinErrorCode = {}));
 var SimlinErrorKind;
 (function (SimlinErrorKind) {
@@ -53,6 +65,11 @@ var SimlinUnitErrorKind;
     SimlinUnitErrorKind[SimlinUnitErrorKind["Consistency"] = 2] = "Consistency";
     SimlinUnitErrorKind[SimlinUnitErrorKind["Inference"] = 3] = "Inference";
 })(SimlinUnitErrorKind || (exports.SimlinUnitErrorKind = SimlinUnitErrorKind = {}));
+var SimlinErrorSeverity;
+(function (SimlinErrorSeverity) {
+    SimlinErrorSeverity[SimlinErrorSeverity["Error"] = 0] = "Error";
+    SimlinErrorSeverity[SimlinErrorSeverity["Warning"] = 1] = "Warning";
+})(SimlinErrorSeverity || (exports.SimlinErrorSeverity = SimlinErrorSeverity = {}));
 var SimlinJsonFormat;
 (function (SimlinJsonFormat) {
     SimlinJsonFormat[SimlinJsonFormat["Native"] = 0] = "Native";
@@ -69,5 +86,7 @@ var SimlinLoopPolarity;
     SimlinLoopPolarity[SimlinLoopPolarity["Reinforcing"] = 0] = "Reinforcing";
     SimlinLoopPolarity[SimlinLoopPolarity["Balancing"] = 1] = "Balancing";
     SimlinLoopPolarity[SimlinLoopPolarity["Undetermined"] = 2] = "Undetermined";
+    SimlinLoopPolarity[SimlinLoopPolarity["MostlyReinforcing"] = 3] = "MostlyReinforcing";
+    SimlinLoopPolarity[SimlinLoopPolarity["MostlyBalancing"] = 4] = "MostlyBalancing";
 })(SimlinLoopPolarity || (exports.SimlinLoopPolarity = SimlinLoopPolarity = {}));
 //# sourceMappingURL=types.js.map
