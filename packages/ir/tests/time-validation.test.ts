@@ -1,7 +1,7 @@
+import { DiagnosticCode } from "@sysdml/contracts";
 import { parseSource } from "@sysdml/parser";
 import { describe, test, expect } from "vitest";
 
-import { DiagnosticCode } from "@sysdml/contracts";
 import { compileAST } from "../src/compile.js";
 
 const ONE_STOCK = `stock s { init: 0 }`;
@@ -160,7 +160,9 @@ describe("time block validation — XMILE §2.3 mappings (B6.4)", () => {
 
 describe("time block save_step and time_units (B6.5, B6.2)", () => {
 	function compileTime(timeBlock: string) {
-		const { ast, parseDiagnostics } = compile(`sfd m\n${timeBlock}\n${ONE_STOCK}`);
+		const { ast, parseDiagnostics } = compile(
+			`sfd m\n${timeBlock}\n${ONE_STOCK}`,
+		);
 		expect(parseDiagnostics).toHaveLength(0);
 		expect(ast).not.toBeNull();
 		return compileAST(ast!);
@@ -175,9 +177,7 @@ describe("time block save_step and time_units (B6.5, B6.2)", () => {
 			(d) => d.code === DiagnosticCode.INVALID_SAVE_STEP,
 		);
 		expect(diag).toBeDefined();
-		expect(diag!.message).toBe(
-			"time.save_step must be greater than 0 (got 0)",
-		);
+		expect(diag!.message).toBe("time.save_step must be greater than 0 (got 0)");
 	});
 
 	test("save_step smaller than step → INVALID_SAVE_STEP", () => {
@@ -228,6 +228,19 @@ describe("time block save_step and time_units (B6.5, B6.2)", () => {
 		);
 		expect(diagnostics).toHaveLength(0);
 		expect(ir!.time.saveStep).toBe(0.3);
+	});
+
+	test("large-ratio near-multiple still snaps", () => {
+		const { ir, diagnostics } = compileTime(
+			`time { start: 0 end: 30000000 step: 1 save_step: 10000000.005 }`,
+		);
+		expect(ir).not.toBeNull();
+		const diag = diagnostics.find(
+			(d) => d.code === DiagnosticCode.SAVE_STEP_NOT_MULTIPLE,
+		);
+		expect(diag).toBeDefined();
+		expect(diag!.severity).toBe("warning");
+		expect(ir!.time.saveStep).toBe(10000000);
 	});
 
 	test("omitted save_step leaves the field absent", () => {

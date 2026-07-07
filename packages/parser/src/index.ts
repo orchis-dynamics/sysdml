@@ -29,6 +29,7 @@ export type {
 	StockPropertyNode,
 	TimeDeclarationNode,
 	TimePropertyNode,
+	TimeUnitsNode,
 	UnaryExpressionNode,
 	UnaryOperator,
 } from "@sysdml/contracts";

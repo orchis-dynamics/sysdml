@@ -244,7 +244,7 @@ function snapSaveStepToStepMultiple(
 ): number {
 	const ratio = saveStep / step;
 	const nearest = Math.round(ratio);
-	if (Math.abs(ratio - nearest) <= 1e-9 * Math.max(1, Math.abs(ratio))) {
+	if (Math.abs(ratio - nearest) <= 1e-12 * Math.max(1, Math.abs(ratio))) {
 		return saveStep;
 	}
 	const snapped = parseFloat((nearest * step).toPrecision(12));
