@@ -236,9 +236,31 @@ function validateGraphicalFunctionIdentifier(
 	}
 }
 
+function snapSaveStepToStepMultiple(
+	saveStep: number,
+	step: number,
+	timeDecl: TimeDeclarationNode,
+	nonFatalDiagnostics: IRDiagnostic[],
+): number {
+	const ratio = saveStep / step;
+	const nearest = Math.round(ratio);
+	if (Math.abs(ratio - nearest) <= 1e-9 * Math.max(1, Math.abs(ratio))) {
+		return saveStep;
+	}
+	const snapped = parseFloat((nearest * step).toPrecision(12));
+	nonFatalDiagnostics.push({
+		code: DiagnosticCode.SAVE_STEP_NOT_MULTIPLE,
+		message: `time.save_step (${saveStep}) is not a multiple of time.step (${step}); saving every ${snapped} (${nearest} * step)`,
+		span: timeDecl.span,
+		severity: "warning",
+	});
+	return snapped;
+}
+
 function compileTimeBlock(
 	timeDecl: TimeDeclarationNode,
 	errors: IRDiagnostic[],
+	nonFatalDiagnostics: IRDiagnostic[],
 ): IRTime {
 	const findTimePropertyValue = (
 		key: "start" | "end" | "step" | "save_step",
@@ -297,11 +319,21 @@ function compileTimeBlock(
 		});
 	}
 
+	const effectiveSaveStep =
+		saveStep !== null && step !== null && step > 0 && saveStep >= step
+			? snapSaveStepToStepMultiple(
+					saveStep,
+					step,
+					timeDecl,
+					nonFatalDiagnostics,
+				)
+			: saveStep;
+
 	return {
 		start: start ?? 0,
 		end: end ?? 0,
 		step: step ?? 1,
-		...(saveStep !== null && { saveStep }),
+		...(effectiveSaveStep !== null && { saveStep: effectiveSaveStep }),
 		...(timeDecl.timeUnits !== undefined && {
 			timeUnits: timeDecl.timeUnits.value,
 		}),
@@ -456,7 +488,7 @@ export function compileAST(ast: FileNode): CompileResult {
 
 	const timeDecl = timeDecls[0];
 	const time = timeDecl
-		? compileTimeBlock(timeDecl, errors)
+		? compileTimeBlock(timeDecl, errors, nonFatalDiagnostics)
 		: { start: 0, end: 0, step: 1 };
 
 	// ── Build valid ID set ────────────────────────────────────────────────────

@@ -18,6 +18,21 @@ function buildIR(source: string): IR {
 	return ir;
 }
 
+function buildIRAllowingWarnings(source: string): IR {
+	const { ast, diagnostics: parseDiagnostics } = parseSource(source);
+	if (ast === null || parseDiagnostics.length > 0) {
+		throw new Error(parseDiagnostics[0]?.message ?? "parse produced no AST");
+	}
+	const { ir, diagnostics } = compileAST(ast);
+	const errors = diagnostics.filter(
+		(diagnostic) => diagnostic.severity !== "warning",
+	);
+	if (ir === null || errors.length > 0) {
+		throw new Error(errors[0]?.message ?? "compile produced no IR");
+	}
+	return ir;
+}
+
 const growthModel = `
 sfd population_growth
 time { start: 0 end: 10 step: 1 }
@@ -78,6 +93,14 @@ flow births { from: null to: population rate: population * birth_rate }
 const timeUnitsModel = `
 sfd dated
 time { start: 0 end: 10 step: 1 time_units: years }
+stock population { init: 100 }
+aux birth_rate = 0.02
+flow births { from: null to: population rate: population * birth_rate }
+`.trim();
+
+const nonMultipleSaveStepModel = `
+sfd snapped
+time { start: 0 end: 10 step: 0.4 save_step: 1 }
 stock population { init: 100 }
 aux birth_rate = 0.02
 flow births { from: null to: population rate: population * birth_rate }
@@ -154,6 +177,17 @@ describe("SimlinSimulator", () => {
 		);
 		expect(result.diagnostics).toHaveLength(0);
 		expect(result.rows.length).toBe(11);
+	});
+
+	test("non-multiple save_step snaps to a whole step multiple", async () => {
+		const result = await new SimlinSimulator().simulate(
+			buildIRAllowingWarnings(nonMultipleSaveStepModel),
+		);
+		expect(result.diagnostics).toHaveLength(0);
+		expect(result.rows.map((row) => row.time)).toEqual([
+			0, 1.2000000000000002, 2.4, 3.5999999999999996, 4.8, 6.000000000000001,
+			7.200000000000002, 8.400000000000002, 9.600000000000003,
+		]);
 	});
 
 	test("evaluates a graphical function nested inside a larger expression", async () => {

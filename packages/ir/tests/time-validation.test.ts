@@ -208,12 +208,26 @@ describe("time block save_step and time_units (B6.5, B6.2)", () => {
 		expect(ir!.time.saveStep).toBe(2.5);
 	});
 
-	test("non-multiple save_step passes through uncorrected", () => {
+	test("non-multiple save_step snaps to the nearest whole multiple with a warning", () => {
 		const { ir, diagnostics } = compileTime(
 			`time { start: 0 end: 10 step: 0.4 save_step: 1 }`,
 		);
+		expect(ir).not.toBeNull();
+		expect(diagnostics).toHaveLength(1);
+		expect(diagnostics[0].code).toBe(DiagnosticCode.SAVE_STEP_NOT_MULTIPLE);
+		expect(diagnostics[0].severity).toBe("warning");
+		expect(diagnostics[0].message).toBe(
+			"time.save_step (1) is not a multiple of time.step (0.4); saving every 1.2 (3 * step)",
+		);
+		expect(ir!.time.saveStep).toBe(1.2);
+	});
+
+	test("float-near-multiple save_step stays uncorrected without a warning", () => {
+		const { ir, diagnostics } = compileTime(
+			`time { start: 0 end: 10 step: 0.1 save_step: 0.3 }`,
+		);
 		expect(diagnostics).toHaveLength(0);
-		expect(ir!.time.saveStep).toBe(1);
+		expect(ir!.time.saveStep).toBe(0.3);
 	});
 
 	test("omitted save_step leaves the field absent", () => {
