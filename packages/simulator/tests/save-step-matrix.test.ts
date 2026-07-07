@@ -35,6 +35,7 @@ const MATRIX: Array<[step: number, saveStep: number, end: number]> = [
 	[0.4, 2, 10],
 	[0.25, 1.1, 10],
 	[0.3, 1, 9],
+	[0.5, 1.3, 10],
 	[0.5, 2, 10],
 	[0.25, 1, 10],
 	[1, 3, 10],
@@ -42,11 +43,13 @@ const MATRIX: Array<[step: number, saveStep: number, end: number]> = [
 
 describe("save_step matrix guard against the engine phantom-row bug (SL8)", () => {
 	test.each(MATRIX)(
-		"step %f save_step %f end %f yields strictly increasing times and sane values",
+		"step %f save_step %f end %f yields strictly increasing times covering the horizon",
 		async (step, saveStep, end) => {
-			const result = await new SimlinSimulator().simulate(
-				buildIRAllowingWarnings(growthModel(step, saveStep, end)),
-			);
+			const ir = buildIRAllowingWarnings(growthModel(step, saveStep, end));
+			const saveInterval = ir.time.saveStep ?? step;
+			const stepRatio = saveInterval / step;
+			expect(Math.abs(stepRatio - Math.round(stepRatio))).toBeLessThan(1e-9);
+			const result = await new SimlinSimulator().simulate(ir);
 			expect(result.diagnostics).toEqual([]);
 			expect(result.rows.length).toBeGreaterThan(1);
 			for (let i = 1; i < result.rows.length; i++) {
@@ -55,6 +58,8 @@ describe("save_step matrix guard against the engine phantom-row bug (SL8)", () =
 			for (const row of result.rows) {
 				expect(row.population).toBeGreaterThanOrEqual(100);
 			}
+			const lastTime = result.rows.at(-1)!.time;
+			expect(end - lastTime).toBeLessThan(saveInterval + 1e-9);
 		},
 	);
 });
