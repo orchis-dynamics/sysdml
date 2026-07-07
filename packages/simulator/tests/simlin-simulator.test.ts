@@ -232,6 +232,19 @@ stock reservoir { init: response(3) }
 		expect(result.rows[0].reservoir).toBeCloseTo(30, 9);
 	});
 
+	test("evaluates an inline LOOKUP as a stock init", async () => {
+		const lookupInitModel = `
+sfd lookup_init
+time { start: 0 end: 1 step: 1 }
+stock reservoir { init: LOOKUP(0.3, 0, 100) }
+`.trim();
+		const result = await new SimlinSimulator().simulate(
+			buildIR(lookupInitModel),
+		);
+		expect(result.diagnostics).toEqual([]);
+		expect(result.rows[0].reservoir).toBeCloseTo(30, 9);
+	});
+
 	test("evaluates a graphical function nested inside another's argument", async () => {
 		const chainedLookupModel = `
 sfd chained_lookup
