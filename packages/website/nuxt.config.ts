@@ -1,6 +1,10 @@
+import { fileURLToPath } from "node:url";
+
 import wasm from "vite-plugin-wasm";
 import topLevelAwait from "vite-plugin-top-level-await";
 import tailwindcss from "@tailwindcss/vite";
+
+const isDev = process.env.NODE_ENV !== "production";
 
 export default defineNuxtConfig({
 	compatibilityDate: "2025-01-01",
@@ -10,6 +14,15 @@ export default defineNuxtConfig({
 		transpile: ["@sysdml/renderer"],
 	},
 	vite: {
+		resolve: {
+			alias: isDev
+				? {
+						"@sysdml/renderer/lib": fileURLToPath(
+							new URL("../renderer/src/lib.ts", import.meta.url),
+						),
+					}
+				: {},
+		},
 		build: {
 			target: "esnext",
 		},
