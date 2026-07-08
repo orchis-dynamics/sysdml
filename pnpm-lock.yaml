@@ -252,6 +252,9 @@ importers:
 
   packages/vscode-extension:
     devDependencies:
+      '@simlin/engine':
+        specifier: workspace:*
+        version: link:../vendor/simlin-engine
       '@sysdml/cli':
         specifier: workspace:*
         version: link:../cli
