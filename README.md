@@ -13,6 +13,7 @@ This repository is a [pnpm workspace](https://pnpm.io/workspaces) containing the
 | [`packages/contracts`](packages/contracts/README.md)              | `@sysdml/contracts`        | Shared, behavior-free type contracts for every type that crosses a package boundary |
 | [`packages/parser`](packages/parser/README.md)                     | `@sysdml/parser`           | ANTLR4 TypeScript parser: SysDML source → typed AST                         |
 | [`packages/ir`](packages/ir/README.md)                             | `@sysdml/ir`               | AST → Intermediate Representation, with semantic diagnostics                |
+| [`packages/layout`](packages/layout/README.md)                     | `@sysdml/layout`           | Layout engine: IR → positioned diagram geometry                             |
 | [`packages/simulator`](packages/simulator)                         | `@sysdml/simulator`        | Simulation backend: compiles IR → Simlin project JSON and runs the Simlin engine |
 | [`packages/lsp`](packages/lsp)                                     | `@sysdml/lsp-server`       | Language Server Protocol implementation                                     |
 | [`packages/renderer`](packages/renderer)                           | `@sysdml/renderer`         | Vue 3 + Vite diagram renderer                                               |
