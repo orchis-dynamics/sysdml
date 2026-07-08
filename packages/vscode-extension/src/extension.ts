@@ -1,5 +1,6 @@
 import * as path from "path";
 
+import { configureWasm } from "@simlin/engine";
 import * as vscode from "vscode";
 import {
 	LanguageClient,
@@ -8,12 +9,17 @@ import {
 	TransportKind,
 } from "vscode-languageclient/node";
 
+import { runSimulateCommand } from "./simulate/command";
 import { DiagramPanel } from "./webview/panel";
 
 let client: LanguageClient | undefined;
 let diagramPanel: DiagramPanel | undefined;
 
 export function activate(context: vscode.ExtensionContext): void {
+	configureWasm({
+		source: context.asAbsolutePath(path.join("dist", "libsimlin.wasm")),
+	});
+
 	const serverModule = context.asAbsolutePath(path.join("dist", "server.js"));
 
 	const serverOptions: ServerOptions = {
@@ -62,6 +68,7 @@ export function activate(context: vscode.ExtensionContext): void {
 			if (!client || !diagramPanel || diagramPanel.isDisposed) return;
 			await diagramPanel.refresh(client);
 		}),
+		vscode.commands.registerCommand("sysdml.simulate", runSimulateCommand),
 		vscode.workspace.onDidSaveTextDocument(async (doc) => {
 			if (doc.languageId !== "sysdml") return;
 			if (!client || !diagramPanel || diagramPanel.isDisposed) return;

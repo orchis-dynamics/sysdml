@@ -22,9 +22,13 @@
 		"watch": "node esbuild.js --watch",
 		"package": "pnpm run build && vsce package --no-dependencies",
 		"build:lsp": "pnpm --filter @sysdml/lsp-server... build",
-		"build:renderer": "pnpm --filter @sysdml/contracts --filter @sysdml/parser --filter @sysdml/ir --filter @sysdml/layout --filter @sysdml/simulator build && pnpm --filter @sysdml/renderer build:vscode && rm -rf renderer-dist && cp -R ../renderer/dist renderer-dist"
+		"build:renderer": "pnpm --filter @sysdml/contracts --filter @sysdml/parser --filter @sysdml/ir --filter @sysdml/layout --filter @sysdml/simulator --filter @sysdml/cli build && pnpm --filter @sysdml/renderer build:vscode && rm -rf renderer-dist && cp -R ../renderer/dist renderer-dist",
+		"test": "vitest run",
+		"test:watch": "vitest"
 	},
 	"devDependencies": {
+		"@simlin/engine": "workspace:*",
+		"@sysdml/cli": "workspace:*",
 		"@sysdml/contracts": "workspace:*",
 		"@sysdml/lsp-server": "workspace:*",
 		"@types/node": "^24.12.4",
@@ -32,6 +36,7 @@
 		"@vscode/vsce": "^3.9.1",
 		"esbuild": "^0.24.0",
 		"typescript": "^5.4.5",
+		"vitest": "^4.1.5",
 		"vscode-languageclient": "^9.0.0"
 	},
 	"contributes": {
@@ -64,12 +69,22 @@
 			{
 				"command": "sysdml.refreshDiagram",
 				"title": "SysDML: Refresh Diagram"
+			},
+			{
+				"command": "sysdml.simulate",
+				"title": "SysDML: Simulate",
+				"icon": "$(play)"
 			}
 		],
 		"menus": {
 			"editor/title": [
 				{
 					"command": "sysdml.openDiagram",
+					"when": "resourceLangId == sysdml",
+					"group": "navigation"
+				},
+				{
+					"command": "sysdml.simulate",
 					"when": "resourceLangId == sysdml",
 					"group": "navigation"
 				}
