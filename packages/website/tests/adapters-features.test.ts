@@ -74,4 +74,38 @@ describe("adapters-features", () => {
 		expect(converted[0]?.name).toBe("population");
 		expect(converted[0]?.range.startLineNumber).toBe(1);
 	});
+
+	test("recurses into child document symbols", () => {
+		const symbols: DocumentSymbol[] = [
+			{
+				name: "model",
+				kind: SymbolKind.Namespace,
+				range: {
+					start: { line: 0, character: 0 },
+					end: { line: 4, character: 0 },
+				},
+				selectionRange: {
+					start: { line: 0, character: 0 },
+					end: { line: 0, character: 5 },
+				},
+				children: [
+					{
+						name: "population",
+						kind: SymbolKind.Variable,
+						range: {
+							start: { line: 1, character: 0 },
+							end: { line: 1, character: 5 },
+						},
+						selectionRange: {
+							start: { line: 1, character: 0 },
+							end: { line: 1, character: 5 },
+						},
+					},
+				],
+			},
+		];
+		const converted = lspDocumentSymbolsToMonaco(symbols);
+		expect(converted[0]?.children?.[0]?.name).toBe("population");
+		expect(converted[0]?.children?.[0]?.range.startLineNumber).toBe(2);
+	});
 });

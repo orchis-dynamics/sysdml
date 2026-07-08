@@ -61,9 +61,6 @@ function makeModel(initialText: string) {
 	return {
 		getValue: (): string => initialText,
 		getVersionId: (): number => version,
-		bumpVersion: (): void => {
-			version += 1;
-		},
 		onDidChangeContent: (
 			handler: (event: { changes: FakeContentChange[] }) => void,
 		): { dispose: () => void } => {

@@ -1,14 +1,33 @@
 import type * as monaco from "monaco-editor";
 import { describe, expect, test } from "vitest";
 import { DiagnosticSeverity } from "vscode-languageserver-protocol";
-import type { Diagnostic } from "vscode-languageserver-protocol";
+import type { Diagnostic, Location } from "vscode-languageserver-protocol";
 
 import {
 	diagnosticToMarker,
+	lspLocationToMonaco,
 	lspRangeToMonaco,
 	monacoPositionToLsp,
 	monacoChangeToLspContentChange,
 } from "../app/lib/lsp/adapters";
+
+function makeMinimalMonacoUri(): monaco.Uri {
+	const components = {
+		scheme: "inmemory",
+		authority: "",
+		path: "/playground.sysdml",
+		query: "",
+		fragment: "",
+	};
+	const uri: monaco.Uri = {
+		...components,
+		fsPath: components.path,
+		with: () => uri,
+		toString: () => `${components.scheme}:${components.path}`,
+		toJSON: () => components,
+	};
+	return uri;
+}
 
 describe("adapters-core", () => {
 	test("converts an LSP diagnostic to a Monaco marker (1-based)", () => {
@@ -40,6 +59,37 @@ describe("adapters-core", () => {
 			message: "boom",
 		};
 		expect(diagnosticToMarker(diagnostic).severity).toBe(8);
+	});
+
+	test("stringifies a numeric diagnostic code onto the marker", () => {
+		const diagnostic: Diagnostic = {
+			range: {
+				start: { line: 0, character: 0 },
+				end: { line: 0, character: 1 },
+			},
+			message: "boom",
+			code: 1234,
+		};
+		expect(diagnosticToMarker(diagnostic).code).toBe("1234");
+	});
+
+	test("converts an LSP location to a Monaco location", () => {
+		const location: Location = {
+			uri: "inmemory://playground.sysdml",
+			range: {
+				start: { line: 1, character: 2 },
+				end: { line: 1, character: 5 },
+			},
+		};
+		const uri = makeMinimalMonacoUri();
+		const converted = lspLocationToMonaco(location, uri);
+		expect(converted.uri).toBe(uri);
+		expect(converted.range).toEqual({
+			startLineNumber: 2,
+			startColumn: 3,
+			endLineNumber: 2,
+			endColumn: 6,
+		});
 	});
 
 	test("converts an LSP range to a 1-based Monaco range", () => {
