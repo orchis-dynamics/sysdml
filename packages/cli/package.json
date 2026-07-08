@@ -10,6 +10,16 @@
 		"./pipeline": {
 			"types": "./dist/src/pipeline.d.ts",
 			"default": "./dist/src/pipeline.js"
+		},
+		"./csv": {
+			"types": "./dist/src/csv.d.ts",
+			"default": "./dist/src/csv.js"
+		}
+	},
+	"typesVersions": {
+		"*": {
+			"pipeline": ["./dist/src/pipeline.d.ts"],
+			"csv": ["./dist/src/csv.d.ts"]
 		}
 	},
 	"scripts": {

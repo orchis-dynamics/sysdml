@@ -1,5 +1,6 @@
 const esbuild = require("esbuild");
 const path = require("node:path");
+const fs = require("node:fs");
 
 const production = process.argv.includes("--production");
 const watch = process.argv.includes("--watch");
@@ -19,6 +20,7 @@ const extensionConfig = {
 	entryPoints: [path.join(__dirname, "src/extension.ts")],
 	outfile: path.join(__dirname, "dist/extension.js"),
 	external: ["vscode"],
+	conditions: ["node"],
 };
 
 const lspServerEntry = path.join(
@@ -36,7 +38,22 @@ const serverConfig = {
 	external: [],
 };
 
+function copyWasm() {
+	const source = path.join(
+		__dirname,
+		"..",
+		"vendor",
+		"simlin-engine",
+		"core",
+		"libsimlin.wasm",
+	);
+	const target = path.join(__dirname, "dist", "libsimlin.wasm");
+	fs.mkdirSync(path.dirname(target), { recursive: true });
+	fs.copyFileSync(source, target);
+}
+
 async function run() {
+	copyWasm();
 	if (watch) {
 		const extensionContext = await esbuild.context(extensionConfig);
 		const serverContext = await esbuild.context(serverConfig);
