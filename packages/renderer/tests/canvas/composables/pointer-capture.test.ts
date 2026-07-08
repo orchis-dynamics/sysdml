@@ -1,10 +1,7 @@
 // @vitest-environment happy-dom
 import { describe, expect, test, vi } from "vitest";
 
-import {
-	capturePointerQuietly,
-	releasePointerCaptureQuietly,
-} from "../../../src/canvas/composables/pointer-capture.js";
+import { capturePointerQuietly } from "../../../src/canvas/composables/pointer-capture.js";
 
 describe("pointer-capture", () => {
 	test("capturePointerQuietly forwards the pointer id to the element", () => {
@@ -26,14 +23,11 @@ describe("pointer-capture", () => {
 		expect(() => capturePointerQuietly(element, 1)).not.toThrow();
 	});
 
-	test("releasePointerCaptureQuietly swallows a rejected release", () => {
+	test("capturePointerQuietly rethrows a non-DOMException failure", () => {
 		const element = document.createElement("div");
-		element.releasePointerCapture = () => {
-			throw new DOMException(
-				"The object is in an invalid state.",
-				"InvalidStateError",
-			);
+		element.setPointerCapture = () => {
+			throw new TypeError("unexpected failure");
 		};
-		expect(() => releasePointerCaptureQuietly(element, 1)).not.toThrow();
+		expect(() => capturePointerQuietly(element, 1)).toThrow(TypeError);
 	});
 });
