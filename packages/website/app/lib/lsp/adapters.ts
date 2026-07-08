@@ -1,7 +1,17 @@
 import type * as monaco from "monaco-editor";
-import { DiagnosticSeverity } from "vscode-languageserver-protocol";
+import {
+	CompletionItemKind,
+	DiagnosticSeverity,
+	SymbolKind,
+} from "vscode-languageserver-protocol";
 import type {
+	CompletionItem,
 	Diagnostic,
+	DocumentSymbol,
+	Hover,
+	Location,
+	MarkedString,
+	MarkupContent,
 	Position,
 	Range,
 	TextEdit,
@@ -92,4 +102,120 @@ export function monacoChangeToLspContentChange(
 		},
 		text: change.text,
 	};
+}
+
+const COMPLETION_KIND_TEXT = 18;
+const COMPLETION_KIND_VARIABLE = 4;
+const COMPLETION_KIND_KEYWORD = 17;
+const COMPLETION_KIND_FUNCTION = 1;
+
+function completionKind(
+	kind: CompletionItemKind | undefined,
+): monaco.languages.CompletionItemKind {
+	switch (kind) {
+		case CompletionItemKind.Variable:
+			return COMPLETION_KIND_VARIABLE;
+		case CompletionItemKind.Keyword:
+			return COMPLETION_KIND_KEYWORD;
+		case CompletionItemKind.Function:
+			return COMPLETION_KIND_FUNCTION;
+		default:
+			return COMPLETION_KIND_TEXT;
+	}
+}
+
+const SYMBOL_KIND_VARIABLE = 12;
+const SYMBOL_KIND_FUNCTION = 11;
+const SYMBOL_KIND_NAMESPACE = 2;
+
+function symbolKind(kind: SymbolKind): monaco.languages.SymbolKind {
+	switch (kind) {
+		case SymbolKind.Function:
+			return SYMBOL_KIND_FUNCTION;
+		case SymbolKind.Namespace:
+			return SYMBOL_KIND_NAMESPACE;
+		default:
+			return SYMBOL_KIND_VARIABLE;
+	}
+}
+
+export function markupToString(
+	contents: string | MarkupContent | (string | MarkupContent)[],
+): string {
+	if (typeof contents === "string") return contents;
+	if (Array.isArray(contents)) {
+		return contents.map((entry) => markupToString(entry)).join("\n\n");
+	}
+	return contents.value;
+}
+
+export function lspCompletionItemToMonaco(
+	item: CompletionItem,
+	defaultRange: monaco.IRange,
+): monaco.languages.CompletionItem {
+	return {
+		label: item.label,
+		kind: completionKind(item.kind),
+		insertText: item.insertText ?? item.label,
+		detail: item.detail,
+		documentation: item.documentation
+			? markupToString(item.documentation)
+			: undefined,
+		range: defaultRange,
+	};
+}
+
+function markedStringToMarkupInput(
+	markedString: MarkedString,
+): string | MarkupContent {
+	return typeof markedString === "string"
+		? markedString
+		: "```" + markedString.language + "\n" + markedString.value + "\n```";
+}
+
+function hoverContentsToMarkupInput(
+	contents: Hover["contents"],
+): string | MarkupContent | (string | MarkupContent)[] {
+	if (Array.isArray(contents)) {
+		return contents.map((entry) => markedStringToMarkupInput(entry));
+	}
+	if (typeof contents === "string" || "kind" in contents) {
+		return contents;
+	}
+	return markedStringToMarkupInput(contents);
+}
+
+export function lspHoverToMonaco(hover: Hover): monaco.languages.Hover {
+	const value = markupToString(hoverContentsToMarkupInput(hover.contents));
+	const range = hover.range ? lspRangeToMonaco(hover.range) : undefined;
+	return {
+		contents: [{ value }],
+		range,
+	};
+}
+
+export function lspLocationToMonaco(
+	location: Location,
+	uri: monaco.Uri,
+): monaco.languages.Location {
+	return {
+		uri,
+		range: lspRangeToMonaco(location.range),
+	};
+}
+
+export function lspDocumentSymbolsToMonaco(
+	symbols: DocumentSymbol[],
+): monaco.languages.DocumentSymbol[] {
+	return symbols.map((symbol) => ({
+		name: symbol.name,
+		detail: symbol.detail ?? "",
+		kind: symbolKind(symbol.kind),
+		tags: [],
+		range: lspRangeToMonaco(symbol.range),
+		selectionRange: lspRangeToMonaco(symbol.selectionRange),
+		children: symbol.children
+			? lspDocumentSymbolsToMonaco(symbol.children)
+			: undefined,
+	}));
 }
