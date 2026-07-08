@@ -7,8 +7,11 @@ import {
 } from "../app/lib/examples";
 
 describe("examples", () => {
-	test("bundles all six example models", () => {
-		expect(exampleModels).toHaveLength(6);
+	test("bundles the expected example models", () => {
+		expect(exampleModels.map((model) => model.name).sort()).toEqual([
+			"beer_distribution_game",
+			"population_growth",
+		]);
 	});
 
 	test("every model has a non-empty source and a label", () => {
