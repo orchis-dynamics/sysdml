@@ -4,7 +4,6 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { createApp, h, nextTick, shallowRef, type App } from "vue";
 
 import Canvas from "../../src/canvas/Canvas.vue";
-import { useProvideModelState } from "../../src/state/model-state.js";
 import { useProvideSimulatorState } from "../../src/state/simulator-state.js";
 import { aux, connection, ir } from "../helpers/ir-builders.js";
 
@@ -40,21 +39,21 @@ function unpositionedModel(): IR {
 function mountCanvas(model: IR): {
 	host: HTMLElement;
 	app: App;
-	irRef: ReturnType<typeof shallowRef<IR | null>>;
+	irRef: ReturnType<typeof shallowRef<IR>>;
 	onPositionEdit: ReturnType<typeof vi.fn>;
 	onPinMissingPositions: ReturnType<typeof vi.fn>;
 } {
 	const onPositionEdit = vi.fn();
 	const onPinMissingPositions = vi.fn();
-	const irRef = shallowRef<IR | null>(model);
+	const irRef = shallowRef<IR>(model);
 	const host = document.createElement("div");
 	document.body.appendChild(host);
 	const app = createApp({
 		setup() {
 			useProvideSimulatorState();
-			useProvideModelState(irRef);
 			return () =>
 				h(Canvas, {
+					ir: irRef.value,
 					onPositionEdit,
 					onPinMissingPositions,
 				});

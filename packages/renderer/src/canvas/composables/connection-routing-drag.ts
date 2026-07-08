@@ -13,7 +13,6 @@ import {
 	viaDerivedCentralAngleDegrees,
 	type Point,
 } from "../edge-geometry.js";
-import { capturePointerQuietly } from "./pointer-capture.js";
 
 const ROUTING_DRAG_CLICK_THRESHOLD_PX = 4;
 const PREVIEW_REVERT_TIMEOUT_MS = 2000;
@@ -106,7 +105,7 @@ export function useConnectionRoutingDrag({
 	): void {
 		event.stopPropagation();
 		if (event.currentTarget instanceof Element) {
-			capturePointerQuietly(event.currentTarget, event.pointerId);
+			event.currentTarget.setPointerCapture(event.pointerId);
 		}
 		draggingEdgeId.value = connection.id;
 		dragConnection = connection;

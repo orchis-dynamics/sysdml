@@ -1,15 +1,13 @@
-import type { BlockKeywordKind, FileNode, IR } from "@sysdml/contracts";
-import {
-	BLOCK_PROPERTY_KEYWORDS,
-	BUILTIN_FUNCTIONS,
-	TOP_LEVEL_KEYWORDS,
-} from "@sysdml/contracts";
+import type { IR } from "@sysdml/contracts";
+import { BUILTIN_FUNCTIONS } from "@sysdml/contracts";
+import type { FileNode } from "@sysdml/contracts";
 import {
 	CompletionItem,
 	CompletionItemKind,
 } from "vscode-languageserver/node.js";
 import type { Position } from "vscode-languageserver/node.js";
 
+const TOP_LEVEL_KEYWORDS = ["sfd", "cld", "stock", "aux", "flow", "time", "gf"];
 const GF_KIND_VALUES = ["linear", "extra", "step"];
 const TIME_METHOD_VALUES = ["euler", "rk4", "rk2"];
 
@@ -20,6 +18,17 @@ type CompletionContext =
 	| "expression"
 	| "block-key"
 	| "top-level";
+
+type BlockKind = "stock" | "flow" | "aux" | "time" | "gf" | "connection";
+
+const BLOCK_KEYS: Record<BlockKind, readonly string[]> = {
+	stock: ["init", "position"],
+	flow: ["from", "to", "rate", "position", "via"],
+	aux: ["position"],
+	time: ["start", "end", "step", "save_step", "method", "time_units"],
+	gf: ["kind", "xscale", "xpts", "ypts", "yscale"],
+	connection: ["angle", "via"],
+};
 
 function replaceCommentsWithSpaces(source: string): string {
 	const characters = source.split("");
@@ -121,7 +130,7 @@ function findEnclosingFlowId(
 function findEnclosingBlockKind(
 	source: string,
 	position: Position,
-): BlockKeywordKind | null {
+): BlockKind | null {
 	const header = headerBeforeEnclosingBlock(source, position);
 	if (header === null) return null;
 	if (/\bstock\s+[A-Za-z_][A-Za-z0-9_]*\s*$/.test(header)) return "stock";
@@ -217,7 +226,7 @@ export function getCompletionItems(
 		case "block-key": {
 			const blockKind = findEnclosingBlockKind(maskedSource, position);
 			if (blockKind === null) return [];
-			return BLOCK_PROPERTY_KEYWORDS[blockKind].map((key) => {
+			return BLOCK_KEYS[blockKind].map((key) => {
 				const item = CompletionItem.create(key);
 				item.kind = CompletionItemKind.Keyword;
 				return item;
