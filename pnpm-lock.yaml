@@ -228,13 +228,13 @@ importers:
 
   packages/simulator:
     dependencies:
-      '@simlin/engine':
-        specifier: workspace:*
-        version: link:../vendor/simlin-engine
       '@sysdml/contracts':
         specifier: workspace:*
         version: link:../contracts
     devDependencies:
+      '@simlin/engine':
+        specifier: workspace:*
+        version: link:../vendor/simlin-engine
       '@sysdml/ir':
         specifier: workspace:*
         version: link:../ir
