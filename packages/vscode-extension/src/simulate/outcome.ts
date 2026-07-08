@@ -1,5 +1,6 @@
 import { formatCsv } from "@sysdml/cli/csv";
 import type { PipelineResult } from "@sysdml/cli/pipeline";
+import type { SimDiagnostic } from "@sysdml/contracts";
 
 export type SimulateOutcome =
 	| { kind: "csv"; csv: string; warnings: string[] }
@@ -8,6 +9,13 @@ export type SimulateOutcome =
 function firstWithCount(messages: string[]): string {
 	const extra = messages.length - 1;
 	return extra > 0 ? `${messages[0]} (+${extra} more)` : messages[0];
+}
+
+function isErrorSimDiagnostic(diagnostic: SimDiagnostic): boolean {
+	if (diagnostic.severity !== undefined) {
+		return diagnostic.severity === "error";
+	}
+	return diagnostic.code === "error";
 }
 
 export function outcomeFromPipeline(result: PipelineResult): SimulateOutcome {
@@ -36,9 +44,8 @@ export function outcomeFromPipeline(result: PipelineResult): SimulateOutcome {
 				"Cannot simulate a cld model: a causal loop diagram describes structure only. Use an sfd model.",
 		};
 	}
-	const simulationError = result.simulation?.diagnostics.find(
-		(d) => d.code === "error",
-	);
+	const simulationError =
+		result.simulation?.diagnostics.find(isErrorSimDiagnostic);
 	if (simulationError !== undefined) {
 		return { kind: "error", message: simulationError.message };
 	}
