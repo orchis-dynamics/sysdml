@@ -22,7 +22,7 @@
 		"watch": "node esbuild.js --watch",
 		"package": "pnpm run build && vsce package --no-dependencies",
 		"build:lsp": "pnpm --filter @sysdml/lsp-server... build",
-		"build:renderer": "pnpm --filter @sysdml/contracts --filter @sysdml/parser --filter @sysdml/ir --filter @sysdml/layout --filter @sysdml/simulator --filter @sysdml/cli build && pnpm --filter @sysdml/renderer build:vscode && rm -rf renderer-dist && cp -R ../renderer/dist renderer-dist",
+		"build:renderer": "pnpm --filter @sysdml/contracts --filter @sysdml/parser --filter @sysdml/ir --filter @sysdml/layout --filter @sysdml/simulator --filter @sysdml/cli build && pnpm --filter @sysdml/renderer build:vscode && rm -rf renderer-dist && cp -R ../renderer/dist-vscode renderer-dist",
 		"test": "vitest run",
 		"test:watch": "vitest"
 	},

@@ -66,7 +66,7 @@ export default defineConfig(({ mode }) => ({
 		plugins: () => [wasm(), topLevelAwait()],
 	},
 	build: {
-		outDir: "dist",
+		outDir: mode === "vscode" ? "dist-vscode" : "dist",
 		target: "esnext",
 		assetsInlineLimit: wasmAssetsInlineLimit(mode),
 		rollupOptions: {
