@@ -5,6 +5,7 @@
 	"type": "module",
 	"main": "./dist/src/index.js",
 	"types": "./dist/src/index.d.ts",
+	"files": ["dist", "LICENSE"],
 	"scripts": {
 		"clean": "rm -rf dist generated node_modules src/grammar/.antlr",
 		"generate": "bash generate.sh",
