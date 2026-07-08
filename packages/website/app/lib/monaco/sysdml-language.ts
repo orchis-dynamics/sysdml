@@ -1,3 +1,9 @@
+import {
+	CONSTANT_KEYWORDS,
+	LOGICAL_OPERATOR_KEYWORDS,
+	PROPERTY_KEYWORDS,
+	TOP_LEVEL_KEYWORDS,
+} from "@sysdml/contracts";
 import type * as monaco from "monaco-editor";
 
 export const SYSDML_LANGUAGE_ID = "sysdml";
@@ -18,37 +24,16 @@ export interface MonacoLanguageRegistrar {
 }
 
 type AssertRealMonacoIsAssignable =
-	typeof import("monaco-editor") extends MonacoLanguageRegistrar
-		? true
-		: never;
+	typeof import("monaco-editor") extends MonacoLanguageRegistrar ? true : never;
 const assertRealMonacoIsAssignable: AssertRealMonacoIsAssignable = true;
 void assertRealMonacoIsAssignable;
 
 export const sysdmlMonarchLanguage: monaco.languages.IMonarchLanguage = {
 	defaultToken: "",
-	keywords: ["sfd", "cld", "stock", "aux", "flow", "time", "gf"],
-	operatorWords: ["IF", "THEN", "ELSE", "AND", "OR", "NOT", "MOD"],
-	properties: [
-		"from",
-		"to",
-		"rate",
-		"init",
-		"start",
-		"end",
-		"step",
-		"save_step",
-		"method",
-		"time_units",
-		"kind",
-		"xscale",
-		"xpts",
-		"ypts",
-		"yscale",
-		"position",
-		"via",
-		"angle",
-	],
-	constants: ["null"],
+	keywords: [...TOP_LEVEL_KEYWORDS],
+	operatorWords: [...LOGICAL_OPERATOR_KEYWORDS],
+	properties: [...PROPERTY_KEYWORDS],
+	constants: [...CONSTANT_KEYWORDS],
 	tokenizer: {
 		root: [
 			[/\/\/.*$/, "comment"],
