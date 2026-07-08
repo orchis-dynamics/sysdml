@@ -24,8 +24,8 @@ async function streamThrough(
 	stream: CompressionStream | DecompressionStream,
 ): Promise<Uint8Array<ArrayBuffer>> {
 	const writer = stream.writable.getWriter();
-	void writer.write(bytes);
-	void writer.close();
+	writer.write(bytes).catch(() => {});
+	writer.close().catch(() => {});
 	const chunks: Uint8Array<ArrayBuffer>[] = [];
 	const reader = stream.readable.getReader();
 	for (;;) {

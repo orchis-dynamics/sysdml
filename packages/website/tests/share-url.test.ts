@@ -27,4 +27,8 @@ describe("share-url", () => {
 		expect(await decodeSourceFromHash("")).toBeNull();
 		expect(await decodeSourceFromHash("#")).toBeNull();
 	});
+
+	test("returns null for valid base64url that is not valid deflate-raw data", async () => {
+		expect(await decodeSourceFromHash("AAAAAAAA")).toBeNull();
+	});
 });
