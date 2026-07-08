@@ -18,6 +18,7 @@
 			"default": "./dist/src/server-browser.js"
 		}
 	},
+	"files": ["dist", "LICENSE"],
 	"scripts": {
 		"clean": "rm -rf dist node_modules",
 		"build": "tsc",
