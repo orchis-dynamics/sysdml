@@ -86,9 +86,10 @@ export function lspTextEditToMonaco(
 	};
 }
 
-export function monacoChangeToLspContentChange(
-	change: monaco.editor.IModelContentChange,
-): { range: Range; text: string } {
+export function monacoChangeToLspContentChange(change: {
+	range: monaco.IRange;
+	text: string;
+}): { range: Range; text: string } {
 	return {
 		range: {
 			start: {
