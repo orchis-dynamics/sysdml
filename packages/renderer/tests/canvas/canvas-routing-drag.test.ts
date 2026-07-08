@@ -1,9 +1,10 @@
 import type { ConnectionRoutingEdit, IR } from "@sysdml/contracts";
 // @vitest-environment happy-dom
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { createApp, h, nextTick, type App } from "vue";
+import { createApp, h, nextTick, ref, type App } from "vue";
 
 import Canvas from "../../src/canvas/Canvas.vue";
+import { useProvideModelState } from "../../src/state/model-state.js";
 import { useProvideSimulatorState } from "../../src/state/simulator-state.js";
 import { aux, connection, ir } from "../helpers/ir-builders.js";
 
@@ -41,7 +42,8 @@ function mountCanvas(
 	const app = createApp({
 		setup() {
 			useProvideSimulatorState();
-			return () => h(Canvas, { ir: model, onRoutingEdit });
+			useProvideModelState(ref(model));
+			return () => h(Canvas, { onRoutingEdit });
 		},
 	});
 	app.mount(host);

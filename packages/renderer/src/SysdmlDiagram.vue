@@ -4,19 +4,22 @@ import type {
 	ElementPositionEdit,
 	IR,
 } from "@sysdml/contracts";
-import { computed, onMounted, onUnmounted, toRaw, watch } from "vue";
+import { computed, onMounted, onUnmounted, toRaw, toRef, watch } from "vue";
 
 import Canvas from "./canvas/Canvas.vue";
 import GraphPanel from "./graph/GraphPanel.vue";
 import TimeseriesLineChart from "./graph/TimeseriesLineChart.vue";
 import { createDefaultSimulatorClient } from "./simulation/client.js";
 import SimulationDiagnosticsBanner from "./SimulationDiagnosticsBanner.vue";
+import { useProvideModelState } from "./state/model-state.js";
 import { useProvideSimulatorState } from "./state/simulator-state.js";
 
 const props = defineProps<{
 	ir: IR | null;
 	errorMessage: string | null;
 }>();
+
+useProvideModelState(toRef(props, "ir"));
 
 const emit = defineEmits<{
 	routingEdit: [edit: ConnectionRoutingEdit];
@@ -89,7 +92,6 @@ function onPinMissingPositions(): void {
 		</div>
 		<SimulationDiagnosticsBanner :diagnostics="simulationDiagnostics" />
 		<Canvas
-			:ir="ir"
 			class="flex-1 min-h-0"
 			@routing-edit="onRoutingEdit"
 			@position-edit="onPositionEdit"
