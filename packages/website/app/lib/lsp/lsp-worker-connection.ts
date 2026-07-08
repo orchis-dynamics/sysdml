@@ -7,9 +7,18 @@ import {
 
 import LspWorker from "../../workers/lsp.worker.ts?worker";
 
-export function spawnLspWorkerConnection(): MessageConnection {
+export interface LspWorkerConnection {
+	connection: MessageConnection;
+	terminateWorker(): void;
+}
+
+export function spawnLspWorkerConnection(): LspWorkerConnection {
 	const worker = new LspWorker();
 	const reader = new BrowserMessageReader(worker);
 	const writer = new BrowserMessageWriter(worker);
-	return createMessageConnection(reader, writer);
+	const connection = createMessageConnection(reader, writer);
+	return {
+		connection,
+		terminateWorker: () => worker.terminate(),
+	};
 }
