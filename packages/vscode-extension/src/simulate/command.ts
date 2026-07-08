@@ -11,22 +11,27 @@ export async function runSimulateCommand(): Promise<void> {
 		);
 		return;
 	}
-	const outcome = outcomeFromPipeline(
-		await runPipeline(editor.document.getText()),
-	);
-	if (outcome.kind === "error") {
-		void vscode.window.showErrorMessage(outcome.message);
-		return;
+	try {
+		const outcome = outcomeFromPipeline(
+			await runPipeline(editor.document.getText()),
+		);
+		if (outcome.kind === "error") {
+			void vscode.window.showErrorMessage(outcome.message);
+			return;
+		}
+		if (outcome.warnings.length > 0) {
+			void vscode.window.showWarningMessage(outcome.warnings.join(" | "));
+		}
+		const document = await vscode.workspace.openTextDocument({
+			language: "csv",
+			content: outcome.csv,
+		});
+		await vscode.window.showTextDocument(document, {
+			viewColumn: vscode.ViewColumn.Beside,
+			preview: false,
+		});
+	} catch (error) {
+		const message = error instanceof Error ? error.message : String(error);
+		void vscode.window.showErrorMessage(`Simulation failed: ${message}`);
 	}
-	if (outcome.warnings.length > 0) {
-		void vscode.window.showWarningMessage(outcome.warnings.join(" | "));
-	}
-	const document = await vscode.workspace.openTextDocument({
-		language: "csv",
-		content: outcome.csv,
-	});
-	await vscode.window.showTextDocument(document, {
-		viewColumn: vscode.ViewColumn.Beside,
-		preview: false,
-	});
 }
