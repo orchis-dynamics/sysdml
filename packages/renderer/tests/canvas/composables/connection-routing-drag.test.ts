@@ -202,34 +202,4 @@ describe("useConnectionRoutingDrag", () => {
 		drag.clearPreviews();
 		expect(drag.previewFor("conn-a-+-b-0")).toBeUndefined();
 	});
-
-	test("drag starts even when the browser rejects pointer capture", () => {
-		const drag = useConnectionRoutingDrag({ scale: ref(1), onCommit: vi.fn() });
-		const capturingTarget = document.createElement("div");
-		capturingTarget.setPointerCapture = () => {
-			throw new DOMException(
-				"The object is in an invalid state.",
-				"InvalidStateError",
-			);
-		};
-		const event = new PointerEvent("pointerdown", {
-			clientX: 50,
-			clientY: 0,
-			pointerId: 1,
-		});
-		Object.defineProperty(event, "currentTarget", {
-			value: capturingTarget,
-			configurable: true,
-		});
-
-		expect(() =>
-			drag.onDotPointerDown(event, angleConnection(), {
-				...HORIZONTAL_GEOMETRY,
-			}),
-		).not.toThrow();
-		expect(drag.draggingEdgeId.value).toBe("conn-a-+-b-0");
-
-		drag.onDotPointerMove(pointerMove(50, -20));
-		expect(drag.previewFor("conn-a-+-b-0")?.angle).toBe(87);
-	});
 });

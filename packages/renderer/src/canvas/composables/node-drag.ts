@@ -2,8 +2,6 @@ import type { ElementPositionEdit } from "@sysdml/contracts";
 import type { LayoutNode } from "@sysdml/layout";
 import { ref, type Ref } from "vue";
 
-import { capturePointerQuietly } from "./pointer-capture.js";
-
 const NODE_DRAG_CLICK_THRESHOLD_PX = 4;
 
 interface DragOffset {
@@ -44,7 +42,7 @@ export function useNodeDrag({
 	function onNodePointerDown(event: PointerEvent, node: LayoutNode): void {
 		event.stopPropagation();
 		if (event.currentTarget instanceof HTMLElement) {
-			capturePointerQuietly(event.currentTarget, event.pointerId);
+			event.currentTarget.setPointerCapture(event.pointerId);
 		}
 		draggingId = node.id;
 		dragNode = node;

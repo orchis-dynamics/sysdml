@@ -2,6 +2,7 @@
 import type {
 	ConnectionRoutingEdit,
 	ElementPositionEdit,
+	IR,
 	IRPosition,
 } from "@sysdml/contracts";
 import {
@@ -17,7 +18,6 @@ import {
 import { useResizeObserver } from "@vueuse/core";
 import { ref, computed, watch, type Component } from "vue";
 
-import { useModelState } from "../state/model-state.js";
 import { useSimulatorState } from "../state/simulator-state.js";
 import ArrowTip from "./ArrowTip.vue";
 import { useConnectionRoutingDrag } from "./composables/connection-routing-drag.js";
@@ -40,18 +40,19 @@ import AuxNode from "./nodes/AuxNode.vue";
 import FlowNode from "./nodes/FlowNode.vue";
 import StockNode from "./nodes/StockNode.vue";
 
-const { ir } = useModelState();
+const props = defineProps<{ ir: IR | null }>();
+
 const { isVariableSelected, toggleVariable } = useSimulatorState();
 
 const layout = computed(() =>
-	ir.value ? computeLayout(ir.value) : { nodes: [], edges: [] },
+	props.ir ? computeLayout(props.ir) : { nodes: [], edges: [] },
 );
 
 const SFD_CONNECTION_BULGE_SIGN = 1;
 const CLD_CONNECTION_BULGE_SIGN = -1;
 
 const connectionBulgeSign = computed(() =>
-	ir.value && isCausalLoopDiagram(ir.value)
+	props.ir && isCausalLoopDiagram(props.ir)
 		? CLD_CONNECTION_BULGE_SIGN
 		: SFD_CONNECTION_BULGE_SIGN,
 );
@@ -147,18 +148,21 @@ const nodeComponentMap: Record<NodeKind, Component> = {
 
 const resolvedNodes = computed(() => layout.value.nodes.map(resolveNode));
 
-watch(ir, () => {
-	resetDragOffsets();
-	clearPreviews();
-});
+watch(
+	() => props.ir,
+	() => {
+		resetDragOffsets();
+		clearPreviews();
+	},
+);
 
 let lastPinSignature: string | null = null;
 
 watch(
-	ir,
-	(currentIr) => {
-		if (!currentIr) return;
-		const missing = computeMissingPositions(currentIr);
+	() => props.ir,
+	(ir) => {
+		if (!ir) return;
+		const missing = computeMissingPositions(ir);
 		if (missing.length === 0) return;
 		const signature = missing
 			.map((entry) => entry.id)

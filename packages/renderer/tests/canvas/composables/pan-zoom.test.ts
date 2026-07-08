@@ -115,7 +115,7 @@ describe("usePanZoom", () => {
 		const panZoom = usePanZoom(nullContainer());
 		panZoom.onPointerDown(pointerDown(0, 100, 100));
 		panZoom.onPointerMove(pointerMove(130, 160));
-		panZoom.onPointerUp();
+		panZoom.onPointerUp(new PointerEvent("pointerup", { pointerId: 1 }));
 		panZoom.onPointerMove(pointerMove(500, 500));
 		expect(panZoom.translateX.value).toBe(30);
 		expect(panZoom.translateY.value).toBe(60);
