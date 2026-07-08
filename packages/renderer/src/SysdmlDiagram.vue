@@ -4,7 +4,7 @@ import type {
 	ElementPositionEdit,
 	IR,
 } from "@sysdml/contracts";
-import { computed, onMounted, onUnmounted, watch } from "vue";
+import { computed, onMounted, onUnmounted, toRaw, watch } from "vue";
 
 import Canvas from "./canvas/Canvas.vue";
 import GraphPanel from "./graph/GraphPanel.vue";
@@ -42,7 +42,7 @@ onMounted(() => {
 		setSimulationError(message);
 	});
 	if (props.ir) {
-		simulator.simulate(props.ir);
+		simulator.simulate(toRaw(props.ir));
 	}
 });
 
@@ -50,7 +50,7 @@ watch(
 	() => props.ir,
 	(incoming) => {
 		if (incoming) {
-			simulator?.simulate(incoming);
+			simulator?.simulate(toRaw(incoming));
 		}
 	},
 );
