@@ -2,10 +2,13 @@
 	"name": "@sysdml/contracts",
 	"version": "0.1.0",
 	"license": "AGPL-3.0-only",
+	"files": [
+		"dist",
+		"LICENSE"
+	],
 	"type": "module",
 	"main": "./dist/src/index.js",
 	"types": "./dist/src/index.d.ts",
-	"files": ["dist", "LICENSE"],
 	"exports": {
 		".": {
 			"types": "./dist/src/index.d.ts",

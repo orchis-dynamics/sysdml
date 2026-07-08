@@ -2,6 +2,10 @@
 	"name": "@sysdml/renderer",
 	"version": "0.1.0",
 	"license": "AGPL-3.0-only",
+	"files": [
+		"dist/lib",
+		"LICENSE"
+	],
 	"type": "module",
 	"exports": {
 		"./lib": {
@@ -10,7 +14,6 @@
 		},
 		"./lib/style.css": "./dist/lib/style.css"
 	},
-	"files": ["dist/lib", "LICENSE"],
 	"scripts": {
 		"clean": "rm -rf dist node_modules",
 		"dev": "vite",
@@ -20,9 +23,6 @@
 		"preview": "vite preview",
 		"test": "vitest run",
 		"test:watch": "vitest"
-	},
-	"peerDependencies": {
-		"vue": "^3.5.0"
 	},
 	"dependencies": {
 		"@sysdml/contracts": "workspace:*",
@@ -50,5 +50,8 @@
 		"vue": "^3.5.0",
 		"vue-tsc": "^2.0.0",
 		"ws": "^8.21.0"
+	},
+	"peerDependencies": {
+		"vue": "^3.5.0"
 	}
 }

@@ -19,8 +19,7 @@ export default defineConfig({
 		dts({
 			entryRoot: "src",
 			include: ["src/lib.ts", "src/SysdmlDiagram.vue"],
-			outDir: "dist/lib",
-			rollupTypes: false,
+			outDirs: "dist/lib",
 		}),
 	],
 	worker: {
