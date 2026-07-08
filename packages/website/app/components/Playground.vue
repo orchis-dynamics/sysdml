@@ -61,25 +61,29 @@ async function onEditorReady(
 	monacoApi: typeof import("monaco-editor"),
 ): Promise<void> {
 	editorModel = model;
-	providerDisposables = registerSysdmlProviders(monacoApi, client);
-	mediator = createPlaygroundMediator({
-		client,
-		model: makeMediatorModel(model),
-		monacoApi: makeMonacoBridge(model, monacoApi),
-		callbacks: {
-			onIr: (incoming) => {
-				ir.value = incoming;
+	try {
+		providerDisposables = registerSysdmlProviders(monacoApi, client);
+		mediator = createPlaygroundMediator({
+			client,
+			model: makeMediatorModel(model),
+			monacoApi: makeMonacoBridge(model, monacoApi),
+			callbacks: {
+				onIr: (incoming) => {
+					ir.value = incoming;
+				},
+				onError: (message) => {
+					errorMessage.value = message;
+				},
+				onToast: (message) => {
+					showToast(message);
+				},
 			},
-			onError: (message) => {
-				errorMessage.value = message;
-			},
-			onToast: (message) => {
-				showToast(message);
-			},
-		},
-	});
-	await mediator.start();
-	await applyHashSource();
+		});
+		await mediator.start();
+		await applyHashSource();
+	} catch (error) {
+		errorMessage.value = String(error);
+	}
 }
 
 function onSelectExample(source: string): void {
@@ -95,8 +99,12 @@ async function onShare(): Promise<void> {
 	const hash = await encodeSourceToHash(editorModel.getValue());
 	const url = `${window.location.origin}${window.location.pathname}#${hash}`;
 	window.history.replaceState(null, "", `#${hash}`);
-	await navigator.clipboard.writeText(url);
-	showToast("Link copied to clipboard");
+	try {
+		await navigator.clipboard.writeText(url);
+		showToast("Link copied to clipboard");
+	} catch {
+		showToast("Could not copy link");
+	}
 }
 
 function onRoutingEdit(edit: ConnectionRoutingEdit): void {

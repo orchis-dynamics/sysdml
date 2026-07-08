@@ -1,3 +1,5 @@
+const MAX_DECODED_BYTES = 1_000_000;
+
 function bytesToBase64Url(bytes: Uint8Array<ArrayBuffer>): string {
 	let binary = "";
 	for (const byte of bytes) {
@@ -19,20 +21,18 @@ function base64UrlToBytes(value: string): Uint8Array<ArrayBuffer> {
 	return bytes;
 }
 
-async function streamThrough(
+function writeToStream(
 	bytes: Uint8Array<ArrayBuffer>,
-	stream: CompressionStream | DecompressionStream,
-): Promise<Uint8Array<ArrayBuffer>> {
-	const writer = stream.writable.getWriter();
+	writable: WritableStream<Uint8Array<ArrayBuffer>>,
+): void {
+	const writer = writable.getWriter();
 	writer.write(bytes).catch(() => {});
 	writer.close().catch(() => {});
-	const chunks: Uint8Array<ArrayBuffer>[] = [];
-	const reader = stream.readable.getReader();
-	for (;;) {
-		const { value, done } = await reader.read();
-		if (done) break;
-		if (value) chunks.push(value);
-	}
+}
+
+function concatChunks(
+	chunks: Uint8Array<ArrayBuffer>[],
+): Uint8Array<ArrayBuffer> {
 	const total = chunks.reduce((sum, chunk) => sum + chunk.length, 0);
 	const result = new Uint8Array(total);
 	let offset = 0;
@@ -41,6 +41,45 @@ async function streamThrough(
 		offset += chunk.length;
 	}
 	return result;
+}
+
+async function streamThrough(
+	bytes: Uint8Array<ArrayBuffer>,
+	stream: CompressionStream,
+): Promise<Uint8Array<ArrayBuffer>> {
+	writeToStream(bytes, stream.writable);
+	const chunks: Uint8Array<ArrayBuffer>[] = [];
+	const reader = stream.readable.getReader();
+	for (;;) {
+		const { value, done } = await reader.read();
+		if (done) break;
+		if (value) chunks.push(value);
+	}
+	return concatChunks(chunks);
+}
+
+async function decompressWithCap(
+	bytes: Uint8Array<ArrayBuffer>,
+	stream: DecompressionStream,
+	maxBytes: number,
+): Promise<Uint8Array<ArrayBuffer> | null> {
+	writeToStream(bytes, stream.writable);
+	const chunks: Uint8Array<ArrayBuffer>[] = [];
+	let totalBytes = 0;
+	const reader = stream.readable.getReader();
+	for (;;) {
+		const { value, done } = await reader.read();
+		if (done) break;
+		if (value) {
+			totalBytes += value.length;
+			if (totalBytes > maxBytes) {
+				await reader.cancel();
+				return null;
+			}
+			chunks.push(value);
+		}
+	}
+	return concatChunks(chunks);
 }
 
 export async function encodeSourceToHash(source: string): Promise<string> {
@@ -59,10 +98,12 @@ export async function decodeSourceFromHash(
 	if (value.length === 0) return null;
 	try {
 		const compressed = base64UrlToBytes(value);
-		const decompressed = await streamThrough(
+		const decompressed = await decompressWithCap(
 			compressed,
 			new DecompressionStream("deflate-raw"),
+			MAX_DECODED_BYTES,
 		);
+		if (decompressed === null) return null;
 		return new TextDecoder().decode(decompressed);
 	} catch {
 		return null;

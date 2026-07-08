@@ -31,4 +31,18 @@ describe("share-url", () => {
 	test("returns null for valid base64url that is not valid deflate-raw data", async () => {
 		expect(await decodeSourceFromHash("AAAAAAAA")).toBeNull();
 	});
+
+	test("returns null when the decompressed content exceeds the size cap", async () => {
+		const oversizedSource = "a".repeat(1_100_000);
+		const hash = await encodeSourceToHash(oversizedSource);
+		expect(await decodeSourceFromHash(hash)).toBeNull();
+	});
+
+	test("still round-trips a realistic multi-kilobyte model source", async () => {
+		const stockDefinition = "stock population {\n  init: 1000\n}\n\n";
+		const source = "sfd demo\n\n" + stockDefinition.repeat(80);
+		const hash = await encodeSourceToHash(source);
+		const decoded = await decodeSourceFromHash(hash);
+		expect(decoded).toBe(source);
+	});
 });
