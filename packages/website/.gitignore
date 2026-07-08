@@ -3,3 +3,6 @@
 dist
 node_modules
 .data
+test-results
+playwright-report
+blob-report
