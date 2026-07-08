@@ -78,7 +78,7 @@ export function diagnosticToMarker(
 export function lspTextEditToMonaco(
 	edit: TextEdit,
 	model: monaco.editor.ITextModel,
-): monaco.editor.IIdentifiedSingleEditOperation {
+): monaco.languages.TextEdit {
 	const range = lspRangeToMonaco(edit.range);
 	return {
 		range: model.validateRange(range),
