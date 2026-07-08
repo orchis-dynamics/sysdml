@@ -1,0 +1,9 @@
+@import "tailwindcss";
+@source "../../../node_modules/@sysdml/renderer/src";
+
+html,
+body,
+#__nuxt {
+	height: 100%;
+	margin: 0;
+}

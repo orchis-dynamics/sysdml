@@ -1,6 +1,8 @@
 import { useElementBounding } from "@vueuse/core";
 import { computed, ref, type Ref } from "vue";
 
+import { capturePointerQuietly } from "./pointer-capture.js";
+
 const MIN_SCALE = 0.1;
 const MAX_SCALE = 10;
 const ZOOM_IN_FACTOR = 1.1;
@@ -28,7 +30,8 @@ export function usePanZoom(containerRef: Ref<HTMLElement | null>) {
 			isPanning = true;
 			panStartX = event.clientX - translateX.value;
 			panStartY = event.clientY - translateY.value;
-			containerRef.value?.setPointerCapture(event.pointerId);
+			const container = containerRef.value;
+			if (container) capturePointerQuietly(container, event.pointerId);
 		}
 	}
 
@@ -38,9 +41,8 @@ export function usePanZoom(containerRef: Ref<HTMLElement | null>) {
 		translateY.value = event.clientY - panStartY;
 	}
 
-	function onPointerUp(event: PointerEvent): void {
+	function onPointerUp(): void {
 		isPanning = false;
-		containerRef.value?.releasePointerCapture(event.pointerId);
 	}
 
 	function onWheel(event: WheelEvent): void {

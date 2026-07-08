@@ -284,3 +284,63 @@ export interface ParseResult {
 	ast: FileNode | null;
 	diagnostics: Diagnostic[];
 }
+
+// ── Reserved keyword vocabulary (single source of truth for SYSDML.g4) ───────
+
+export const MODEL_DECLARATION_KEYWORDS = ["sfd", "cld"] as const;
+
+export const BLOCK_DECLARATION_KEYWORDS = [
+	"stock",
+	"aux",
+	"flow",
+	"time",
+	"gf",
+] as const;
+
+export const TOP_LEVEL_KEYWORDS = [
+	...MODEL_DECLARATION_KEYWORDS,
+	...BLOCK_DECLARATION_KEYWORDS,
+] as const;
+
+export type BlockKeywordKind =
+	| "stock"
+	| "flow"
+	| "aux"
+	| "time"
+	| "gf"
+	| "connection";
+
+export const BLOCK_PROPERTY_KEYWORDS: Record<
+	BlockKeywordKind,
+	readonly string[]
+> = {
+	stock: ["init", "position"],
+	flow: ["from", "to", "rate", "position", "via"],
+	aux: ["position"],
+	time: ["start", "end", "step", "save_step", "time_units", "method"],
+	gf: ["kind", "xscale", "xpts", "ypts", "yscale"],
+	connection: ["angle", "via"],
+};
+
+export const LOGICAL_OPERATOR_KEYWORDS = [
+	"IF",
+	"THEN",
+	"ELSE",
+	"AND",
+	"OR",
+	"NOT",
+	"MOD",
+] as const;
+
+export const CONSTANT_KEYWORDS = ["null"] as const;
+
+export const PROPERTY_KEYWORDS: readonly string[] = [
+	...new Set(Object.values(BLOCK_PROPERTY_KEYWORDS).flat()),
+];
+
+export const ALL_KEYWORDS: readonly string[] = [
+	...TOP_LEVEL_KEYWORDS,
+	...PROPERTY_KEYWORDS,
+	...LOGICAL_OPERATOR_KEYWORDS,
+	...CONSTANT_KEYWORDS,
+];
