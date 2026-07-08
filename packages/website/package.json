@@ -27,6 +27,7 @@
 	"devDependencies": {
 		"@playwright/test": "^1.48.0",
 		"@tailwindcss/vite": "^4.2.0",
+		"@vitejs/plugin-vue": "^5.2.0",
 		"@types/node": "^24.12.4",
 		"happy-dom": "^20.9.0",
 		"nuxt": "^4.0.0",

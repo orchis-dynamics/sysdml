@@ -1,0 +1,21 @@
+cld burnout
+
+deadline_pressure ->+ workload
+workload ->+ overtime_hours
+overtime_hours ->+ fatigue
+overtime_hours ->- sleep_quality
+sleep_quality ->+ energy
+energy ->- fatigue
+fatigue ->+ mistakes
+mistakes ->+ rework
+rework ->+ workload
+
+fatigue ->+ sick_days
+sick_days ->+ recovery_time
+recovery_time ->- fatigue
+sick_days ->- workload
+
+manager_support ->+ motivation
+manager_support ->- deadline_pressure
+motivation ->+ productivity
+productivity ->- workload

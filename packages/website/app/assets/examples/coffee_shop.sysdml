@@ -1,0 +1,21 @@
+cld coffee_shop
+
+quality ->+ reputation
+reputation ->+ customers
+customers ->+ revenue
+revenue ->+ ingredient_investment
+ingredient_investment ->+ quality
+
+revenue ->+ staff_training
+staff_training ->+ staff_morale
+staff_morale ->+ quality
+
+customers ->+ queue_length
+queue_length ->+ wait_time
+wait_time ->+ customer_churn
+customer_churn ->- customers
+
+pricing ->+ revenue
+pricing ->- customers
+competition ->- customers
+competition ->- pricing
