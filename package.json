@@ -12,9 +12,12 @@
 		"fmt": "oxfmt",
 		"fmt:check": "oxfmt --check",
 		"update-simlin": "bash scripts/update-simlin.sh",
-		"clean": "pnpm -r clean && rm -rf node_modules"
+		"clean": "pnpm -r clean && rm -rf node_modules",
+		"changeset": "changeset",
+		"version-packages": "changeset version"
 	},
 	"devDependencies": {
+		"@changesets/cli": "2.31.0",
 		"oxfmt": "^0.47.0",
 		"oxlint": "^1.62.0",
 		"oxlint-tsgolint": "^0.22.1"
