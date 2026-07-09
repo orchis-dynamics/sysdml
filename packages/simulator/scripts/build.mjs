@@ -44,6 +44,12 @@ async function buildNodeBundle() {
 		conditions: ["node", "import"],
 		sourcemap: false,
 		logLevel: "info",
+		banner: {
+			js: [
+				"import { createRequire as createNodeRequire } from 'node:module';",
+				"const require = createNodeRequire(import.meta.url);",
+			].join("\n"),
+		},
 	});
 	await cp(
 		resolve(vendorRoot, "core", "libsimlin.wasm"),
