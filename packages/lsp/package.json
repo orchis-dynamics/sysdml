@@ -6,9 +6,12 @@
 		"sysdml-lsp": "./dist/src/server.js"
 	},
 	"files": [
-		"dist",
+		"dist/src",
 		"LICENSE"
 	],
+	"publishConfig": {
+		"access": "public"
+	},
 	"type": "module",
 	"main": "./dist/src/server.js",
 	"types": "./dist/src/server.d.ts",
