@@ -6,12 +6,7 @@ import { fileURLToPath } from "node:url";
 import esbuild from "esbuild";
 
 const packageRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const vendorRoot = resolve(
-	packageRoot,
-	"..",
-	"vendor",
-	"simlin-engine",
-);
+const vendorRoot = resolve(packageRoot, "..", "vendor", "simlin-engine");
 const distRoot = resolve(packageRoot, "dist");
 
 const browserWasmSourcePlugin = {
@@ -36,9 +31,12 @@ const externalWasmPlugin = {
 const workerBackendStubPlugin = {
 	name: "worker-backend-stub",
 	setup(build) {
-		build.onResolve({ filter: /^@simlin\/engine\/internal\/backend-factory$/ }, () => ({
-			path: resolve(packageRoot, "src", "simlin-worker-backend-stub.ts"),
-		}));
+		build.onResolve(
+			{ filter: /^@simlin\/engine\/internal\/backend-factory$/ },
+			() => ({
+				path: resolve(packageRoot, "src", "simlin-worker-backend-stub.ts"),
+			}),
+		);
 	},
 };
 
@@ -75,7 +73,11 @@ async function buildBrowserBundle() {
 		format: "esm",
 		target: "esnext",
 		conditions: ["browser", "module", "import"],
-		plugins: [browserWasmSourcePlugin, externalWasmPlugin, workerBackendStubPlugin],
+		plugins: [
+			browserWasmSourcePlugin,
+			externalWasmPlugin,
+			workerBackendStubPlugin,
+		],
 		sourcemap: false,
 		logLevel: "info",
 	});
@@ -88,7 +90,12 @@ async function buildBrowserBundle() {
 async function bundleTypes() {
 	const result = spawnSync(
 		"pnpm",
-		["exec", "dts-bundle-generator", "--config", "dts-bundle-generator.config.cjs"],
+		[
+			"exec",
+			"dts-bundle-generator",
+			"--config",
+			"dts-bundle-generator.config.cjs",
+		],
 		{ cwd: packageRoot, stdio: "inherit" },
 	);
 	if (result.status !== 0) {
@@ -113,7 +120,9 @@ async function assertNoBareEngineSpecifier() {
 	for (const relativePath of ["node/index.js", "browser/index.js"]) {
 		const contents = await readFile(resolve(distRoot, relativePath), "utf8");
 		if (/from\s*["']@simlin\/engine/.test(contents)) {
-			throw new Error(`bare @simlin/engine specifier survived in dist/${relativePath}`);
+			throw new Error(
+				`bare @simlin/engine specifier survived in dist/${relativePath}`,
+			);
 		}
 	}
 }

@@ -7,9 +7,6 @@
 		"LICENSE",
 		"NOTICE"
 	],
-	"publishConfig": {
-		"access": "public"
-	},
 	"type": "module",
 	"main": "./dist/node/index.js",
 	"types": "./dist/index.d.ts",
@@ -20,6 +17,9 @@
 			"node": "./dist/node/index.js",
 			"default": "./dist/node/index.js"
 		}
+	},
+	"publishConfig": {
+		"access": "public"
 	},
 	"scripts": {
 		"clean": "rm -rf dist node_modules",

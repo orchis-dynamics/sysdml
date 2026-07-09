@@ -3,8 +3,6 @@ import type { Model, ModelIssue } from "@simlin/engine";
 import { DirectBackend } from "@simlin/engine/direct-backend";
 import { canonicalizeIdent } from "@simlin/engine/internal/canonicalize";
 import { SimlinJsonFormat } from "@simlin/engine/internal/types";
-
-import { resolveNodeWasmSource } from "./wasm-source.node.js";
 import type {
 	IR,
 	SimDiagnostic,
@@ -15,6 +13,7 @@ import type {
 
 import { collectUnsupportedBuiltinDiagnostics } from "./engine-support.js";
 import { irToSimlinProject } from "./ir-to-simlin.js";
+import { resolveNodeWasmSource } from "./wasm-source.node.js";
 
 let readyBackend: Promise<DirectBackend> | null = null;
 
