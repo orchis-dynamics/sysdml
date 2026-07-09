@@ -1,0 +1,10 @@
+@sysdml/simulator (AGPL-3.0-only) embeds a compiled build of @simlin/engine,
+which is licensed under Apache-2.0.
+
+  @simlin/engine — Copyright Bobby Powers and the Simlin contributors
+  Source: https://github.com/bpowers/simlin (src/engine)
+
+The embedded engine's license text and vendoring provenance (upstream commit,
+version, and date) are shipped under dist/vendor/simlin-engine/ (LICENSE and
+VENDORED.md). This package is produced by bundling that build output; no
+separate @simlin/engine package is resolved at install time.
