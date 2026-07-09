@@ -14,7 +14,7 @@
 	"types": "./dist/src/index.d.ts",
 	"scripts": {
 		"clean": "rm -rf dist node_modules",
-		"build": "tsc",
+		"build": "tsc --noEmit && node scripts/build.mjs",
 		"test": "vitest run",
 		"test:watch": "vitest"
 	},
@@ -26,6 +26,8 @@
 		"@sysdml/ir": "workspace:*",
 		"@sysdml/parser": "workspace:*",
 		"@types/node": "^24.12.4",
+		"dts-bundle-generator": "^9.5.1",
+		"esbuild": "^0.24.0",
 		"typescript": "^5.4.5",
 		"vitest": "^4.1.5"
 	},
