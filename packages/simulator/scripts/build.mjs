@@ -33,6 +33,15 @@ const externalWasmPlugin = {
 	},
 };
 
+const workerBackendStubPlugin = {
+	name: "worker-backend-stub",
+	setup(build) {
+		build.onResolve({ filter: /^@simlin\/engine\/internal\/backend-factory$/ }, () => ({
+			path: resolve(packageRoot, "src", "simlin-worker-backend-stub.ts"),
+		}));
+	},
+};
+
 async function buildNodeBundle() {
 	await esbuild.build({
 		entryPoints: [resolve(packageRoot, "src", "index.ts")],
@@ -66,7 +75,7 @@ async function buildBrowserBundle() {
 		format: "esm",
 		target: "esnext",
 		conditions: ["browser", "module", "import"],
-		plugins: [browserWasmSourcePlugin, externalWasmPlugin],
+		plugins: [browserWasmSourcePlugin, externalWasmPlugin, workerBackendStubPlugin],
 		sourcemap: false,
 		logLevel: "info",
 	});
