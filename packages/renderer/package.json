@@ -2,15 +2,24 @@
 	"name": "@sysdml/renderer",
 	"version": "0.1.0",
 	"license": "AGPL-3.0-only",
+	"files": [
+		"dist/lib",
+		"LICENSE"
+	],
 	"type": "module",
 	"exports": {
-		"./lib": "./src/lib.ts"
+		"./lib": {
+			"types": "./dist/lib/lib.d.ts",
+			"default": "./dist/lib/lib.js"
+		},
+		"./lib/style.css": "./dist/lib/style.css"
 	},
 	"scripts": {
 		"clean": "rm -rf dist node_modules",
 		"dev": "vite",
-		"build": "vue-tsc --noEmit && vite build",
+		"build": "vue-tsc --noEmit && vite build && vite build --config vite.lib.config.ts",
 		"build:vscode": "vue-tsc --noEmit && vite build --mode vscode",
+		"build:lib": "vue-tsc --noEmit && vite build --config vite.lib.config.ts",
 		"preview": "vite preview",
 		"test": "vitest run",
 		"test:watch": "vitest"
@@ -21,8 +30,7 @@
 		"@sysdml/simulator": "workspace:*",
 		"@unovis/ts": "^1.6.5",
 		"@unovis/vue": "^1.6.5",
-		"@vueuse/core": "^14.3.0",
-		"vue": "^3.5.0"
+		"@vueuse/core": "^14.3.0"
 	},
 	"devDependencies": {
 		"@sysdml/ir": "workspace:*",
@@ -35,10 +43,15 @@
 		"tailwindcss": "^4.2.0",
 		"typescript": "^5.4.5",
 		"vite": "^6.4.3",
+		"vite-plugin-dts": "^5.0.3",
 		"vite-plugin-top-level-await": "^1.6.0",
 		"vite-plugin-wasm": "^3.6.0",
 		"vitest": "^4.1.5",
+		"vue": "^3.5.0",
 		"vue-tsc": "^2.0.0",
 		"ws": "^8.21.0"
+	},
+	"peerDependencies": {
+		"vue": "^3.5.0"
 	}
 }

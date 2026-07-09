@@ -3,6 +3,7 @@ packages/parser/generated/
 packages/parser/src/grammar/.antlr/
 **/node_modules
 **/dist/
+**/dist-vscode/
 packages/contracts/docs-api/
 .worktrees/
 

@@ -2,6 +2,10 @@
 	"name": "@sysdml/simulator",
 	"version": "0.1.0",
 	"license": "AGPL-3.0-only",
+	"files": [
+		"dist",
+		"LICENSE"
+	],
 	"type": "module",
 	"main": "./dist/src/index.js",
 	"types": "./dist/src/index.d.ts",
@@ -12,14 +16,17 @@
 		"test:watch": "vitest"
 	},
 	"dependencies": {
-		"@simlin/engine": "workspace:*",
 		"@sysdml/contracts": "workspace:*"
 	},
 	"devDependencies": {
+		"@simlin/engine": "workspace:*",
 		"@sysdml/ir": "workspace:*",
 		"@sysdml/parser": "workspace:*",
 		"@types/node": "^24.12.4",
 		"typescript": "^5.4.5",
 		"vitest": "^4.1.5"
+	},
+	"peerDependencies": {
+		"@simlin/engine": "workspace:^"
 	}
 }
