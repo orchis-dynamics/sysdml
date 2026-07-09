@@ -3,6 +3,8 @@ import type { Model, ModelIssue } from "@simlin/engine";
 import { DirectBackend } from "@simlin/engine/direct-backend";
 import { canonicalizeIdent } from "@simlin/engine/internal/canonicalize";
 import { SimlinJsonFormat } from "@simlin/engine/internal/types";
+
+import { resolveNodeWasmSource } from "./wasm-source.node.js";
 import type {
 	IR,
 	SimDiagnostic,
@@ -19,7 +21,9 @@ let readyBackend: Promise<DirectBackend> | null = null;
 function backend(): Promise<DirectBackend> {
 	if (readyBackend === null) {
 		const instance = new DirectBackend();
-		const pendingBackend = instance.init().then(() => instance);
+		const pendingBackend = instance
+			.init(resolveNodeWasmSource())
+			.then(() => instance);
 		pendingBackend.catch(() => {
 			if (readyBackend === pendingBackend) {
 				readyBackend = null;
