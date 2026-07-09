@@ -6,6 +6,9 @@
 		"dist/lib",
 		"LICENSE"
 	],
+	"publishConfig": {
+		"access": "public"
+	},
 	"type": "module",
 	"exports": {
 		"./lib": {
