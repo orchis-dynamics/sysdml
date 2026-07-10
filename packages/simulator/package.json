@@ -3,18 +3,27 @@
 	"version": "0.1.0",
 	"license": "AGPL-3.0-only",
 	"files": [
-		"dist/src",
-		"LICENSE"
+		"dist",
+		"LICENSE",
+		"NOTICE"
 	],
+	"type": "module",
+	"main": "./dist/node/index.js",
+	"types": "./dist/index.d.ts",
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"browser": "./dist/browser/index.js",
+			"node": "./dist/node/index.js",
+			"default": "./dist/node/index.js"
+		}
+	},
 	"publishConfig": {
 		"access": "public"
 	},
-	"type": "module",
-	"main": "./dist/src/index.js",
-	"types": "./dist/src/index.d.ts",
 	"scripts": {
 		"clean": "rm -rf dist node_modules",
-		"build": "tsc",
+		"build": "tsc --noEmit && node scripts/build.mjs",
 		"test": "vitest run",
 		"test:watch": "vitest"
 	},
@@ -26,10 +35,9 @@
 		"@sysdml/ir": "workspace:*",
 		"@sysdml/parser": "workspace:*",
 		"@types/node": "^24.12.4",
+		"dts-bundle-generator": "^9.5.1",
+		"esbuild": "^0.24.0",
 		"typescript": "^5.4.5",
 		"vitest": "^4.1.5"
-	},
-	"peerDependencies": {
-		"@simlin/engine": "workspace:^"
 	}
 }

@@ -153,6 +153,20 @@ verify_against_workspace() {
 	(cd "$REPOSITORY_ROOT" && pnpm --filter "@sysdml/simulator..." run build)
 	step "Running @sysdml/simulator tests"
 	(cd "$REPOSITORY_ROOT" && pnpm --filter "@sysdml/simulator" run test)
+	step "Verifying the publishable bundle has no unresolved @simlin/engine specifier"
+	verify_bundle_is_self_contained
+}
+
+verify_bundle_is_self_contained() {
+	local node_bundle="$REPOSITORY_ROOT/packages/simulator/dist/node/index.js"
+	local browser_bundle="$REPOSITORY_ROOT/packages/simulator/dist/browser/index.js"
+	for bundle in "$node_bundle" "$browser_bundle"; do
+		[ -f "$bundle" ] || fail "expected bundled output missing: $bundle (did the simulator build run?)"
+		if grep -Eq 'from[[:space:]]*["'"'"']@simlin/engine' "$bundle"; then
+			fail "bare @simlin/engine specifier survived in $bundle — bundling is incomplete"
+		fi
+	done
+	echo "  bundles are self-contained (no bare @simlin/engine specifier)"
 }
 
 print_summary() {

@@ -4,14 +4,16 @@
 		"module": "NodeNext",
 		"moduleResolution": "NodeNext",
 		"rootDir": ".",
-		"outDir": "./dist",
+		"outDir": "./dist/types-check",
 		"strict": true,
 		"declaration": true,
-		"declarationMap": true,
-		"sourceMap": true,
+		"declarationMap": false,
+		"emitDeclarationOnly": true,
+		"sourceMap": false,
 		"esModuleInterop": true,
 		"isolatedModules": true,
-		"skipLibCheck": true
+		"skipLibCheck": true,
+		"types": ["node"]
 	},
 	"include": ["src/**/*", "tests/**/*"]
 }
