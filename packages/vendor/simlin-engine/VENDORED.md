@@ -10,4 +10,5 @@ by hand — rerun the script to update.
 - License: Apache-2.0 (see LICENSE)
 - Local transformations: `scripts` and `devDependencies` removed from
   package.json so workspace-wide `pnpm -r` commands and installs skip
-  the upstream build/test tooling.
+  the upstream build/test tooling; `private: true` added so this vendored
+  copy is never published to npm (it is bundled into `@sysdml/simulator`).

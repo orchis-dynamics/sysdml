@@ -1,14 +1,11 @@
 {
 	"name": "@sysdml/renderer",
-	"version": "0.1.0",
+	"version": "0.1.1",
 	"license": "AGPL-3.0-only",
 	"files": [
 		"dist/lib",
 		"LICENSE"
 	],
-	"publishConfig": {
-		"access": "public"
-	},
 	"type": "module",
 	"exports": {
 		"./lib": {
@@ -16,6 +13,9 @@
 			"default": "./dist/lib/lib.js"
 		},
 		"./lib/style.css": "./dist/lib/style.css"
+	},
+	"publishConfig": {
+		"access": "public"
 	},
 	"scripts": {
 		"clean": "rm -rf dist node_modules",

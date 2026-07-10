@@ -1,6 +1,7 @@
 {
   "name": "@simlin/engine",
   "version": "2.0.0",
+  "private": true,
   "description": "an engine for building, running and analyzing system dynamics models",
   "repository": {
     "type": "git",

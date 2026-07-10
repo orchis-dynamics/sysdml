@@ -1,11 +1,22 @@
 {
 	"name": "@sysdml/cli",
 	"version": "0.1.0",
+	"private": true,
 	"license": "AGPL-3.0-only",
 	"bin": {
 		"sysdml": "./dist/src/index.js"
 	},
 	"type": "module",
+	"typesVersions": {
+		"*": {
+			"pipeline": [
+				"./dist/src/pipeline.d.ts"
+			],
+			"csv": [
+				"./dist/src/csv.d.ts"
+			]
+		}
+	},
 	"exports": {
 		"./pipeline": {
 			"types": "./dist/src/pipeline.d.ts",
@@ -14,12 +25,6 @@
 		"./csv": {
 			"types": "./dist/src/csv.d.ts",
 			"default": "./dist/src/csv.js"
-		}
-	},
-	"typesVersions": {
-		"*": {
-			"pipeline": ["./dist/src/pipeline.d.ts"],
-			"csv": ["./dist/src/csv.d.ts"]
 		}
 	},
 	"scripts": {
