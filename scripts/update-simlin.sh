@@ -120,9 +120,10 @@ write_vendored_package_json() {
 		const packageJson = JSON.parse(fs.readFileSync(sourcePath, "utf8"));
 		delete packageJson.scripts;
 		delete packageJson.devDependencies;
+		packageJson.private = true;
 		fs.writeFileSync(destinationPath, JSON.stringify(packageJson, null, 2) + "\n");
 	' "$upstream_package_json" "$VENDOR_DIRECTORY/package.json"
-	echo "  vendored package.json (scripts and devDependencies removed)"
+	echo "  vendored package.json (scripts and devDependencies removed, marked private)"
 }
 
 write_provenance_file() {
@@ -141,7 +142,8 @@ write_provenance_file() {
 		- License: Apache-2.0 (see LICENSE)
 		- Local transformations: \`scripts\` and \`devDependencies\` removed from
 		  package.json so workspace-wide \`pnpm -r\` commands and installs skip
-		  the upstream build/test tooling.
+		  the upstream build/test tooling; \`private: true\` added so this vendored
+		  copy is never published to npm (it is bundled into \`@sysdml/simulator\`).
 	EOF
 	echo "  wrote VENDORED.md (commit $UPSTREAM_COMMIT)"
 }
