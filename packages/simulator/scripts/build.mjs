@@ -51,6 +51,9 @@ async function buildNodeBundle() {
 		conditions: ["node", "import"],
 		sourcemap: false,
 		logLevel: "info",
+		define: {
+			__SYSDML_SIMULATOR_BUNDLED__: "true",
+		},
 		banner: {
 			js: [
 				"import { createRequire as createNodeRequire } from 'node:module';",
