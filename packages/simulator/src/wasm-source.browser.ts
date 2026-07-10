@@ -1,3 +1,3 @@
-export function resolveNodeWasmSource(): string | undefined {
+export function resolveWasmSource(): string | undefined {
 	return undefined;
 }

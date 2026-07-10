@@ -13,7 +13,7 @@ import type {
 
 import { collectUnsupportedBuiltinDiagnostics } from "./engine-support.js";
 import { irToSimlinProject } from "./ir-to-simlin.js";
-import { resolveNodeWasmSource } from "./wasm-source.node.js";
+import { resolveWasmSource } from "./wasm-source.node.js";
 
 let readyBackend: Promise<DirectBackend> | null = null;
 
@@ -21,7 +21,7 @@ function backend(): Promise<DirectBackend> {
 	if (readyBackend === null) {
 		const instance = new DirectBackend();
 		const pendingBackend = instance
-			.init(resolveNodeWasmSource())
+			.init(resolveWasmSource())
 			.then(() => instance);
 		pendingBackend.catch(() => {
 			if (readyBackend === pendingBackend) {

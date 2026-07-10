@@ -12,7 +12,7 @@ function isBundledRuntime(): boolean {
 	);
 }
 
-export function resolveNodeWasmSource(): string | undefined {
+export function resolveWasmSource(): string | undefined {
 	const coLocatedWasmPath = fileURLToPath(
 		new URL("./libsimlin.wasm", import.meta.url),
 	);

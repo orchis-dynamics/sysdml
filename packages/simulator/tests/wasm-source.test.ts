@@ -3,14 +3,14 @@ import { fileURLToPath } from "node:url";
 
 import { describe, expect, test } from "vitest";
 
-import { resolveNodeWasmSource } from "../src/wasm-source.node.js";
+import { resolveWasmSource } from "../src/wasm-source.node.js";
 
-describe("resolveNodeWasmSource", () => {
+describe("resolveWasmSource", () => {
 	test("returns undefined in the source tree (no co-located libsimlin.wasm)", () => {
 		const coLocated = fileURLToPath(
 			new URL("../src/libsimlin.wasm", import.meta.url),
 		);
 		expect(existsSync(coLocated)).toBe(false);
-		expect(resolveNodeWasmSource()).toBeUndefined();
+		expect(resolveWasmSource()).toBeUndefined();
 	});
 });

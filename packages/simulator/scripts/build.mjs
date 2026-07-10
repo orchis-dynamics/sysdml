@@ -18,13 +18,20 @@ const browserWasmSourcePlugin = {
 	},
 };
 
+const browserWasmFilename = "libsimlin-browser.wasm";
+
 const externalWasmPlugin = {
 	name: "external-wasm",
 	setup(build) {
-		build.onResolve({ filter: /\.wasm$/ }, (args) => ({
-			path: `./${args.path.split("/").pop()}`,
-			external: true,
-		}));
+		build.onResolve({ filter: /\.wasm$/ }, (args) => {
+			const importedWasmFilename = args.path.split("/").pop();
+			if (importedWasmFilename !== browserWasmFilename) {
+				throw new Error(
+					`external-wasm: unexpected WASM import '${args.path}'. buildBrowserBundle only copies '${browserWasmFilename}' into dist/browser; a new engine WASM asset must be copied there and allowed here before it can be externalized.`,
+				);
+			}
+			return { path: `./${importedWasmFilename}`, external: true };
+		});
 	},
 };
 
@@ -85,8 +92,8 @@ async function buildBrowserBundle() {
 		logLevel: "info",
 	});
 	await cp(
-		resolve(vendorRoot, "core", "libsimlin-browser.wasm"),
-		resolve(distRoot, "browser", "libsimlin-browser.wasm"),
+		resolve(vendorRoot, "core", browserWasmFilename),
+		resolve(distRoot, "browser", browserWasmFilename),
 	);
 }
 
