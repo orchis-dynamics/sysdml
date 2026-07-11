@@ -13,6 +13,17 @@ const sharedOptions = {
 	sourcemap: !production,
 	minify: production,
 	logLevel: "info",
+	// @sysdml/simulator ships an ESM node bundle that uses `import.meta.url`
+	// (for createRequire and to locate its co-located WASM). esbuild empties
+	// `import.meta.url` in CJS output, so shim it to this bundle's own file
+	// URL — the extension copies libsimlin.wasm next to the bundle, so the
+	// simulator resolves the WASM there.
+	banner: {
+		js: "const importMetaUrl = require('node:url').pathToFileURL(__filename).href;",
+	},
+	define: {
+		"import.meta.url": "importMetaUrl",
+	},
 };
 
 const extensionConfig = {
